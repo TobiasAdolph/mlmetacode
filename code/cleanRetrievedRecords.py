@@ -14,7 +14,9 @@ dataRegex = re.compile('[0-9a-f]{2}\.json$')
 # used to check the subject[subjectScheme] payload to determine whether this is
 # a dewey decimal subject
 ddcNames = [
-        "udc",
+        "Dewey decimal Classification",
+        "Dewey-Dezimalklassifikation (DDC) (http://ddc-deutsch.de/)",
+        "DeweyDecimalClassification",
         "dewey",
         "ddccode",
         "ddc",
@@ -39,8 +41,6 @@ ddcNames = [
 #  ^79[^.] | Sports, games & entertainment
 #  ^91[^.] | Geography & travel
 #  ^92[^.] | Biography & genealogy
-
-
 
 # ! order matters: first come first serve, rearranging might result in false
 # positives
@@ -287,20 +287,19 @@ mappingDDC = [
                     )
         ]
 ]
-
 # Used to map the payload (subject["value"]) of a ANZSRC-subject to the base
 # classes of ANZSRC
 anzsrcBaseClasses = {
-        "0" : "00 uncategorized",
-        "1" : "01 mathematical science",
-        "2" : "02 physical science",
-        "3" : "03 chemical science",
-        "4" : "04 earth sciences",
-        "5" : "05 environmental sciences",
-        "6" : "06 biological sciences",
-        "7" : "07 agricultural and veterinary science",
-        "8" : "08 information and computing sciences",
-        "9" : "09 engineering",
+        "00" : "00 uncategorized",
+        "01" : "01 mathematical science",
+        "02" : "02 physical science",
+        "03" : "03 chemical science",
+        "04" : "04 earth sciences",
+        "05" : "05 environmental sciences",
+        "06" : "06 biological sciences",
+        "07" : "07 agricultural and veterinary science",
+        "08" : "08 information and computing sciences",
+        "09" : "09 engineering",
         "10" : "10 technology",
         "11" : "11 medical and health sciences",
         "12" : "12 built environment and design",
@@ -319,7 +318,6 @@ anzsrcBaseClasses = {
 ################################################################################
 # FUNCTIONS
 ################################################################################
-
 def isANZSRC(subject):
     if "schemeURI" not in subject.keys():
         return False
@@ -339,9 +337,9 @@ def isDDC(subject):
     return False
 
 def isJEL(subject):
-    if "schemeURI" not in subject.keys():
+    if "subjectScheme" not in subject.keys():
         return False
-    if subject["schemeURI"] == "JEL":
+    if re.match(r'^JEL.*', subject["subjectScheme"]):
         return True
     else:
         return False
@@ -352,26 +350,22 @@ def isAnnotatable(subject):
             return True
     return False
 
-def getFieldOrEmpty(field, document):
-    if field == "subjects":
-        subjects = []
-        for subject in document["subjects"]:
-            if isAnnotatable(subject):
-                continue
-            subjects.append(subject)
-        return subjects
-    if field in document.keys():
-        return document[field]
-    else:
-        return getEmptyField(field)
+def isAscii(s):
+    return all(ord(c) < 128 for c in s)
 
-def getEmptyField(field):
-    if field == "publisher":
-        return ""
-    elif field in ["subjects", "descriptions", "titles"]:
-        return []
-    elif field == "resourceType":
-        return {"resourceType": { "value": "", "resourceTypeGeneral": ""}}
+def isEnglish(field):
+    if field.get("lang", "?") == "en":
+        return True
+    if isAscii(field["value"]):
+        return True
+    return False
+
+def getEnglishValueOrEmpty(field, document):
+    if field in document.keys():
+        for instance in document[field]:
+            if isEnglish(instance):
+                return instance["value"]
+    return ""
 
 def registerMapping(anzsrc, payload, anzsrc2subject):
     if anzsrc not in anzsrc2subject.keys():
@@ -383,54 +377,43 @@ def registerMapping(anzsrc, payload, anzsrc2subject):
         anzsrc2subject[anzsrc][payload] += 1
         anzsrc2subject[anzsrc]["total"] += 1
 
-def getBaseAnzsrc(payload, anzsrc2subject, type="ddc"):
-    if type == "ddc":
+def getBaseAnzsrc(subject):
+    payload = subject["value"].lower().strip()
+    if isDDC(subject):
         for pair in mappingDDC:
             anzsrc = pair[0]
             regex  = pair[1]
             if regex.match(payload):
-                registerMapping(anzsrc, payload, anzsrc2subject)
                 return anzsrc
-        registerMapping("0", payload, anzsrc2subject)
-        return ""
-    elif type == "anzsrc":
+    elif isANZSRC(subject):
         anzsrcNumber = re.search('\d+', payload).group()
         if len(anzsrcNumber) % 2 == 0:
-            if payload[0] == "0":
-                anzsrcKey = payload[1:2]
-            else:
-                anzsrcKey = payload[:2]
+            anzsrcKey = payload[:2]
         else:
-            anzsrcKey = payload[:1]
+            anzsrcKey = "0" + payload[:1]
 
         if anzsrcKey in anzsrcBaseClasses.keys():
             anzsrc = anzsrcBaseClasses[anzsrcKey]
         else:
-            anzsrc = anzsrcBaseClasses["0"]
-        registerMapping(anzsrc, payload, anzsrc2subject)
+            anzsrc = anzsrcBaseClasses["00"]
         return anzsrc
-    elif type == "jel":
+    elif isJEL(subject):
         anzsrc = anzsrcBaseClasses["14"]
-        registerMapping(anzsrc, payload, anzsrc2subject)
         return anzsrc
+    return ""
 
 def getFullAnnotation(subjects, anzsrc2subject):
     ddc = []
     annotations = []
+    seenAnzsrcMappings = []
     for subject in subjects:
-        if isDDC(subject):
-            anzsrc = getBaseAnzsrc(subject["value"].lower().strip(),
-                    anzsrc2subject)
-            if anzsrc:
-                annotations.append(anzsrc)
-        elif isANZSRC(subject):
-            annotations.append(getBaseAnzsrc(subject["value"].lower().strip(),
-                anzsrc2subject,
-                "anzsrc"))
-        elif isJEL(subject):
-            annotations.append(getBaseAnzsrc(subject["value"].lower().strip(),
-                anzsrc2subject,
-                "jel"))
+        anzsrc = getBaseAnzsrc(subject)
+        if not anzsrc:
+            continue
+        if not anzsrc in seenAnzsrcMappings:
+            seenAnzsrcMappings.append(anzsrc)
+            registerMapping(anzsrc, subject["value"], anzsrc2subject)
+            annotations.append(anzsrc)
     return annotations
 
 def getAnnotation(subjects, anzsrc2subject):
@@ -440,14 +423,9 @@ def getAnnotation(subjects, anzsrc2subject):
     return annotations
 
 def addTo(name, bucket, seen, addee):
-    if name not in addee.keys():
+    if name not in addee.keys() or addee[name] in seen:
         return
-    if addee[name] in seen:
-        return
-    if addee["value"] in bucket.keys():
-        bucket[addee[name]] += 1
-    else:
-        bucket[addee[name]]  = 1
+    bucket[addee[name]] = bucket.get(addee[name], 0) + 1
 
 def processChunk(fileName):
     print("\tProcessing %s" % fileName)
@@ -474,20 +452,29 @@ def processChunk(fileName):
                         subject)
                 if isAnnotatable(subject):
                     selectable = True
-                if selectable:
-                    add = {
-                      "payload": {
-                        "publisher": getFieldOrEmpty("publisher", document),
-                        "subjects": getFieldOrEmpty("subjects", document),
-                        "titles": getFieldOrEmpty("titles", document),
-                        "descriptions": getFieldOrEmpty("descriptions", document)
-                      },
-                      "annotation": getAnnotation(document["subjects"],
-                          anzsrc2subject)
+            if selectable:
+                annotations = getAnnotation(document["subjects"],
+                      anzsrc2subject)
+                if len(annotations) != 1:
+                    continue
+                annotation = annotations[0]
+
+                title = getEnglishValueOrEmpty("titles", document)
+                if not title:
+                    continue
+
+                description =  getEnglishValueOrEmpty("descriptions", document)
+                if not description:
+                    continue
+
+                if not annotation in result.keys():
+                    result[annotation] = {}
+                result[annotation][document["identifier"]["value"]] = (
+                    {
+                        "title": title,
+                        "description": description
                     }
-                    if len(add["annotation"]) < 1:
-                        continue
-                    result[document["identifier"]["value"]] = add
+                )
     return {
                 "documents": documents,
                 "schemeURI": schemeURIs,
@@ -499,11 +486,12 @@ def processChunk(fileName):
 ################################################################################
 # DIVIDE
 ################################################################################
-worker = 3
-print("Starting %i worker" % worker)
+worker = 4
+print("Starting %i workers" % worker)
 files = [f for f in os.listdir(base_dir) if dataRegex.match(f)]
+#files = files[:1]
 with ProcessPoolExecutor(worker) as ex:
-    res = zip(files, ex.map(processChunk, files[:6]))
+    res = zip(files, ex.map(processChunk, files))
 
 ################################################################################
 # CONQUER
@@ -514,47 +502,46 @@ result = {}
 anzsrc2subject = {}
 subjectScheme = {}
 schemeURI = {}
+numAnnotations = {}
+typeAnnotation = {}
 for r in res:
-    print("\tMerging %s to results" % r[0])
     documents += r[1]["documents"]
     for key in r[1]["result"].keys():
-        if key not in result.keys():
-            result[key] = r[1]["result"][key]
+        if not key in result.keys():
+            result[key] = {}
+        for identifier in r[1]["result"][key]:
+            result[key][identifier] = r[1]["result"][key][identifier]
     for anzsrc in anzsrcBaseClasses.values():
         if anzsrc not in anzsrc2subject.keys():
-            anzsrc2subject[anzsrc] = {}
+            anzsrc2subject[anzsrc] = {"total": 0}
         if anzsrc in r[1]["anzsrc2subject"].keys():
             for key, value in r[1]["anzsrc2subject"][anzsrc].items():
-                if key in anzsrc2subject[anzsrc].keys():
-                    anzsrc2subject[anzsrc][key] += value
-                else:
-                    anzsrc2subject[anzsrc][key]  = value
+                anzsrc2subject[anzsrc][key] = anzsrc2subject[anzsrc].get(key, 0) + value
     for key, value in r[1]["subjectScheme"].items():
-        if key in subjectScheme.keys():
-            subjectScheme[key] += value
-        else:
-            subjectScheme[key]  = value
+        subjectScheme[key] = subjectScheme.get(key, 0) + value
     for key, value in r[1]["schemeURI"].items():
-        if key in schemeURI.keys():
-            schemeURI[key] += value
-        else:
-            schemeURI[key]  = value
+        schemeURI[key] = schemeURI.get(key, 0) + value
 
-with open("Pdata.json", 'w') as crf:
-    json.dump(result, crf)
+for key in result.keys():
+    with open(key + ".data.json", 'w') as crf:
+        json.dump(result[key], crf)
 
-with open("Panzsrc2subject.json", "w") as mf:
+with open("anzsrc2subject.json", "w") as mf:
     json.dump(anzsrc2subject, mf)
 
-with open("PsubjectScheme.json", "w") as sf:
+with open("subjectScheme.json", "w") as sf:
     json.dump(subjectScheme, sf)
 
-with open("PschemeURI.json", "w") as sf:
+with open("schemeURI.json", "w") as sf:
     json.dump(schemeURI, sf)
 
-print("Number of documents:  %i" %documents)
-print("Size of cleaned recs: %i" % len(result))
 
-for key in anzsrc2subject.keys():
-    if "total" in anzsrc2subject[key].keys():
-        print("%s: %s" % (key, anzsrc2subject[key]["total"]))
+print("General Statistics:")
+print("\tNumber of documents:  %i" %documents)
+print("\tSize of cleaned recs: %i" % sum(len(discp) for discp in result))
+print("Discipline match before data cleanup")
+for key in sorted(anzsrc2subject.keys()):
+    print("\t%s: %s" % (key, anzsrc2subject[key].get("total", 0)))
+print("Discipline match after data cleanup")
+for key in sorted(result.keys()):
+    print("\t%s: %s" % (anzsrcBaseClasses[key], len(result[key])))
