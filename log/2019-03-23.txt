@@ -1,0 +1,621 @@
+################################################################################
+# 1st run (2019-03-23): dmin / title
+################################################################################
+Loaded sample:
+	3520 training texts (3520 labels)
+	858 evaluation texts (858 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 3520 samples, validate on 858 samples
+2019-03-23 10:31:43.964326: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 10:31:44.019783: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 10:31:44.023030: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x4b7a410 executing computations on platform Host. Devices:
+2019-03-23 10:31:44.023421: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 1s - loss: 3.0814 - acc: 0.1170 - val_loss: 3.0622 - val_acc: 0.2319
+Epoch 2/1000
+ - 0s - loss: 3.0207 - acc: 0.3469 - val_loss: 3.0009 - val_acc: 0.2786
+Epoch 3/1000
+ - 0s - loss: 2.9121 - acc: 0.4710 - val_loss: 2.9091 - val_acc: 0.3368
+Epoch 4/1000
+ - 0s - loss: 2.7574 - acc: 0.5864 - val_loss: 2.7997 - val_acc: 0.3601
+Epoch 5/1000
+ - 0s - loss: 2.5797 - acc: 0.6327 - val_loss: 2.6893 - val_acc: 0.3800
+Epoch 6/1000
+ - 0s - loss: 2.3923 - acc: 0.6991 - val_loss: 2.5836 - val_acc: 0.3963
+Epoch 7/1000
+ - 0s - loss: 2.1990 - acc: 0.7281 - val_loss: 2.4917 - val_acc: 0.4056
+Epoch 8/1000
+ - 0s - loss: 2.0133 - acc: 0.7520 - val_loss: 2.4046 - val_acc: 0.4161
+Epoch 9/1000
+ - 0s - loss: 1.8301 - acc: 0.7776 - val_loss: 2.3303 - val_acc: 0.4231
+Epoch 10/1000
+ - 0s - loss: 1.6559 - acc: 0.7926 - val_loss: 2.2654 - val_acc: 0.4207
+Epoch 11/1000
+ - 0s - loss: 1.5090 - acc: 0.8051 - val_loss: 2.2074 - val_acc: 0.4382
+Epoch 12/1000
+ - 0s - loss: 1.3585 - acc: 0.8236 - val_loss: 2.1578 - val_acc: 0.4417
+Epoch 13/1000
+ - 0s - loss: 1.2332 - acc: 0.8324 - val_loss: 2.1162 - val_acc: 0.4382
+Epoch 14/1000
+ - 0s - loss: 1.1309 - acc: 0.8352 - val_loss: 2.0852 - val_acc: 0.4406
+Epoch 15/1000
+ - 0s - loss: 1.0403 - acc: 0.8477 - val_loss: 2.0561 - val_acc: 0.4417
+Epoch 16/1000
+ - 0s - loss: 0.9629 - acc: 0.8580 - val_loss: 2.0354 - val_acc: 0.4476
+Epoch 17/1000
+ - 0s - loss: 0.9025 - acc: 0.8540 - val_loss: 2.0170 - val_acc: 0.4452
+Epoch 18/1000
+ - 0s - loss: 0.8420 - acc: 0.8588 - val_loss: 2.0049 - val_acc: 0.4441
+Epoch 19/1000
+ - 0s - loss: 0.8015 - acc: 0.8611 - val_loss: 1.9975 - val_acc: 0.4382
+Epoch 20/1000
+ - 0s - loss: 0.7501 - acc: 0.8648 - val_loss: 1.9932 - val_acc: 0.4441
+Epoch 21/1000
+ - 0s - loss: 0.7124 - acc: 0.8685 - val_loss: 1.9887 - val_acc: 0.4429
+Epoch 22/1000
+ - 0s - loss: 0.6700 - acc: 0.8756 - val_loss: 1.9856 - val_acc: 0.4417
+Epoch 23/1000
+ - 0s - loss: 0.6401 - acc: 0.8807 - val_loss: 1.9853 - val_acc: 0.4429
+Epoch 24/1000
+ - 0s - loss: 0.6171 - acc: 0.8767 - val_loss: 1.9875 - val_acc: 0.4347
+Epoch 25/1000
+ - 0s - loss: 0.5811 - acc: 0.8869 - val_loss: 1.9895 - val_acc: 0.4371
+Validation accuracy: 0.43706294894218445, loss: 1.9894556504585248
+
+################################################################################
+# 2nd run (Sa 23. Mär 10:41:20 CET 2019) dmax / title
+################################################################################
+Loaded sample:
+	319453 training texts (319453 labels)
+	79845 evaluation texts (79845 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 319453 samples, validate on 79845 samples
+2019-03-23 10:32:35.162175: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 10:32:35.183906: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 10:32:35.184232: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x7030190 executing computations on platform Host. Devices:
+2019-03-23 10:32:35.184264: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 87s - loss: 0.8151 - acc: 0.7790 - val_loss: 0.6003 - val_acc: 0.8272
+Epoch 2/1000
+ - 87s - loss: 0.5689 - acc: 0.8298 - val_loss: 0.5256 - val_acc: 0.8434
+Epoch 3/1000
+ - 86s - loss: 0.5052 - acc: 0.8454 - val_loss: 0.5010 - val_acc: 0.8491
+Epoch 4/1000
+ - 87s - loss: 0.4755 - acc: 0.8513 - val_loss: 0.4877 - val_acc: 0.8528
+Epoch 5/1000
+ - 86s - loss: 0.4562 - acc: 0.8564 - val_loss: 0.4790 - val_acc: 0.8557
+Epoch 6/1000
+ - 88s - loss: 0.4417 - acc: 0.8604 - val_loss: 0.4735 - val_acc: 0.8576
+Epoch 7/1000
+ - 86s - loss: 0.4305 - acc: 0.8623 - val_loss: 0.4694 - val_acc: 0.8598
+Epoch 8/1000
+ - 90s - loss: 0.4224 - acc: 0.8646 - val_loss: 0.4678 - val_acc: 0.8603
+Epoch 9/1000
+ - 92s - loss: 0.4143 - acc: 0.8663 - val_loss: 0.4636 - val_acc: 0.8624
+Epoch 10/1000
+ - 84s - loss: 0.4058 - acc: 0.8695 - val_loss: 0.4601 - val_acc: 0.8645
+Epoch 11/1000
+ - 84s - loss: 0.4004 - acc: 0.8711 - val_loss: 0.4600 - val_acc: 0.8653
+Epoch 12/1000
+ - 84s - loss: 0.3941 - acc: 0.8725 - val_loss: 0.4601 - val_acc: 0.8662
+Epoch 13/1000
+ - 85s - loss: 0.3895 - acc: 0.8741 - val_loss: 0.4592 - val_acc: 0.8673
+Epoch 14/1000
+ - 93s - loss: 0.3852 - acc: 0.8747 - val_loss: 0.4582 - val_acc: 0.8688
+Epoch 15/1000
+ - 88s - loss: 0.3817 - acc: 0.8758 - val_loss: 0.4589 - val_acc: 0.8698
+Epoch 16/1000
+ - 86s - loss: 0.3759 - acc: 0.8780 - val_loss: 0.4581 - val_acc: 0.8695
+Epoch 17/1000
+ - 85s - loss: 0.3725 - acc: 0.8797 - val_loss: 0.4569 - val_acc: 0.8719
+Epoch 18/1000
+ - 86s - loss: 0.3696 - acc: 0.8800 - val_loss: 0.4586 - val_acc: 0.8722
+Epoch 19/1000
+ - 86s - loss: 0.3671 - acc: 0.8817 - val_loss: 0.4575 - val_acc: 0.8736
+Validation accuracy: 0.873567521572113, loss: 0.45753255075612315
+
+################################################################################
+# 3rd run (Sa 23. Mär 11:02:45 CET 2019) dstat1000 / title
+################################################################################
+Loaded sample:
+	15582 training texts (15582 labels)
+	3870 evaluation texts (3870 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 15582 samples, validate on 3870 samples
+2019-03-23 11:00:32.159683: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 11:00:32.179973: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 11:00:32.180245: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x4315480 executing computations on platform Host. Devices:
+2019-03-23 11:00:32.180284: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 6s - loss: 2.9549 - acc: 0.2501 - val_loss: 2.7460 - val_acc: 0.4160
+Epoch 2/1000
+ - 6s - loss: 2.5068 - acc: 0.5092 - val_loss: 2.3754 - val_acc: 0.4938
+Epoch 3/1000
+ - 6s - loss: 2.0457 - acc: 0.6120 - val_loss: 2.0544 - val_acc: 0.5341
+Epoch 4/1000
+ - 5s - loss: 1.6446 - acc: 0.6615 - val_loss: 1.8256 - val_acc: 0.5470
+Epoch 5/1000
+ - 5s - loss: 1.3653 - acc: 0.6959 - val_loss: 1.6852 - val_acc: 0.5568
+Epoch 6/1000
+ - 5s - loss: 1.1926 - acc: 0.7153 - val_loss: 1.5994 - val_acc: 0.5646
+Epoch 7/1000
+ - 6s - loss: 1.0607 - acc: 0.7405 - val_loss: 1.5426 - val_acc: 0.5729
+Epoch 8/1000
+ - 5s - loss: 0.9707 - acc: 0.7509 - val_loss: 1.5065 - val_acc: 0.5744
+Epoch 9/1000
+ - 5s - loss: 0.9027 - acc: 0.7665 - val_loss: 1.4815 - val_acc: 0.5773
+Epoch 10/1000
+ - 5s - loss: 0.8462 - acc: 0.7745 - val_loss: 1.4648 - val_acc: 0.5786
+Epoch 11/1000
+ - 5s - loss: 0.7904 - acc: 0.7895 - val_loss: 1.4562 - val_acc: 0.5806
+Epoch 12/1000
+ - 5s - loss: 0.7473 - acc: 0.7999 - val_loss: 1.4516 - val_acc: 0.5811
+Epoch 13/1000
+ - 5s - loss: 0.7097 - acc: 0.8058 - val_loss: 1.4508 - val_acc: 0.5809
+Epoch 14/1000
+ - 5s - loss: 0.6862 - acc: 0.8121 - val_loss: 1.4532 - val_acc: 0.5845
+Epoch 15/1000
+ - 5s - loss: 0.6589 - acc: 0.8177 - val_loss: 1.4562 - val_acc: 0.5858
+Validation accuracy: 0.5857881307601929, loss: 1.456228328613656
+
+################################################################################
+# 4th run (Sa 23. Mär 11:05:41 CET 2019) dmin / description 
+################################################################################
+Loaded sample:
+	3520 training texts (3520 labels)
+	858 evaluation texts (858 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 3520 samples, validate on 858 samples
+2019-03-23 11:04:30.426981: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 11:04:30.447884: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 11:04:30.448104: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x5e8faa0 executing computations on platform Host. Devices:
+2019-03-23 11:04:30.448129: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 1s - loss: 3.0604 - acc: 0.2247 - val_loss: 3.0077 - val_acc: 0.4091
+Epoch 2/1000
+ - 1s - loss: 2.9114 - acc: 0.5429 - val_loss: 2.8717 - val_acc: 0.4231
+Epoch 3/1000
+ - 1s - loss: 2.7022 - acc: 0.6043 - val_loss: 2.7062 - val_acc: 0.4557
+Epoch 4/1000
+ - 1s - loss: 2.4540 - acc: 0.6884 - val_loss: 2.5348 - val_acc: 0.4907
+Epoch 5/1000
+ - 1s - loss: 2.2007 - acc: 0.7369 - val_loss: 2.3671 - val_acc: 0.5163
+Epoch 6/1000
+ - 1s - loss: 1.9471 - acc: 0.7889 - val_loss: 2.2187 - val_acc: 0.5373
+Epoch 7/1000
+ - 1s - loss: 1.7169 - acc: 0.8045 - val_loss: 2.0913 - val_acc: 0.5420
+Epoch 8/1000
+ - 1s - loss: 1.5020 - acc: 0.8310 - val_loss: 1.9846 - val_acc: 0.5490
+Epoch 9/1000
+ - 1s - loss: 1.3358 - acc: 0.8469 - val_loss: 1.8984 - val_acc: 0.5559
+Epoch 10/1000
+ - 1s - loss: 1.1872 - acc: 0.8506 - val_loss: 1.8269 - val_acc: 0.5676
+Epoch 11/1000
+ - 1s - loss: 1.0611 - acc: 0.8659 - val_loss: 1.7681 - val_acc: 0.5676
+Epoch 12/1000
+ - 1s - loss: 0.9577 - acc: 0.8781 - val_loss: 1.7190 - val_acc: 0.5676
+Epoch 13/1000
+ - 1s - loss: 0.8575 - acc: 0.8869 - val_loss: 1.6815 - val_acc: 0.5676
+Epoch 14/1000
+ - 1s - loss: 0.7970 - acc: 0.8895 - val_loss: 1.6472 - val_acc: 0.5699
+Epoch 15/1000
+ - 1s - loss: 0.7218 - acc: 0.8957 - val_loss: 1.6200 - val_acc: 0.5688
+Epoch 16/1000
+ - 1s - loss: 0.6706 - acc: 0.9009 - val_loss: 1.5968 - val_acc: 0.5688
+Epoch 17/1000
+ - 1s - loss: 0.6239 - acc: 0.9043 - val_loss: 1.5787 - val_acc: 0.5711
+Epoch 18/1000
+ - 1s - loss: 0.5755 - acc: 0.9060 - val_loss: 1.5620 - val_acc: 0.5758
+Epoch 19/1000
+ - 1s - loss: 0.5432 - acc: 0.9128 - val_loss: 1.5479 - val_acc: 0.5676
+Epoch 20/1000
+ - 1s - loss: 0.5134 - acc: 0.9173 - val_loss: 1.5364 - val_acc: 0.5653
+Epoch 21/1000
+ - 1s - loss: 0.4731 - acc: 0.9222 - val_loss: 1.5288 - val_acc: 0.5699
+Epoch 22/1000
+ - 1s - loss: 0.4491 - acc: 0.9236 - val_loss: 1.5205 - val_acc: 0.5699
+Epoch 23/1000
+ - 1s - loss: 0.4407 - acc: 0.9185 - val_loss: 1.5148 - val_acc: 0.5734
+Epoch 24/1000
+ - 1s - loss: 0.4133 - acc: 0.9253 - val_loss: 1.5080 - val_acc: 0.5734
+Epoch 25/1000
+ - 1s - loss: 0.3926 - acc: 0.9253 - val_loss: 1.5028 - val_acc: 0.5758
+Epoch 26/1000
+ - 1s - loss: 0.3874 - acc: 0.9244 - val_loss: 1.4992 - val_acc: 0.5723
+Epoch 27/1000
+ - 1s - loss: 0.3688 - acc: 0.9233 - val_loss: 1.4983 - val_acc: 0.5699
+Epoch 28/1000
+ - 1s - loss: 0.3536 - acc: 0.9298 - val_loss: 1.4964 - val_acc: 0.5723
+Epoch 29/1000
+ - 1s - loss: 0.3398 - acc: 0.9315 - val_loss: 1.4946 - val_acc: 0.5734
+Epoch 30/1000
+ - 1s - loss: 0.3372 - acc: 0.9276 - val_loss: 1.4935 - val_acc: 0.5688
+Epoch 31/1000
+ - 1s - loss: 0.3164 - acc: 0.9352 - val_loss: 1.4929 - val_acc: 0.5723
+Epoch 32/1000
+ - 1s - loss: 0.3141 - acc: 0.9330 - val_loss: 1.4930 - val_acc: 0.5746
+Epoch 33/1000
+ - 1s - loss: 0.3071 - acc: 0.9321 - val_loss: 1.4930 - val_acc: 0.5711
+Validation accuracy: 0.5710955858230591, loss: 1.4930112978795191
+
+
+################################################################################
+# 5th run (Sa 23. Mär 11:08:12 CET 2019) dstat1000 / description
+################################################################################
+Loaded sample:
+	15582 training texts (15582 labels)
+	3870 evaluation texts (3870 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 15582 samples, validate on 3870 samples
+2019-03-23 11:06:30.362310: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 11:06:30.383883: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 11:06:30.384128: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x5d54150 executing computations on platform Host. Devices:
+2019-03-23 11:06:30.384148: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 4s - loss: 2.8670 - acc: 0.3290 - val_loss: 2.5581 - val_acc: 0.5018
+Epoch 2/1000
+ - 4s - loss: 2.2803 - acc: 0.5241 - val_loss: 2.0647 - val_acc: 0.5643
+Epoch 3/1000
+ - 4s - loss: 1.8042 - acc: 0.6064 - val_loss: 1.7312 - val_acc: 0.5863
+Epoch 4/1000
+ - 4s - loss: 1.4970 - acc: 0.6486 - val_loss: 1.5388 - val_acc: 0.6085
+Epoch 5/1000
+ - 4s - loss: 1.2999 - acc: 0.6770 - val_loss: 1.4205 - val_acc: 0.6155
+Epoch 6/1000
+ - 4s - loss: 1.1592 - acc: 0.7088 - val_loss: 1.3417 - val_acc: 0.6274
+Epoch 7/1000
+ - 4s - loss: 1.0502 - acc: 0.7289 - val_loss: 1.2855 - val_acc: 0.6390
+Epoch 8/1000
+ - 4s - loss: 0.9670 - acc: 0.7472 - val_loss: 1.2443 - val_acc: 0.6452
+Epoch 9/1000
+ - 4s - loss: 0.8967 - acc: 0.7627 - val_loss: 1.2148 - val_acc: 0.6553
+Epoch 10/1000
+ - 4s - loss: 0.8383 - acc: 0.7803 - val_loss: 1.1916 - val_acc: 0.6579
+Epoch 11/1000
+ - 4s - loss: 0.7837 - acc: 0.7920 - val_loss: 1.1729 - val_acc: 0.6656
+Epoch 12/1000
+ - 4s - loss: 0.7323 - acc: 0.8066 - val_loss: 1.1615 - val_acc: 0.6708
+Epoch 13/1000
+ - 4s - loss: 0.6895 - acc: 0.8164 - val_loss: 1.1491 - val_acc: 0.6747
+Epoch 14/1000
+ - 4s - loss: 0.6504 - acc: 0.8285 - val_loss: 1.1409 - val_acc: 0.6770
+Epoch 15/1000
+ - 4s - loss: 0.6104 - acc: 0.8401 - val_loss: 1.1354 - val_acc: 0.6762
+Epoch 16/1000
+ - 4s - loss: 0.5891 - acc: 0.8462 - val_loss: 1.1355 - val_acc: 0.6809
+Epoch 17/1000
+ - 4s - loss: 0.5613 - acc: 0.8518 - val_loss: 1.1355 - val_acc: 0.6822
+Validation accuracy: 0.682170569896698, loss: 1.1355485439916606
+
+################################################################################
+# 6th run (Sa 23. Mär 11:45:54 CET 2019) dmax / description
+################################################################################
+Loaded sample:
+	319453 training texts (319453 labels)
+	79845 evaluation texts (79845 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 319453 samples, validate on 79845 samples
+2019-03-23 11:10:08.665542: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 11:10:08.691845: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 11:10:08.692191: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x6a30ca0 executing computations on platform Host. Devices:
+2019-03-23 11:10:08.692225: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 86s - loss: 0.6723 - acc: 0.8220 - val_loss: 0.4775 - val_acc: 0.8595
+Epoch 2/1000
+ - 88s - loss: 0.4571 - acc: 0.8645 - val_loss: 0.4179 - val_acc: 0.8741
+Epoch 3/1000
+ - 90s - loss: 0.4050 - acc: 0.8768 - val_loss: 0.3910 - val_acc: 0.8794
+Epoch 4/1000
+ - 88s - loss: 0.3739 - acc: 0.8844 - val_loss: 0.3737 - val_acc: 0.8849
+Epoch 5/1000
+ - 92s - loss: 0.3517 - acc: 0.8902 - val_loss: 0.3613 - val_acc: 0.8886
+Epoch 6/1000
+ - 90s - loss: 0.3337 - acc: 0.8948 - val_loss: 0.3522 - val_acc: 0.8920
+Epoch 7/1000
+ - 87s - loss: 0.3181 - acc: 0.8989 - val_loss: 0.3449 - val_acc: 0.8949
+Epoch 8/1000
+ - 87s - loss: 0.3046 - acc: 0.9029 - val_loss: 0.3385 - val_acc: 0.8972
+Epoch 9/1000
+ - 87s - loss: 0.2937 - acc: 0.9061 - val_loss: 0.3325 - val_acc: 0.9003
+Epoch 10/1000
+ - 86s - loss: 0.2851 - acc: 0.9092 - val_loss: 0.3298 - val_acc: 0.9013
+Epoch 11/1000
+ - 88s - loss: 0.2750 - acc: 0.9117 - val_loss: 0.3243 - val_acc: 0.9042
+Epoch 12/1000
+ - 88s - loss: 0.2668 - acc: 0.9145 - val_loss: 0.3222 - val_acc: 0.9061
+Epoch 13/1000
+ - 87s - loss: 0.2598 - acc: 0.9171 - val_loss: 0.3206 - val_acc: 0.9077
+Epoch 14/1000
+ - 87s - loss: 0.2520 - acc: 0.9189 - val_loss: 0.3168 - val_acc: 0.9101
+Epoch 15/1000
+ - 87s - loss: 0.2469 - acc: 0.9206 - val_loss: 0.3166 - val_acc: 0.9112
+Epoch 16/1000
+ - 86s - loss: 0.2396 - acc: 0.9222 - val_loss: 0.3143 - val_acc: 0.9128
+Epoch 17/1000
+ - 87s - loss: 0.2362 - acc: 0.9235 - val_loss: 0.3127 - val_acc: 0.9141
+Epoch 18/1000
+ - 86s - loss: 0.2303 - acc: 0.9259 - val_loss: 0.3107 - val_acc: 0.9163
+Epoch 19/1000
+ - 97s - loss: 0.2259 - acc: 0.9269 - val_loss: 0.3113 - val_acc: 0.9172
+Epoch 20/1000
+ - 86s - loss: 0.2234 - acc: 0.9280 - val_loss: 0.3105 - val_acc: 0.9183
+Epoch 21/1000
+ - 86s - loss: 0.2199 - acc: 0.9289 - val_loss: 0.3099 - val_acc: 0.9191
+Epoch 22/1000
+ - 88s - loss: 0.2163 - acc: 0.9300 - val_loss: 0.3094 - val_acc: 0.9194
+Epoch 23/1000
+ - 86s - loss: 0.2139 - acc: 0.9309 - val_loss: 0.3115 - val_acc: 0.9198
+Epoch 24/1000
+ - 86s - loss: 0.2103 - acc: 0.9319 - val_loss: 0.3098 - val_acc: 0.9206
+Validation accuracy: 0.9205710887908936, loss: 0.3098482588839237
+
+
+################################################################################
+# 7th run (Sa 23. Mär 11:53:55 CET 2019) dmin / all (title/description)
+################################################################################
+Loaded sample:
+	3520 training texts (3520 labels)
+	858 evaluation texts (858 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 3520 samples, validate on 858 samples
+2019-03-23 11:52:02.766725: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 11:52:02.787856: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 11:52:02.788205: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x4f9b1d0 executing computations on platform Host. Devices:
+2019-03-23 11:52:02.788228: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 1s - loss: 3.0621 - acc: 0.2341 - val_loss: 3.0123 - val_acc: 0.3566
+Epoch 2/1000
+ - 1s - loss: 2.9172 - acc: 0.5219 - val_loss: 2.8764 - val_acc: 0.3986
+Epoch 3/1000
+ - 1s - loss: 2.7045 - acc: 0.6338 - val_loss: 2.7137 - val_acc: 0.4627
+Epoch 4/1000
+ - 1s - loss: 2.4548 - acc: 0.6977 - val_loss: 2.5454 - val_acc: 0.5058
+Epoch 5/1000
+ - 1s - loss: 2.2004 - acc: 0.7580 - val_loss: 2.3814 - val_acc: 0.5490
+Epoch 6/1000
+ - 1s - loss: 1.9351 - acc: 0.7943 - val_loss: 2.2286 - val_acc: 0.5699
+Epoch 7/1000
+ - 1s - loss: 1.7013 - acc: 0.8125 - val_loss: 2.0933 - val_acc: 0.5723
+Epoch 8/1000
+ - 1s - loss: 1.4886 - acc: 0.8443 - val_loss: 1.9772 - val_acc: 0.5839
+Epoch 9/1000
+ - 1s - loss: 1.3045 - acc: 0.8543 - val_loss: 1.8767 - val_acc: 0.5804
+Epoch 10/1000
+ - 1s - loss: 1.1526 - acc: 0.8619 - val_loss: 1.7909 - val_acc: 0.5932
+Epoch 11/1000
+ - 1s - loss: 1.0202 - acc: 0.8813 - val_loss: 1.7202 - val_acc: 0.6014
+Epoch 12/1000
+ - 1s - loss: 0.9166 - acc: 0.8918 - val_loss: 1.6611 - val_acc: 0.5944
+Epoch 13/1000
+ - 1s - loss: 0.8231 - acc: 0.9003 - val_loss: 1.6100 - val_acc: 0.5956
+Epoch 14/1000
+ - 1s - loss: 0.7461 - acc: 0.9065 - val_loss: 1.5679 - val_acc: 0.6049
+Epoch 15/1000
+ - 1s - loss: 0.6787 - acc: 0.9187 - val_loss: 1.5319 - val_acc: 0.6061
+Epoch 16/1000
+ - 1s - loss: 0.6024 - acc: 0.9207 - val_loss: 1.5010 - val_acc: 0.6026
+Epoch 17/1000
+ - 1s - loss: 0.5699 - acc: 0.9270 - val_loss: 1.4754 - val_acc: 0.6002
+Epoch 18/1000
+ - 1s - loss: 0.5323 - acc: 0.9267 - val_loss: 1.4536 - val_acc: 0.5991
+Epoch 19/1000
+ - 1s - loss: 0.4887 - acc: 0.9355 - val_loss: 1.4343 - val_acc: 0.6014
+Epoch 20/1000
+ - 1s - loss: 0.4542 - acc: 0.9361 - val_loss: 1.4201 - val_acc: 0.6026
+Epoch 21/1000
+ - 1s - loss: 0.4231 - acc: 0.9426 - val_loss: 1.4053 - val_acc: 0.6002
+Epoch 22/1000
+ - 1s - loss: 0.3910 - acc: 0.9429 - val_loss: 1.3946 - val_acc: 0.6026
+Epoch 23/1000
+ - 1s - loss: 0.3702 - acc: 0.9480 - val_loss: 1.3840 - val_acc: 0.5991
+Epoch 24/1000
+ - 1s - loss: 0.3423 - acc: 0.9503 - val_loss: 1.3759 - val_acc: 0.5979
+Epoch 25/1000
+ - 1s - loss: 0.3374 - acc: 0.9477 - val_loss: 1.3680 - val_acc: 0.5991
+Epoch 26/1000
+ - 1s - loss: 0.3198 - acc: 0.9528 - val_loss: 1.3616 - val_acc: 0.5967
+Epoch 27/1000
+ - 1s - loss: 0.2967 - acc: 0.9545 - val_loss: 1.3575 - val_acc: 0.6037
+Epoch 28/1000
+ - 1s - loss: 0.2814 - acc: 0.9557 - val_loss: 1.3534 - val_acc: 0.6061
+Epoch 29/1000
+ - 1s - loss: 0.2815 - acc: 0.9568 - val_loss: 1.3512 - val_acc: 0.6026
+Epoch 30/1000
+ - 1s - loss: 0.2631 - acc: 0.9602 - val_loss: 1.3475 - val_acc: 0.5991
+Epoch 31/1000
+ - 1s - loss: 0.2498 - acc: 0.9605 - val_loss: 1.3468 - val_acc: 0.6049
+Epoch 32/1000
+ - 1s - loss: 0.2444 - acc: 0.9588 - val_loss: 1.3456 - val_acc: 0.6002
+Epoch 33/1000
+ - 1s - loss: 0.2315 - acc: 0.9588 - val_loss: 1.3468 - val_acc: 0.6061
+Epoch 34/1000
+ - 1s - loss: 0.2292 - acc: 0.9602 - val_loss: 1.3464 - val_acc: 0.6037
+Validation accuracy: 0.6037296056747437, loss: 1.346370390523008
+
+################################################################################
+# 8th run (Sa 23. Mär 11:56:20 CET 2019) dstat1000 / all (text/description)
+################################################################################
+Loaded sample:
+	15582 training texts (15582 labels)
+	3870 evaluation texts (3870 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 15582 samples, validate on 3870 samples
+2019-03-23 11:54:27.064930: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 11:54:27.087798: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 11:54:27.088109: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x5f1fb80 executing computations on platform Host. Devices:
+2019-03-23 11:54:27.088140: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 4s - loss: 2.8502 - acc: 0.3279 - val_loss: 2.5582 - val_acc: 0.4690
+Epoch 2/1000
+ - 4s - loss: 2.2517 - acc: 0.5295 - val_loss: 2.0459 - val_acc: 0.5643
+Epoch 3/1000
+ - 4s - loss: 1.7651 - acc: 0.6140 - val_loss: 1.7069 - val_acc: 0.6000
+Epoch 4/1000
+ - 4s - loss: 1.4458 - acc: 0.6653 - val_loss: 1.5104 - val_acc: 0.6181
+Epoch 5/1000
+ - 4s - loss: 1.2424 - acc: 0.6950 - val_loss: 1.3909 - val_acc: 0.6349
+Epoch 6/1000
+ - 4s - loss: 1.1028 - acc: 0.7203 - val_loss: 1.3105 - val_acc: 0.6447
+Epoch 7/1000
+ - 4s - loss: 0.9932 - acc: 0.7473 - val_loss: 1.2520 - val_acc: 0.6535
+Epoch 8/1000
+ - 4s - loss: 0.9105 - acc: 0.7650 - val_loss: 1.2111 - val_acc: 0.6602
+Epoch 9/1000
+ - 4s - loss: 0.8353 - acc: 0.7800 - val_loss: 1.1804 - val_acc: 0.6656
+Epoch 10/1000
+ - 4s - loss: 0.7731 - acc: 0.7976 - val_loss: 1.1554 - val_acc: 0.6703
+Epoch 11/1000
+ - 4s - loss: 0.7180 - acc: 0.8121 - val_loss: 1.1351 - val_acc: 0.6770
+Epoch 12/1000
+ - 4s - loss: 0.6727 - acc: 0.8243 - val_loss: 1.1197 - val_acc: 0.6786
+Epoch 13/1000
+ - 4s - loss: 0.6295 - acc: 0.8334 - val_loss: 1.1100 - val_acc: 0.6842
+Epoch 14/1000
+ - 4s - loss: 0.5870 - acc: 0.8484 - val_loss: 1.1001 - val_acc: 0.6858
+Epoch 15/1000
+ - 4s - loss: 0.5507 - acc: 0.8594 - val_loss: 1.0944 - val_acc: 0.6881
+Epoch 16/1000
+ - 4s - loss: 0.5193 - acc: 0.8655 - val_loss: 1.0915 - val_acc: 0.6912
+Epoch 17/1000
+ - 4s - loss: 0.4926 - acc: 0.8727 - val_loss: 1.0902 - val_acc: 0.6897
+Epoch 18/1000
+ - 4s - loss: 0.4664 - acc: 0.8819 - val_loss: 1.0910 - val_acc: 0.6917
+Epoch 19/1000
+ - 5s - loss: 0.4447 - acc: 0.8864 - val_loss: 1.0948 - val_acc: 0.6917
+Validation accuracy: 0.6917312741279602, loss: 1.0948164615212177
+Loaded sample:
+
+################################################################################
+# 9th run (Sa 23. Mär 12:36:34 CET 2019) dmax / all (text/description)
+################################################################################
+	319453 training texts (319453 labels)
+	79845 evaluation texts (79845 labels)
+
+/home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/sklearn/feature_extraction/text.py:1577: UserWarning: Only (<class 'numpy.float64'>, <class 'numpy.float32'>, <class 'numpy.float16'>) 'dtype' should be used. int32 'dtype' will be converted to np.float64.
+  UserWarning)
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+WARNING:tensorflow:From /home/di72jiv/Documents/src/gerdi/ml/code/venv/lib/python3.5/site-packages/tensorflow/python/ops/control_flow_ops.py:423: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Train on 319453 samples, validate on 79845 samples
+2019-03-23 11:57:42.366679: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-03-23 11:57:42.391923: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2496000000 Hz
+2019-03-23 11:57:42.392247: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x882a0b0 executing computations on platform Host. Devices:
+2019-03-23 11:57:42.392286: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+Epoch 1/1000
+ - 86s - loss: 0.6621 - acc: 0.8282 - val_loss: 0.4496 - val_acc: 0.8679
+Epoch 2/1000
+ - 87s - loss: 0.4285 - acc: 0.8714 - val_loss: 0.3845 - val_acc: 0.8843
+Epoch 3/1000
+ - 96s - loss: 0.3748 - acc: 0.8847 - val_loss: 0.3562 - val_acc: 0.8906
+Epoch 4/1000
+ - 89s - loss: 0.3431 - acc: 0.8925 - val_loss: 0.3371 - val_acc: 0.8966
+Epoch 5/1000
+ - 90s - loss: 0.3203 - acc: 0.8985 - val_loss: 0.3246 - val_acc: 0.8998
+Epoch 6/1000
+ - 94s - loss: 0.3009 - acc: 0.9039 - val_loss: 0.3152 - val_acc: 0.9037
+Epoch 7/1000
+ - 92s - loss: 0.2848 - acc: 0.9089 - val_loss: 0.3056 - val_acc: 0.9058
+Epoch 8/1000
+ - 93s - loss: 0.2718 - acc: 0.9121 - val_loss: 0.2980 - val_acc: 0.9085
+Epoch 9/1000
+ - 88s - loss: 0.2596 - acc: 0.9165 - val_loss: 0.2925 - val_acc: 0.9110
+Epoch 10/1000
+ - 87s - loss: 0.2494 - acc: 0.9192 - val_loss: 0.2870 - val_acc: 0.9137
+Epoch 11/1000
+ - 87s - loss: 0.2401 - acc: 0.9222 - val_loss: 0.2820 - val_acc: 0.9162
+Epoch 12/1000
+ - 88s - loss: 0.2313 - acc: 0.9241 - val_loss: 0.2799 - val_acc: 0.9173
+Epoch 13/1000
+ - 87s - loss: 0.2255 - acc: 0.9265 - val_loss: 0.2761 - val_acc: 0.9200
+Epoch 14/1000
+ - 99s - loss: 0.2177 - acc: 0.9292 - val_loss: 0.2739 - val_acc: 0.9211
+Epoch 15/1000
+ - 87s - loss: 0.2120 - acc: 0.9310 - val_loss: 0.2711 - val_acc: 0.9231
+Epoch 16/1000
+ - 87s - loss: 0.2055 - acc: 0.9328 - val_loss: 0.2697 - val_acc: 0.9244
+Epoch 17/1000
+ - 85s - loss: 0.1996 - acc: 0.9346 - val_loss: 0.2682 - val_acc: 0.9260
+Epoch 18/1000
+ - 86s - loss: 0.1955 - acc: 0.9358 - val_loss: 0.2665 - val_acc: 0.9274
+Epoch 19/1000
+ - 86s - loss: 0.1919 - acc: 0.9369 - val_loss: 0.2674 - val_acc: 0.9284
+Epoch 20/1000
+ - 86s - loss: 0.1877 - acc: 0.9385 - val_loss: 0.2661 - val_acc: 0.9290
+Epoch 21/1000
+ - 86s - loss: 0.1841 - acc: 0.9403 - val_loss: 0.2658 - val_acc: 0.9302
+Epoch 22/1000
+ - 85s - loss: 0.1807 - acc: 0.9408 - val_loss: 0.2653 - val_acc: 0.9311
+Epoch 23/1000
+ - 87s - loss: 0.1765 - acc: 0.9423 - val_loss: 0.2638 - val_acc: 0.9322
+Epoch 24/1000
+ - 87s - loss: 0.1736 - acc: 0.9430 - val_loss: 0.2651 - val_acc: 0.9326
+Epoch 25/1000
+ - 89s - loss: 0.1707 - acc: 0.9443 - val_loss: 0.2649 - val_acc: 0.9334
+Validation accuracy: 0.9334084987640381, loss: 0.26487993658003267

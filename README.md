@@ -52,4 +52,7 @@ Retrieval of Statistics as proposed [here](https://developers.google.com/machine
 virutalenv -p `which python3` venv
 source venv/bin/activate
 pip install -r requirements.txt
+
+# Extract & clean data
 ```
+

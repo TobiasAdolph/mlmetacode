@@ -440,6 +440,7 @@ def processChunk(fileName):
             alreadySeenSchemeURIs = []
             alreadySeenSubjectSchemes = []
             documents += 1
+            # todo: add quality-checks
             selectable = False
             for subject in document["subjects"]:
                 addTo("schemeURI",
