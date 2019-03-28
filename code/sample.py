@@ -1,10 +1,11 @@
 import re
 import os
 import json
+import math
 import random
 import statistics
 
-sampleType = "dstat" # dstat dmax dmin
+sampleType = "dmed" # dstat dmax dmin
 sampleName = sampleType
 base_dir = "/home/di72jiv/Documents/src/gerdi/ml/data"
 srcDir  = os.path.join(base_dir, "dmax")
@@ -27,6 +28,10 @@ elif sampleType == "dmax":
     sampleSize = max(getSizes(srcDir, dataRegex))
 elif sampleType == "dmin":
     sampleSize = min(getSizes(srcDir, dataRegex))
+elif sampleType == "dmed":
+    sampleSize = math.floor(statistics.median(getSizes(srcDir, dataRegex)))
+    print(sampleSize)
+
 
 tgtDir  = os.path.join(base_dir, sampleName)
 

@@ -9,11 +9,14 @@ import scipy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
+from sklearn.metrics import confusion_matrix
 from tensorflow.python.keras import models
 from tensorflow.python.keras.layers import Dense
 from tensorflow.python.keras.layers import Dropout
 import tensorflow as tf
-
+import seaborn as sn
+import pandas as pd
+import matplotlib.pyplot as plt
 # Vectorization parameters
 # Range (inclusive) of n-gram sizes for tokenizing text.
 NGRAM_RANGE = (1, 2)
@@ -30,7 +33,7 @@ ALLOWED_MODES = ["title", "description"]
 # Minimum document/corpus frequency below which a token will be discarded.
 MIN_DOCUMENT_FREQUENCY = 2
 
-def load_sample(directory, seed=123, ratio=0.8, mode="title"):
+def load_sample(directory, seed=123, ratio1=0.8, ratio2=0.9, mode="title"):
     """Loads a sample of titles/descriptions.
 
     # Arguments
@@ -48,6 +51,8 @@ def load_sample(directory, seed=123, ratio=0.8, mode="title"):
     """
     train_texts  = []
     train_labels = []
+    val_texts  = []
+    val_labels = []
     test_texts   = []
     test_labels  = []
 
@@ -61,7 +66,11 @@ def load_sample(directory, seed=123, ratio=0.8, mode="title"):
                 data = json.load(df)
             keys = list(data.keys())
             random.shuffle(keys)
-            last_train_item_idx = math.floor(len(data) * ratio)
+            last_train_item_idx = math.floor(len(data) * ratio1)
+            last_val_item_idx = math.floor(len(data) * ratio2)
+            num_train = 0
+            num_val = 0
+            num_test = 0
             for idx, key in enumerate(keys):
                 if mode != "all":
                     payload = data[key][mode]
@@ -69,10 +78,16 @@ def load_sample(directory, seed=123, ratio=0.8, mode="title"):
                     payload = " ".join([data[key][allowedMode] for allowedMode in ALLOWED_MODES])
                 if idx <= last_train_item_idx:
                     train_texts.append(payload)
+                    num_train += 1
+                elif idx <= last_val_item_idx:
+                    val_texts.append(payload)
+                    num_val += 1
                 else:
                     test_texts.append(payload)
-            train_labels.extend([category] * (last_train_item_idx + 1))
-            test_labels.extend([category] * (len(data) - ((last_train_item_idx) + 1)))
+                    num_test += 1
+            train_labels.extend([category] * num_train)
+            val_labels.extend( [category] * num_val) 
+            test_labels.extend( [category] * num_test) 
     random.seed(seed)
     random.shuffle(train_texts)
     random.seed(seed)
@@ -80,14 +95,20 @@ def load_sample(directory, seed=123, ratio=0.8, mode="title"):
 
     print("Loaded sample:\n"
             "\t{} training texts ({} labels)\n"
-            "\t{} evaluation texts ({} labels)\n".format(
+            "\t{} validation texts ({} labels)\n"
+            "\t{} test texts ({} labels)\n".format(
                 len(train_texts),
                 len(train_labels),
+                len(val_texts),
+                len(val_labels),
                 len(test_texts),
-                len(test_labels)))
-
+                len(test_labels)
+            )
+    )
     return ((train_texts, np.array(train_labels)),
-            (test_texts, np.array(test_labels)))
+            (val_texts, np.array(val_labels)),
+            (test_texts, np.array(test_labels))
+        )
 
 def get_num_words_per_sample(sample_texts):
     """Returns the median number of words per sample given corpus.
@@ -120,7 +141,7 @@ def plot_sample_length_distribution(sample_texts):
     plt.title('Sample length distribution')
     plt.show()
 
-def ngram_vectorize(train_texts, train_labels, val_texts):
+def ngram_vectorize(train_texts, train_labels, val_texts, test_texts):
     """Vectorizes texts as n-gram vectors.
 
     1 text = 1 tf-idf vector the length of vocabulary of unigrams + bigrams.
@@ -152,13 +173,15 @@ def ngram_vectorize(train_texts, train_labels, val_texts):
 
     # Vectorize validation texts.
     x_val = vectorizer.transform(val_texts)
+    x_test = vectorizer.transform(test_texts)
 
     # Select top 'k' of the vectorized features.
     selector = SelectKBest(f_classif, k=min(TOP_K, x_train.shape[1]))
     selector.fit(x_train, train_labels)
     x_train = selector.transform(x_train).astype('float32')
     x_val = selector.transform(x_val).astype('float32')
-    return x_train, x_val
+    x_test = selector.transform(x_test).astype('float32')
+    return x_train, x_val, x_test
 
 def _get_last_layer_units_and_activation(num_classes):
     """Gets the # units and activation function for the last network layer.
@@ -266,7 +289,7 @@ def train_ngram_model(data,
         https://developers.google.com/machine-learning/guides/text-classification/step-4
     """
     # Get the data.
-    (train_texts, train_labels), (val_texts, val_labels) = data
+    (train_texts, train_labels), (val_texts, val_labels), (test_texts, test_labels) = data
 
     # Verify that validation labels are in the same range as training labels.
     num_classes = get_num_classes(train_labels)
@@ -279,8 +302,8 @@ def train_ngram_model(data,
                              unexpected_labels=unexpected_labels))
 
     # Vectorize texts.
-    x_train, x_val = ngram_vectorize(
-        train_texts, train_labels, val_texts)
+    x_train, x_val, x_test = ngram_vectorize(
+        train_texts, train_labels, val_texts, test_texts)
 
     # Create model instance.
     model = mlp_model(layers=layers,
@@ -317,9 +340,60 @@ def train_ngram_model(data,
     print('Validation accuracy: {acc}, loss: {loss}'.format(
             acc=history['val_acc'][-1], loss=history['val_loss'][-1]))
 
+    results = model.evaluate(x_test, test_labels)
+    pprint.pprint(results)
+    predictions = []
+    for x in model.predict(x_test):
+        predictions.append(np.argmax(x)) 
+    cfm = confusion_matrix(
+            test_labels,
+            predictions)
+    df_cm = pd.DataFrame(cm2df(cfm, range(22)), range(22), range(22))
+    plt.figure(figsize = (10,7))
+    sn.heatmap(df_cm, annot=True)
+    plt.show()
+
     # Save model.
-    model.save('IMDb_mlp_model.h5')
-    return history['val_acc'][-1], history['val_loss'][-1]
+     
+    model_name = "mlp_model.h5"
+    model.save(model_name)
+    #return history['val_acc'][-1], history['val_loss'][-1]
+    return model
+
+def cm2df(cm, labels):
+    df = pd.DataFrame()
+    # rows
+    for i, row_label in enumerate(labels):
+
+        rowdata={}
+        # columns
+        for j, col_label in enumerate(labels): 
+            rowdata[col_label]=cm[i,j]
+        df = df.append(pd.DataFrame.from_dict({row_label:rowdata}, orient='index'))
+    return df[labels]
 
 
-train_ngram_model(load_sample("../data/dmax", mode="all"))
+
+import pprint
+model = train_ngram_model(load_sample("../data/dmax", mode="all"))
+
+#model = models.load_model('dmaxAll_mlp.model.h5')
+#
+#((train_texts, train_labels), (test_texts, test_labels)) = load_sample("../data/dmin", mode="all")
+#x_train, x_test = ngram_vectorize(
+#        train_texts, train_labels, test_texts)
+#results = model.evaluate(x_test, test_labels)
+#pprint.pprint(results)
+#
+#predictions = []
+#for x in model.predict(x_test):
+#    predictions.append(np.argmax(x)) 
+#cfm = confusion_matrix(
+#        test_labels,
+#        predictions)
+#import seaborn as sn
+#import pandas as pd
+#import matplotlib.pyplot as plt
+#df_cm = pd.DataFrame(cm2df(cfm, range(22)), range(22), range(22))
+#plt.figure(figsize = (10,7))
+#sn.heatmap(df_cm, annot=True) 
