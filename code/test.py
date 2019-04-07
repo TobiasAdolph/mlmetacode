@@ -1,34 +1,63 @@
+from util import loadConfig, loadBinary, loadJsonFromFile
 from tensorflow.python.keras import models
-from util import load_sample, ngram_vectorize
-import pprint
-from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
+import os
 
-NGRAM_RANGE = (1, 2)
-TOKEN_MODE = 'word'
-MIN_DOCUMENT_FREQUENCY = 2
+config = loadConfig()
+model_file = os.path.join(config["dataDir"],
+            "{}_{}_mlp_model.h5".format(config["dtype"], config["dmode"])
+)
+model = models.load_model(os.path.join(model_file))
 
-((train_texts, train_labels), (test_texts, test_labels)) = load_sample("../data/dmax", mode="all")
-model = models.load_model('dmaxAll_mlp.model.h5')
-print("Load sample")
-((train_texts, train_labels), (test_texts, test_labels)) = load_sample("../data/dmax", mode="all")
-print("sample loaded")
+#x_val = vectorizer.transform(val_texts)
+#x_val = selector.transform(x_val).astype('float32')
+
+tests = [ "mathematics proof theorem lemma number topology deduction",
+"particle physics theoretical physics experimental physics atom mass motion star nova",
+"chemistry liquid acid protein reaction",
+"earth science atmosphere geochemistry geology oceanography hydrology",
+"ecology soil environmental sciences",
+"biology species population life organism evolution",
+"agriculture veterinary crop cattle forest animal slaughterhouse",
+"computer science information science library Memory Computation IT programming language code",
+"engineering construction electronic structure applied",
+"technology nanotechnology biotechnology hardware",
+"medical science medicine health science cancer blood pressure leucocytes cardiology fracture insufficience",
+"built environment design building bridge architecture designer fabric",
+"education pedagogy learn teach children life-long",
+"economics economic econometrics",
+"commerce management tourism services travel leadership provider",
+"social science qualitative politics human society",
+"psychology mind cognition think conscious",
+"law legal jurisdiction",
+"creative arts writing piece creation sculpture music literature",
+"language communication culture lingustics tongue socialised gender",
+"history archaeology historical",
+"philosophy religious studies epistemology ethics god true bad wrong reason theological christian"]
+
+vectorizer = loadBinary(config, "vectorizer.bin")
+selector = loadBinary(config, "selector.bin")
 
 
-# Learn vocabulary from training texts and vectorize training texts.
+anzsrc = loadJsonFromFile(config, "anzsrc.json")
 
-x_train, x_test = ngram_vectorize(
-        train_texts, train_labels, test_texts)
+def getCheck(categoryIdx, anzsrcIdx):
+    if categoryIdx == i:
+        return "PASS"
+    else:
+        return "FAIL"
 
-results = model.evaluate(x_test, test_labels)
-
-pprint.pprint(results)
-
-cfm = tf.math.confusion_matrix(
-        train_labels,
-        predictions,
-        num_classes = 22)
-
-
-#predictions = model.predict(test_texts)
+i = 0
+for test in tests:
+    x_test = vectorizer.transform([test])
+    x_test = selector.transform(x_test).astype('float32')
+    result = model.predict(x_test)[0]
+    categoryIdx = np.argmax(result)
+    anzsrcIdx = "{:02}".format(categoryIdx + 1)
+    print("{}: {} is {} with {:02} certainty".format(getCheck(categoryIdx, i), test, anzsrc[anzsrcIdx], result[categoryIdx])) 
+    i += 1
 
 
+#for idx in range(0, len(result)):
+#    anzsrc_idx = "{:02}".format(idx + 1)
+#    print("{}: {:0.2f}".format(anzsrc[anzsrc_idx], result[idx]))
