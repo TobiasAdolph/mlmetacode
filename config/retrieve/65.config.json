@@ -1,0 +1,6 @@
+{  "Submission.Loader": "DiskLoader",
+    "OaiPmhETL.hostURL": "https://oai.datacite.org/oai",
+    "OaiPmhETL.metadataPrefix": "datacite",
+    "OaiPmhETL.until": "2018-10-13T22:21:00Z",
+    "OaiPmhETL.from": "2018-10-09T14:45:30Z",
+    "Submission.saveFolder": "/var/lib/jetty/cache/records"}
