@@ -5,15 +5,16 @@ from sklearn.metrics import confusion_matrix
 from tensorflow.python.keras import models
 from tensorflow.python.keras.layers import Dense
 from tensorflow.python.keras.layers import Dropout
-from util import *
+
 import matplotlib.pyplot as plt
-import matrix
 import numpy as np
-import os
+import os, sys
 import pandas as pd
 import seaborn as sn
 import tensorflow as tf
 
+import util.matrix
+from util.util import *
 def ngramVectorize(texts, labels, config, save=True):
     """Vectorizes texts as n-gram vectors.
 
