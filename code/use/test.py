@@ -1,12 +1,20 @@
-from util import loadConfig, loadBinary, loadJsonFromFile
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from util.util import loadConfig, loadBinary, loadJsonFromFile
 from tensorflow.python.keras import models
 import numpy as np
-import os
+import argparse
 
-config = loadConfig()
-model_file = os.path.join(config["dataDir"],
-            "{}_{}_mlp_model.h5".format(config["dtype"], config["dmode"])
+parser = argparse.ArgumentParser(
+    description='TEST: test a model with a given configuration.'
 )
+parser.add_argument('--config',
+        required    = True,
+        help        ="File with the configuration for the training run")
+args = parser.parse_args()
+
+config = loadConfig(args.config)
+model_file = os.path.join(config["processedDataDir"], "mlp_model.h5")
 model = models.load_model(os.path.join(model_file))
 
 #x_val = vectorizer.transform(val_texts)
@@ -52,9 +60,11 @@ for test in tests:
     x_test = vectorizer.transform([test])
     x_test = selector.transform(x_test).astype('float32')
     result = model.predict(x_test)[0]
-    categoryIdx = np.argmax(result)
-    anzsrcIdx = "{:02}".format(categoryIdx + 1)
-    print("{}: {} is {} with {:02} certainty".format(getCheck(categoryIdx, i), test, anzsrc[anzsrcIdx], result[categoryIdx])) 
+    bestGuesses = result.argsort()[-3:][::-1]
+    print("Testing {}\n\t{} ({})".format(test, getCheck(bestGuesses[0], i), anzsrc["{:02}".format(i+1)]))   
+    for guess, idx in enumerate(bestGuesses): 
+        anzsrcIdx = "{:02}".format(idx + 1)
+        print("\t{:02} certainty: {}". format(result[idx], anzsrc[anzsrcIdx]))
     i += 1
 
 

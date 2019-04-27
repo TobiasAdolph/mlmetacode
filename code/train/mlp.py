@@ -53,7 +53,10 @@ def ngramVectorize(texts, labels, config, save=True):
 
     if not selector:
         selector = SelectKBest(f_classif, k=min(config["topK"], x.shape[1]))
-        selector.fit(x, labels)
+
+    # we need the labels, otherwise we cannot guarantee that the selector selects
+    # something for every label
+    selector.fit(x, labels)
 
     if save:
         dumpBinary(config, vectorizer, "vectorizer.bin")
@@ -209,9 +212,7 @@ def train_ngram_model(config):
             acc=history['val_acc'][-1], loss=history['val_loss'][-1]))
 
     # Save model
-    model_file = os.path.join(config["dataDir"],
-            "{}_{}_mlp_model.h5".format(config["dtype"], config["dmode"])
-    )
+    model_file = os.path.join(config["processedDataDir"], "mlp_model.h5")
     model.save(model_file)
     return model
 
