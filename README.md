@@ -16,13 +16,7 @@
 * Make use of data set which are annotated with multiple categories
 
 ### Code
-* separate code in the following steps
-    * retrieve
-    * clean
-    * sample
-    * train
-    * test/evaluate
-    * use
+* Automate evaluation (confusion matrix, csv, simple test)
 * Document steps (see down this document) to make them reproducible
 * tune simple model https://developers.google.com/machine-learning/guides/text-classification/step-5
 * Improve language checks (research)
