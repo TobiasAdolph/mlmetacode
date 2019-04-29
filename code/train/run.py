@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from mlp import train_ngram_model
+from mlp import train_ngram_model, ngramVectorize
 import util.util as util
 import argparse
 
@@ -20,6 +20,14 @@ config = util.loadConfig(args.config)
 print("Run model training with configuration {}".format(config["hash"]))
 
 print("Preparing data from directory {}".format(config["rawDataDir"]))
-data = util.loadTextAndLabels(config)
 
+text    = []
+labels  = []
+for t, l in util.loadSample(config):
+   text.extend(t)
+   labels.extend(l)
+print("Calculating ngrams")
+data = ngramVectorize(text, labels, config) 
+
+print("Training the model")
 model = train_ngram_model(config)

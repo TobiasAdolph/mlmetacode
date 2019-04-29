@@ -11,7 +11,7 @@
     "minDocFreq": 2,
     "dmode": "title_description",
     "baseDir": "../data",
-    "dtype": "dmin",
+    "dtype": "dmax",
     "seed": 1234,
     "ratio1": 0.8,
     "ratio2": 0.9,

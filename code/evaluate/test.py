@@ -14,8 +14,11 @@ parser.add_argument('--config',
 args = parser.parse_args()
 
 config = loadConfig(args.config)
-model_file = os.path.join(config["processedDataDir"], "mlp_model.h5")
-model = models.load_model(os.path.join(model_file))
+
+model_file = os.path.join(config["processedDataDir"], "train", "mlp_model.h5")
+print("Loading model: {}".format(model_file))
+model = models.load_model(model_file)
+
 
 #x_val = vectorizer.transform(val_texts)
 #x_val = selector.transform(x_val).astype('float32')
@@ -43,8 +46,8 @@ tests = [ "mathematics proof theorem lemma number topology deduction",
 "history archaeology historical",
 "philosophy religious studies epistemology ethics god true bad wrong reason theological christian"]
 
-vectorizer = loadBinary(config, "vectorizer.bin")
-selector = loadBinary(config, "selector.bin")
+vectorizer = loadBinary(config, "vectorizer.bin", "train")
+selector = loadBinary(config, "selector.bin", "train")
 
 
 anzsrc = loadJsonFromFile(config, "anzsrc.json")
@@ -68,6 +71,5 @@ for test in tests:
     i += 1
 
 
-#for idx in range(0, len(result)):
-#    anzsrc_idx = "{:02}".format(idx + 1)
-#    print("{}: {:0.2f}".format(anzsrc[anzsrc_idx], result[idx]))
+
+

@@ -34,13 +34,12 @@ def ngramVectorize(texts, labels, config, save=True):
         https://developers.google.com/machine-learning/guides/text-classification/step-3
     """
 
-    vectorizer = loadBinaryOrNone(config, "vectorizer.bin")
-    selector = loadBinaryOrNone(config, "selector.bin")
-
+    vectorizer = loadBinaryOrNone(config, "vectorizer.bin", "train")
+    selector = loadBinaryOrNone(config, "selector.bin", "train")
     if not vectorizer:
         kwargs = {
                 'ngram_range': config["ngramRange"],
-                'dtype': 'int32',
+                'dtype': np.float64,
                 'strip_accents': 'unicode',
                 'decode_error': 'replace',
                 'analyzer': config["tokenMode"],
@@ -53,16 +52,16 @@ def ngramVectorize(texts, labels, config, save=True):
 
     if not selector:
         selector = SelectKBest(f_classif, k=min(config["topK"], x.shape[1]))
-
-    # we need the labels, otherwise we cannot guarantee that the selector selects
-    # something for every label
-    selector.fit(x, labels)
+        # we need the labels, otherwise we cannot guarantee that the selector selects
+        # something for every label ?
+        selector.fit(x, labels)
 
     if save:
-        dumpBinary(config, vectorizer, "vectorizer.bin")
-        dumpBinary(config, selector, "selector.bin")
+        dumpBinary(config, vectorizer, "vectorizer.bin", "train")
+        dumpBinary(config, selector, "selector.bin", "train")
 
-    return selector.transform(x).astype('float32')
+
+    return selector.transform(x).astype('float64')
 
 def _get_last_layer_units_and_activation(num_classes):
     """Gets the # units and activation function for the last network layer.
@@ -162,6 +161,7 @@ def train_ngram_model(config):
     (train_texts, train_labels), (val_texts, val_labels), (test_texts, test_labels) = (
             loadSample(config))
 
+
     # Verify that validation labels are in the same range as training labels.
     num_classes = get_num_classes(train_labels)
     unexpected_labels = [v for v in val_labels if v not in range(num_classes)]
@@ -172,25 +172,30 @@ def train_ngram_model(config):
                          'as training labels.'.format(
                              unexpected_labels=unexpected_labels))
 
+    
     # Vectorize texts.
     x_train = ngramVectorize(train_texts, train_labels, config)
     x_val = ngramVectorize(val_texts, val_labels, config, False)
-
+    
+    print("after vectorizing")
     # Create model instance.
     model = mlp_model(layers=config["layers"],
                                   units=config["units"],
                                   dropout_rate=config["dropoutRate"],
                                   input_shape=x_train.shape[1:],
                                   num_classes=num_classes)
+    print("after model")
 
     # Compile model with learning parameters.
     if num_classes == 2:
         loss = 'binary_crossentropy'
     else:
         loss = 'sparse_categorical_crossentropy'
+    
     optimizer = tf.keras.optimizers.Adam(lr=config["learningRate"])
     model.compile(optimizer=optimizer, loss=loss, metrics=['acc'])
 
+    print("after model compilation")
     # Create callback for early stopping on validation loss. If the loss does
     # not decrease in two consecutive tries, stop training.
     callbacks = [tf.keras.callbacks.EarlyStopping(
@@ -212,7 +217,7 @@ def train_ngram_model(config):
             acc=history['val_acc'][-1], loss=history['val_loss'][-1]))
 
     # Save model
-    model_file = os.path.join(config["processedDataDir"], "mlp_model.h5")
+    model_file = os.path.join(config["processedDataDir"], "train", "mlp_model.h5")
     model.save(model_file)
     return model
 

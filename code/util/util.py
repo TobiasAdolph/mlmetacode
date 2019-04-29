@@ -66,17 +66,17 @@ def dumpJsonToFile(config, name, payload, subpath=None):
     with open(path, "w") as f:
         json.dump(payload, f)
 
-def dumpBinary(config, obj, name):
-    with open(os.path.join(config["processedDataDir"], name), "wb") as f:
+def dumpBinary(config, obj, name, subpath=""):
+    with open(os.path.join(config["processedDataDir"], subpath, name), "wb") as f:
         pickle.dump(obj, f)
 
-def loadBinary(config, name):
-    with open(os.path.join(config["processedDataDir"], name), "rb") as f:
+def loadBinary(config, name, subpath=""):
+    with open(os.path.join(config["processedDataDir"], subpath, name), "rb") as f:
         return pickle.load(f)
 
-def loadBinaryOrNone(config, name):
-    if os.path.isfile(os.path.join(config["processedDataDir"], name)):
-        return loadBinary(config, name)
+def loadBinaryOrNone(config, name, subpath=""):
+    if os.path.isfile(os.path.join(config["processedDataDir"], subpath, name)):
+        return loadBinary(config, name, subpath)
     return None
 
 def loadTextLabelsOrEmpty(config, name):
@@ -110,7 +110,6 @@ def loadTextAndLabels(config):
                     payload.append(value[modeKey])
                 data[category].append(" ".join(payload))
     return data
-
 
 def loadSample(config, data=None, save=True):
     """Loads text and labels and splits it into train/validate/test sets.
