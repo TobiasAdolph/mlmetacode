@@ -9,9 +9,22 @@
 ## Philosophy and Religious Studies (w/o further sources: 373)
 * https://philpapers.org 39.171 submissions. Might need some quality check:
   https://philpapers.org/oai.pl?verb=ListRecords&metdataPrefix=oai_dc
+* ChesterRep (https://chesterrep.openrepository.com/handle/10034/6732): 296 heterogenous religious data
+  https://chesterrep.openrepository.com/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_10034_6732
 
 ## Studies in creative arts and writing (w/o further sources: 433)
+* Chapman University Repository (College of the Performing Arts): 5500 items
+  https://digitalcommons.chapman.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:copa
 
 ## History and Archaeology (w/o further sources: 494)
+* Bulleting of the History of Archaeology: https://www.archaeologybulletin.org/ 571 Records
+  https://www.archaeologybulletin.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc
+* University Library System, University of Pittsburgh: 38 records (not all with descriptions, but data-centric)
+    http://jwhi.pitt.edu/ojs/index.php/jwhi/oai?verb=ListRecords&metadataPrefix=oai_dc
 
 ## Built Environment and Design (w/o further sources: 953)
+* http://www.bipcons.ce.tuiasi.ro/: The Bulletin of the Polytechnic Institute of Jassy, Construction. Architecture Section: 610
+  (resumption token does not work on browser check)
+  http://www.bipcons.ce.tuiasi.ro/oai/oai2.php?verb=ListRecords&metadataPrefix=oai_dc
+* Iconarp International Journal of Architecture and Planning: 139 records 
+  http://iconarp.selcuk.edu.tr/iconarp/oai?verb=ListRecords&metadataPrefix=oai_dc
