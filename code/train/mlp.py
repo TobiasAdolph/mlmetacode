@@ -245,14 +245,15 @@ def getConfusionMatrixSensSpec(config, cfm):
         }
     return cfm_eval
 
-def plotConfusionMatrix(cfm):
-    #TODO 22 is hardcoded, not good
+def plotConfusionMatrix(config, cfm):
+    shortAnzsrc = getShortAnzsrcAsList(config)
+    shortAnzsrc.pop(0)
+    df = cfm2df(cfm, range(len(shortAnzsrc)))
     df_cfm = pd.DataFrame(
-            cfm2df(cfm, range(22)),
-            range(22),
-            range(22)
+            data=df.values,
+            index=shortAnzsrc,
+            columns=shortAnzsrc
     )
-
     plt.figure(figsize = (40,28))
     sn.heatmap(df_cfm, annot=True)
     return plt.plot()

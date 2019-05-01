@@ -19,10 +19,6 @@ model_file = os.path.join(config["processedDataDir"], "train", "mlp_model.h5")
 print("Loading model: {}".format(model_file))
 model = models.load_model(model_file)
 
-
-#x_val = vectorizer.transform(val_texts)
-#x_val = selector.transform(x_val).astype('float32')
-
 tests = [ "mathematics proof theorem lemma number topology deduction",
 "particle physics theoretical physics experimental physics atom mass motion star nova",
 "chemistry liquid acid protein reaction",
@@ -61,7 +57,7 @@ def getCheck(categoryIdx, anzsrcIdx):
 i = 0
 for test in tests:
     x_test = vectorizer.transform([test])
-    x_test = selector.transform(x_test).astype('float32')
+    x_test = selector.transform(x_test).astype('float64')
     result = model.predict(x_test)[0]
     bestGuesses = result.argsort()[-3:][::-1]
     print("Testing {}\n\t{} ({})".format(test, getCheck(bestGuesses[0], i), anzsrc["{:02}".format(i+1)]))   

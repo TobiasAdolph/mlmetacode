@@ -1,0 +1,17 @@
+# Additional OAI-PMH SOURCES:
+
+## Law and Legal Studies (w/o further sources: 199)
+* Univeristy on Pennsylvania Law School Scholary Repository: 2005 articles (titles and descriptions):
+  https://scholarship.law.upenn.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:faculty_scholarship
+* Utrecht Journal of International and European Law: 77 articles (titles and descriptions):
+  https://utrechtjournal.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=up:RES
+
+## Philosophy and Religious Studies (w/o further sources: 373)
+* https://philpapers.org 39.171 submissions. Might need some quality check:
+  https://philpapers.org/oai.pl?verb=ListRecords&metdataPrefix=oai_dc
+
+## Studies in creative arts and writing (w/o further sources: 433)
+
+## History and Archaeology (w/o further sources: 494)
+
+## Built Environment and Design (w/o further sources: 953)

@@ -34,7 +34,7 @@ def loadConfig(path="config.json"):
     config["hash"] = configHash
     config["rawDataDir"] = os.path.join(config["baseDir"], config["dtype"])
     config["processedDataDir"] = os.path.join(config["baseDir"], config["hash"])
-    config["configDir"] = os.path.join(config["baseDir"], "config")
+    config["configDir"] = os.path.join(configBasePath)
     
     if not os.path.isdir(config["processedDataDir"]):
         os.mkdir(config["processedDataDir"])
@@ -171,3 +171,36 @@ def loadSample(config, data=None, save=True):
             (val_texts, np.array(val_labels)),
             (test_texts, np.array(test_labels))
     )
+
+def getAnzsrc(config):
+    with open(os.path.join(config["configDir"], "anzsrc.json"), "r") as f:
+        return json.load(f)
+
+def getAnzsrcAsList(config):
+    retval = []
+    anzsrc = getAnzsrc(config)
+    for i in range(0, len(anzrc)):
+        retval.append(anzsrc["{:02}".format(i)])
+    return retval
+
+def getShortAnzsrc(config):
+    with open(os.path.join(config["configDir"], "shortAnzsrc.json"), "r") as f:
+        return json.load(f)
+
+def getShortAnzsrcAsList(config):
+    retval = []
+    shortAnzsrc = getShortAnzsrc(config)
+    for i in range(0, len(shortAnzsrc)):
+        retval.append(shortAnzsrc["{}".format(i)])
+    return retval
+
+def convertCfmAbsToPerc(cfm):
+    print(type(cfm))
+    newCfm = []
+    for row in cfm:
+        newRow = []
+        rowSum = np.sum(row)
+        for col in row:
+            newRow.append(col/rowSum)
+        newCfm.append(newRow)
+    return np.array(newCfm)

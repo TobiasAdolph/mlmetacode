@@ -1,0 +1,1 @@
+{"baseDir": "../data", "layers": 2, "tokenMode": "word", "units": 64, "topK": 20000, "seed": 1234, "dmode": ["titles", "descriptions"], "minDocFreq": 2, "epochs": 1000, "ratio2": 0.9, "dtype": "dmax", "dropoutRate": 0.2, "ngramRange": [1, 2], "batchSize": 128, "learningRate": 0.001, "ratio1": 0.8, "categories": "anzsrc.json"}
