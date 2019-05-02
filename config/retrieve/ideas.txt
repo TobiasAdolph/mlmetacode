@@ -5,6 +5,8 @@
   https://scholarship.law.upenn.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:faculty_scholarship
 * Utrecht Journal of International and European Law: 77 articles (titles and descriptions):
   https://utrechtjournal.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=up:RES
+* Intr2Dok: 4974 records (but not all in English and not all with descriptions)
+  http://intr2dok.vifa-recht.de/servlets/OAIDataProvider?verb=ListRecords&metadataPrefix=oai_datacite
 
 ## Philosophy and Religious Studies (w/o further sources: 373)
 * https://philpapers.org 39.171 submissions. Might need some quality check:
