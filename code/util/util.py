@@ -195,7 +195,6 @@ def getShortAnzsrcAsList(config):
     return retval
 
 def convertCfmAbsToPerc(cfm):
-    print(type(cfm))
     newCfm = []
     for row in cfm:
         newRow = []
