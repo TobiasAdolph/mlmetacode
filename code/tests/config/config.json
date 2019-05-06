@@ -1,0 +1,20 @@
+{
+    "learningRate": 1e-3,
+    "epochs": 1000,
+    "batchSize": 128,
+    "layers": 2,
+    "units": 64,
+    "dropoutRate": 0.2,
+    "ngramRange": [1,2],
+    "topK": 20000,
+    "tokenMode": "word",
+    "minDocFreq": 2,
+    "dmode": "title_description",
+    "baseDir": "./tests",
+    "dtype": "dmin",
+    "seed": 1234,
+    "ratio1": 0.8,
+    "ratio2": 0.9,
+    "categories": "anzsrc.json"
+}
+

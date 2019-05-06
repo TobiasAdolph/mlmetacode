@@ -1,5 +1,8 @@
+jupyter_console
 matplotlib
 numpy
+pytest
+pytest-cov
 pyyaml
 sklearn
 tensorflow

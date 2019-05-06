@@ -14,7 +14,7 @@ import seaborn as sn
 import tensorflow as tf
 
 import util.matrix
-from util.util import *
+import util.util as util
 def ngramVectorize(texts, labels, config, save=True):
     """Vectorizes texts as n-gram vectors.
 
@@ -34,8 +34,8 @@ def ngramVectorize(texts, labels, config, save=True):
         https://developers.google.com/machine-learning/guides/text-classification/step-3
     """
 
-    vectorizer = loadBinaryOrNone(config, "vectorizer.bin", "train")
-    selector = loadBinaryOrNone(config, "selector.bin", "train")
+    vectorizer = util.loadBinaryOrNone(config, "vectorizer.bin", "train")
+    selector = util.loadBinaryOrNone(config, "selector.bin", "train")
     if not vectorizer:
         kwargs = {
                 'ngram_range': config["ngramRange"],
@@ -57,8 +57,8 @@ def ngramVectorize(texts, labels, config, save=True):
         selector.fit(x, labels)
 
     if save:
-        dumpBinary(config, vectorizer, "vectorizer.bin", "train")
-        dumpBinary(config, selector, "selector.bin", "train")
+        util.dumpBinary(config, vectorizer, "vectorizer.bin", "train")
+        util.dumpBinary(config, selector, "selector.bin", "train")
 
 
     return selector.transform(x).astype('float64')
@@ -159,7 +159,7 @@ def train_ngram_model(config):
     # Get the data.
 
     (train_texts, train_labels), (val_texts, val_labels), (test_texts, test_labels) = (
-            loadSample(config))
+            util.loadSample(config))
 
 
     # Verify that validation labels are in the same range as training labels.
@@ -172,11 +172,11 @@ def train_ngram_model(config):
                          'as training labels.'.format(
                              unexpected_labels=unexpected_labels))
 
-    
+
     # Vectorize texts.
     x_train = ngramVectorize(train_texts, train_labels, config)
     x_val = ngramVectorize(val_texts, val_labels, config, False)
-    
+
     print("after vectorizing")
     # Create model instance.
     model = mlp_model(layers=config["layers"],
@@ -191,7 +191,7 @@ def train_ngram_model(config):
         loss = 'binary_crossentropy'
     else:
         loss = 'sparse_categorical_crossentropy'
-    
+
     optimizer = tf.keras.optimizers.Adam(lr=config["learningRate"])
     model.compile(optimizer=optimizer, loss=loss, metrics=['acc'])
 
@@ -220,51 +220,3 @@ def train_ngram_model(config):
     model_file = os.path.join(config["processedDataDir"], "train", "mlp_model.h5")
     model.save(model_file)
     return model
-
-def evaluateModel(config, model, test_texts, test_labels):
-    x_test = ngramVectorize(test_texts, test_labels, config, False)
-    return model.evaluate(x_test, test_labels)
-
-def getConfusionMatrix(config, model, test_texts, test_labels):
-    x_test = ngramVectorize(test_texts, test_labels, config, False)
-    predictions = []
-    for x in model.predict(x_test):
-        predictions.append(np.argmax(x))
-    return confusion_matrix(
-            test_labels,
-            predictions)
-
-def getConfusionMatrixSensSpec(config, cfm):
-    anzsrc = loadJsonFromFile(config, "anzsrc.json")
-    cfm_eval = { }
-    for i in range(0,len(cfm)):
-        cfm_eval[i] = {
-                "name": anzsrc["{:02}".format(i+1)],
-                "sens": matrix.sens(cfm, i),
-                "spec": matrix.spec(cfm, i)
-        }
-    return cfm_eval
-
-def plotConfusionMatrix(config, cfm):
-    shortAnzsrc = getShortAnzsrcAsList(config)
-    shortAnzsrc.pop(0)
-    df = cfm2df(cfm, range(len(shortAnzsrc)))
-    df_cfm = pd.DataFrame(
-            data=df.values,
-            index=shortAnzsrc,
-            columns=shortAnzsrc
-    )
-    plt.figure(figsize = (40,28))
-    sn.heatmap(df_cfm, annot=True)
-    return plt.plot()
-
-def cfm2df(cfm, labels):
-    df = pd.DataFrame()
-    # rows
-    for i, row_label in enumerate(labels):
-        rowdata={}
-        # columns
-        for j, col_label in enumerate(labels):
-            rowdata[col_label]=cfm[i,j]
-        df = df.append(pd.DataFrame.from_dict({row_label:rowdata}, orient='index'))
-    return df[labels]

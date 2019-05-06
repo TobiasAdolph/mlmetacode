@@ -10,8 +10,9 @@ import re
 def loadConfig(path="config.json"):
     """Loads the file with all configuration
 
-        The config will be hashed. If there is no copy named <hash>.json 
-        in the directory of the config, it will be created.
+        The config will be hashed. If there is no copy named <hash>.json
+        in the directory of the config, it will be created. If the directory
+        for processed data does not exist, it will be created.
 
     # Argument
         path: string path to the configuration file
@@ -25,17 +26,17 @@ def loadConfig(path="config.json"):
     configHash = getDictHash(config)
     configBasePath = os.path.dirname(path)
     copyOfConfig = os.path.join(configBasePath, configHash + ".json")
-    
+
     if not os.path.isfile(copyOfConfig):
         with open(copyOfConfig, "w") as f:
             json.dump(config, f)
-            
+
     # Derived values
     config["hash"] = configHash
     config["rawDataDir"] = os.path.join(config["baseDir"], config["dtype"])
     config["processedDataDir"] = os.path.join(config["baseDir"], config["hash"])
     config["configDir"] = os.path.join(configBasePath)
-    
+
     if not os.path.isdir(config["processedDataDir"]):
         os.mkdir(config["processedDataDir"])
     for subdir in ["retrieve", "clean", "sample", "train", "evaluate", "use"]:
@@ -46,9 +47,31 @@ def loadConfig(path="config.json"):
     return config
 
 def getDictHash(payload):
+    """Reproducibly sha256-hashes a python dictionary to the same hash
+    value if the keys, values are identical.
+
+    # Argument
+        payload: A python dictionary
+
+    # Returns
+        A SHA256 hash
+    """
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
 
 def loadJsonFromFile(config, name, subpath=""):
+    """Wrapper around json.load() (probably bad practice)
+
+    Searches for name in processedDataDir, rawDataDir and configDir, as given
+    by config.
+
+    # Arguments
+        config:  a dictionary with the paths to search
+        name:    name of the file to load
+        subpath: optional, allows to specifiy a subpath under the pathes
+                 configured in config
+    # Returns
+        The loaded json as a python data structure
+    """
     paths = [
             os.path.join(config["processedDataDir"], subpath, name),
             os.path.join(config["rawDataDir"], subpath, name),
@@ -61,7 +84,15 @@ def loadJsonFromFile(config, name, subpath=""):
         name,
         config["hash"]))
 
-def dumpJsonToFile(config, name, payload, subpath=None): 
+def dumpJsonToFile(config, name, payload, subpath=""):
+    """ Wrapper around json.dump() (probably bad practice) dumps a given datastructure
+
+    # Arguments:
+        config:  a dictionary with the processedDataDir path to dump to
+        name:    name of the file to be dumped
+        payload: python datastructure to be dumped
+        subpath: optional, allows to specifiy a subpath under processedDataDir
+    """
     path = os.path.join(config["processedDataDir"], subpath, name)
     with open(path, "w") as f:
         json.dump(payload, f)
@@ -113,7 +144,7 @@ def loadTextAndLabels(config):
 
 def loadSample(config, data=None, save=True):
     """Loads text and labels and splits it into train/validate/test sets.
-    
+
     The call uses stored files if they exist.
 
     # Arguments
@@ -123,7 +154,7 @@ def loadSample(config, data=None, save=True):
         A triple of tuples of text and labels (train, val and test)
 
     # References
-        Inspired by 
+        Inspired by
         https://developers.google.com/machine-learning/guides/text-classification/step-2
     """
 
@@ -203,3 +234,48 @@ def convertCfmAbsToPerc(cfm):
             newRow.append(col/rowSum)
         newCfm.append(newRow)
     return np.array(newCfm)
+
+
+def getConfusionMatrix(config, model, test_texts, test_labels):
+    x_test = ngramVectorize(test_texts, test_labels, config, False)
+    predictions = []
+    for x in model.predict(x_test):
+        predictions.append(np.argmax(x))
+    return confusion_matrix(
+            test_labels,
+            predictions)
+
+def getConfusionMatrixSensSpec(config, cfm):
+    anzsrc = util.loadJsonFromFile(config, "anzsrc.json")
+    cfm_eval = { }
+    for i in range(0,len(cfm)):
+        cfm_eval[i] = {
+                "name": anzsrc["{:02}".format(i+1)],
+                "sens": matrix.sens(cfm, i),
+                "spec": matrix.spec(cfm, i)
+        }
+    return cfm_eval
+
+def plotConfusionMatrix(config, cfm):
+    shortAnzsrc = getShortAnzsrcAsList(config)
+    shortAnzsrc.pop(0)
+    df = cfm2df(cfm, range(len(shortAnzsrc)))
+    df_cfm = pd.DataFrame(
+            data=df.values,
+            index=shortAnzsrc,
+            columns=shortAnzsrc
+    )
+    plt.figure(figsize = (40,28))
+    sn.heatmap(df_cfm, annot=True)
+    return plt.plot()
+
+def cfm2df(cfm, labels):
+    df = pd.DataFrame()
+    # rows
+    for i, row_label in enumerate(labels):
+        rowdata={}
+        # columns
+        for j, col_label in enumerate(labels):
+            rowdata[col_label]=cfm[i,j]
+        df = df.append(pd.DataFrame.from_dict({row_label:rowdata}, orient='index'))
+    return df[labels]
