@@ -5,7 +5,7 @@ import math
 import random
 import statistics
 
-sampleType = "dmed" # dstat dmax dmin
+sampleType = "dstat10" # dstat dmax dmin
 sampleName = sampleType
 base_dir = "/home/di72jiv/Documents/src/gerdi/ml/data"
 srcDir  = os.path.join(base_dir, "dmax")
@@ -21,9 +21,9 @@ def getSizes(srcDir, dataRegex):
             sizes.append(len(sampleSpace))
     return sizes
 
-if sampleType == "dstat":
-    sampleSize = 1000
-    sampleName = sampleType + str(sampleSize)
+if sampleType.startswith("dstat"):
+    sampleSize = int(sampleType.split("dstat")[1])
+    sampleName = sampleType
 elif sampleType == "dmax":
     sampleSize = max(getSizes(srcDir, dataRegex))
 elif sampleType == "dmin":
@@ -40,7 +40,7 @@ try:
 except:
     os.mkdir(tgtDir)
 
-stat = { "title": [], "description":  [], "tNd": [], "size" : {} } 
+stat = { "title": [], "description":  [], "tNd": [], "size" : {} }
 
 for f in [f for f in os.listdir(srcDir) if dataRegex.match(f)]:
     with open(os.path.join(srcDir, f), "r") as fp:

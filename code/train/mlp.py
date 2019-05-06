@@ -1,67 +1,13 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import f_classif
-from sklearn.metrics import confusion_matrix
+
 from tensorflow.python.keras import models
 from tensorflow.python.keras.layers import Dense
 from tensorflow.python.keras.layers import Dropout
-
-import matplotlib.pyplot as plt
 import numpy as np
 import os, sys
 import pandas as pd
-import seaborn as sn
 import tensorflow as tf
 
-import util.matrix
 import util.util as util
-def ngramVectorize(texts, labels, config, save=True):
-    """Vectorizes texts as n-gram vectors.
-
-    1 text = 1 tf-idf vector the length of vocabulary of unigrams + bigrams.
-
-    # Arguments
-        train_texts: list, text strings.
-        train_labels: np.ndarray, labels for texts.
-        config: dict, config hash
-        save: Save vectorizer and selector to disk
-
-    # Returns
-        x: vectorized texts
-
-    # References
-        Adapted from
-        https://developers.google.com/machine-learning/guides/text-classification/step-3
-    """
-
-    vectorizer = util.loadBinaryOrNone(config, "vectorizer.bin", "train")
-    selector = util.loadBinaryOrNone(config, "selector.bin", "train")
-    if not vectorizer:
-        kwargs = {
-                'ngram_range': config["ngramRange"],
-                'dtype': np.float64,
-                'strip_accents': 'unicode',
-                'decode_error': 'replace',
-                'analyzer': config["tokenMode"],
-                'min_df': config["minDocFreq"]
-        }
-        vectorizer = TfidfVectorizer(**kwargs)
-        x = vectorizer.fit_transform(texts)
-    else:
-        x = vectorizer.transform(texts)
-
-    if not selector:
-        selector = SelectKBest(f_classif, k=min(config["topK"], x.shape[1]))
-        # we need the labels, otherwise we cannot guarantee that the selector selects
-        # something for every label ?
-        selector.fit(x, labels)
-
-    if save:
-        util.dumpBinary(config, vectorizer, "vectorizer.bin", "train")
-        util.dumpBinary(config, selector, "selector.bin", "train")
-
-
-    return selector.transform(x).astype('float64')
 
 def _get_last_layer_units_and_activation(num_classes):
     """Gets the # units and activation function for the last network layer.
@@ -174,8 +120,8 @@ def train_ngram_model(config):
 
 
     # Vectorize texts.
-    x_train = ngramVectorize(train_texts, train_labels, config)
-    x_val = ngramVectorize(val_texts, val_labels, config, False)
+    x_train = util.ngramVectorize(train_texts, train_labels, config)
+    x_val = util.ngramVectorize(val_texts, val_labels, config, False)
 
     print("after vectorizing")
     # Create model instance.

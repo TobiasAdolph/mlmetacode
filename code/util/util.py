@@ -1,11 +1,18 @@
 import hashlib
 import json
 import math
-import numpy as np
 import os
 import pickle
 import random
 import re
+
+import numpy as np
+
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_classif
+from sklearn.metrics import confusion_matrix
 
 def loadConfig(path="config.json"):
     """Loads the file with all configuration
@@ -97,20 +104,42 @@ def dumpJsonToFile(config, name, payload, subpath=""):
     with open(path, "w") as f:
         json.dump(payload, f)
 
-def dumpBinary(config, obj, name, subpath=""):
+def dumpBinary(config, name, payload, subpath=""):
+    """ Wrapper around pickle.dump() (probably bad practice) dumps an python
+        object
+
+    # Arguments:
+        config:  a dictionary with the processedDataDir path to dump to
+        name:    name of the file to be dumped
+        payload: python object to be dumped
+        subpath: optional, allows to specifiy a subpath under processedDataDir
+    """
     with open(os.path.join(config["processedDataDir"], subpath, name), "wb") as f:
-        pickle.dump(obj, f)
+        pickle.dump(payload, f)
 
 def loadBinary(config, name, subpath=""):
+    """Wrapper around pickle.load() (probably bad practice)
+
+    Searches for a file with name in processedDataDir as given by config.
+
+    # Arguments
+        config:  a dictionary with the paths to search
+        name:    name of the file to load
+        subpath: optional, allows to specifiy a subpath under the pathes
+                 configured in config
+    # Returns
+        The loaded binary as a python data structure
+    """
     with open(os.path.join(config["processedDataDir"], subpath, name), "rb") as f:
         return pickle.load(f)
 
-def loadBinaryOrNone(config, name, subpath=""):
-    if os.path.isfile(os.path.join(config["processedDataDir"], subpath, name)):
-        return loadBinary(config, name, subpath)
-    return None
-
 def loadTextLabelsOrEmpty(config, name):
+    """ Check whether the text and labels are already sampled and load them
+
+    # Arguments
+        config: a dictionary with the path to search for the samples
+        name: name of the sample part (train|val|test).json
+    """
     try:
         data = loadJsonFromFile(config, name, "train")
         return (data[0], data[1])
@@ -121,7 +150,7 @@ def loadTextAndLabels(config):
     """Loads text and labels from the rawDataDir specified in config
 
     # Arguments
-        config: dict, configuration
+        config: a dictionary with necessary paths
 
     # Returns
         A dictionary with labels as keys and a list of texts as values
@@ -170,11 +199,13 @@ def loadSample(config, data=None, save=True):
 
     if not (train_texts and val_texts and test_texts):
         if not data:
-            data = loadTextAndLabels(config) 
+            data = loadTextAndLabels(config)
         for category in data.keys():
             random.shuffle(data[category])
-            last_train_item_idx = math.floor(len(data[category]) * config["ratio1"])
-            last_val_item_idx = math.floor(len(data[category]) * config["ratio2"])
+            last_train_item_idx = math.floor(len(data[category]) *
+                                             config["ratio1"]) - 1
+            last_val_item_idx = math.floor(len(data[category]) *
+                                           config["ratio2"]) - 1
             #print("category: {} size: {} train until: {} val until: {}".format(
             #    category, len(data[category]), last_train_item_idx, last_val_item_idx))
 
@@ -204,26 +235,117 @@ def loadSample(config, data=None, save=True):
     )
 
 def getAnzsrc(config):
+    """ Get a dictionary mapping a label (number) to the names of the disciplines
+    (physical science)
+
+    # Argument
+        config: a dictionary with the necessary path information
+
+    # Returns
+        a dictionary with keys (01) mapping to names (physical science)
+    """
     with open(os.path.join(config["configDir"], "anzsrc.json"), "r") as f:
         return json.load(f)
 
 def getAnzsrcAsList(config):
+    """ Get a list of disciplines with a label - 1 (number -1) mapping to the
+    name of the disciplines.
+
+    # Argument
+        config: a dictionary with the necessary path information
+
+    # Returns
+        a python list (idx + 1 is the idx of the discipline) 
+    """
     retval = []
     anzsrc = getAnzsrc(config)
-    for i in range(0, len(anzrc)):
+    for i in range(0, len(anzsrc)):
         retval.append(anzsrc["{:02}".format(i)])
     return retval
 
 def getShortAnzsrc(config):
+    """ Get a dictionary mapping a label (number) to the short names of the disciplines
+    (physical science)
+
+    # Argument
+        config: a dictionary with the necessary path information
+
+    # Returns
+        a dictionary with keys (01) mapping to names (physical science)
+    """
     with open(os.path.join(config["configDir"], "shortAnzsrc.json"), "r") as f:
         return json.load(f)
 
 def getShortAnzsrcAsList(config):
+    """ Get a list of disciplines with a label - 1 (number -1) mapping to the
+    short name of the disciplines.
+
+    # Argument
+        config: a dictionary with the necessary path information
+
+    # Returns
+        a python list (idx + 1 is the idx of the discipline) 
+    """
     retval = []
     shortAnzsrc = getShortAnzsrc(config)
     for i in range(0, len(shortAnzsrc)):
         retval.append(shortAnzsrc["{}".format(i)])
     return retval
+
+def ngramVectorize(texts, labels, config, save=True):
+    """Vectorizes texts as n-gram vectors.
+
+    1 text = 1 tf-idf vector the length of vocabulary of unigrams + bigrams.
+
+    # Arguments
+        train_texts: list, text strings.
+        train_labels: np.ndarray, labels for texts.
+        config: dict, config hash
+        save: Save vectorizer and selector to disk
+
+    # Returns
+        x: vectorized texts
+
+    # References
+        Adapted from
+        https://developers.google.com/machine-learning/guides/text-classification/step-3
+    """
+
+    try:
+        vectorizer = loadBinary(config, "vectorizer.bin", "train")
+    except FileNotFoundError:
+        vectorizer = None
+
+    try:
+        selector = loadBinary(config, "selector.bin", "train")
+    except FileNotFoundError:
+        selector = None
+
+    if not vectorizer:
+        kwargs = {
+                'ngram_range': config["ngramRange"],
+                'dtype': np.float64,
+                'strip_accents': 'unicode',
+                'decode_error': 'replace',
+                'analyzer': config["tokenMode"],
+                'min_df': config["minDocFreq"]
+        }
+        vectorizer = TfidfVectorizer(**kwargs)
+        x = vectorizer.fit_transform(texts)
+    else:
+        x = vectorizer.transform(texts)
+
+    if not selector:
+        selector = SelectKBest(f_classif, k=min(config["topK"], x.shape[1]))
+        # we need the labels, otherwise we cannot guarantee that the selector selects
+        # something for every label ?
+        selector.fit(x, labels)
+
+    if save:
+        dumpBinary(config, "vectorizer.bin", vectorizer, "train")
+        dumpBinary(config, "selector.bin", selector, "train")
+
+    return selector.transform(x).astype('float64')
 
 def convertCfmAbsToPerc(cfm):
     newCfm = []
@@ -235,7 +357,6 @@ def convertCfmAbsToPerc(cfm):
         newCfm.append(newRow)
     return np.array(newCfm)
 
-
 def getConfusionMatrix(config, model, test_texts, test_labels):
     x_test = ngramVectorize(test_texts, test_labels, config, False)
     predictions = []
@@ -245,16 +366,16 @@ def getConfusionMatrix(config, model, test_texts, test_labels):
             test_labels,
             predictions)
 
-def getConfusionMatrixSensSpec(config, cfm):
-    anzsrc = util.loadJsonFromFile(config, "anzsrc.json")
-    cfm_eval = { }
-    for i in range(0,len(cfm)):
-        cfm_eval[i] = {
-                "name": anzsrc["{:02}".format(i+1)],
-                "sens": matrix.sens(cfm, i),
-                "spec": matrix.spec(cfm, i)
-        }
-    return cfm_eval
+def cfm2df(cfm, labels):
+    df = pd.DataFrame()
+    # rows
+    for i, row_label in enumerate(labels):
+        rowdata={}
+        # columns
+        for j, col_label in enumerate(labels):
+            rowdata[col_label]=cfm[i,j]
+        df = df.append(pd.DataFrame.from_dict({row_label:rowdata}, orient='index'))
+    return df[labels]
 
 def plotConfusionMatrix(config, cfm):
     shortAnzsrc = getShortAnzsrcAsList(config)
@@ -268,14 +389,3 @@ def plotConfusionMatrix(config, cfm):
     plt.figure(figsize = (40,28))
     sn.heatmap(df_cfm, annot=True)
     return plt.plot()
-
-def cfm2df(cfm, labels):
-    df = pd.DataFrame()
-    # rows
-    for i, row_label in enumerate(labels):
-        rowdata={}
-        # columns
-        for j, col_label in enumerate(labels):
-            rowdata[col_label]=cfm[i,j]
-        df = df.append(pd.DataFrame.from_dict({row_label:rowdata}, orient='index'))
-    return df[labels]
