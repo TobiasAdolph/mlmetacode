@@ -27,7 +27,7 @@ for t, l in util.loadSample(config):
    text.extend(t)
    labels.extend(l)
 print("Calculating ngrams")
-data = ngramVectorize(text, labels, config) 
+data = ngramVectorize(text, labels, config)
 
 print("Training the model")
 model = train_ngram_model(config)
