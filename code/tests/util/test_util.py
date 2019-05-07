@@ -1,6 +1,7 @@
 import os
 import util.util as util
 import numpy as np
+import shutil
 from train.mlp import train_ngram_model
 
 ################################################################################
@@ -12,35 +13,31 @@ def getTestConfig():
 
 payload = { "test": [1,2,3], "test2": { "test3": "abc" } }
 subdir = "retrieve"
-
-text    = []
-labels  = []
 config = util.loadConfig(getTestConfig())
-for t, l in util.loadSample(config):
-   text.extend(t)
-   labels.extend(l)
-data = util.ngramVectorize(text, labels, config)
-model = train_ngram_model(config)
 
 ################################################################################
 # TESTS
 ################################################################################
 def testLoadConfig():
     # Check autocompletion of config works
+    config = util.loadConfig(getTestConfig())
     for key in ("hash", "rawDataDir", "processedDataDir", "configDir"):
         assert key in config.keys()
 
-    # Check autocreations work
+    # Check autocreations work (therefore delete the dirs first)
     hashedConfig = os.path.join(os.path.dirname(getTestConfig()),
                                        config["hash"] + ".json")
-    assert os.path.exists(hashedConfig)
+    if os.path.isfile(hashedConfig):
+        os.remove(hashedConfig)
+    shutil.rmtree(config["processedDataDir"])
+
+    config = util.loadConfig(getTestConfig())
+    # Check config backup works and provides identical copy
     for key in ("processedDataDir", "configDir"):
         assert os.path.isdir(config[key])
-
     for key in ("retrieve", "clean", "sample", "train", "evaluate", "use"):
         assert os.path.isdir(os.path.join(config["processedDataDir"], key))
-
-    # Check config backup works and provides identical copy
+    assert os.path.exists(hashedConfig)
     config2 = util.loadConfig(hashedConfig)
     assert config == config2
 
@@ -120,11 +117,16 @@ def testGetAnzsrc():
     assert len(anzsrcShortList) == 23
 
 def testConfusionMatrix():
+    text    = []
+    labels  = []
+    for t, l in util.loadSample(config):
+       text.extend(t)
+       labels.extend(l)
+    data = util.ngramVectorize(text, labels, config)
+    model = train_ngram_model(config)
     (test_texts, test_labels) = util.loadJsonFromFile(config, "test.json", "train")
     cfm = util.getConfusionMatrix(config, model, test_texts, test_labels)
     assert cfm.shape == (22,22)
-    newCfm = util.convertCfmAbsToPerc(cfm)
-    assert np.any(newCfm <= 1.0)
     dfmAsDf = util.cfm2df(cfm, range(len(test_labels)))
     assert dfmAsDf.shape == (22, 22)
 

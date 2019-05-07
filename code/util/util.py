@@ -347,17 +347,18 @@ def ngramVectorize(texts, labels, config, save=True):
 
     return selector.transform(x).astype('float64')
 
-def convertCfmAbsToPerc(cfm):
-    newCfm = []
-    for row in cfm:
-        newRow = []
-        rowSum = np.sum(row)
-        for col in row:
-            newRow.append(col/rowSum)
-        newCfm.append(newRow)
-    return np.array(newCfm)
-
 def getConfusionMatrix(config, model, test_texts, test_labels):
+    """ Calculates a confusion matrix
+
+    # Arguments
+        config: a dictionary holding pathes, parameters, etc.
+        model: the model to be used to predict
+        test_texts: Texts to use to build the confusion matrix
+        test_labels: Labels for the test
+
+    # Returns
+        a confusion matrix (np.array)
+    """
     x_test = ngramVectorize(test_texts, test_labels, config, False)
     predictions = []
     for x in model.predict(x_test):
@@ -367,6 +368,15 @@ def getConfusionMatrix(config, model, test_texts, test_labels):
             predictions)
 
 def cfm2df(cfm, labels):
+    """ Converts a confusion matrix to a pandas data frame
+
+    # Arguments
+        cfm: the confusion matrix to be transformed
+        labels: labels (or index) that the dataframe should have as a list
+
+    # Returns
+        a pandas data frame
+    """
     df = pd.DataFrame()
     # rows
     for i, row_label in enumerate(labels):
@@ -376,16 +386,3 @@ def cfm2df(cfm, labels):
             rowdata[col_label]=cfm[i,j]
         df = df.append(pd.DataFrame.from_dict({row_label:rowdata}, orient='index'))
     return df[labels]
-
-def plotConfusionMatrix(config, cfm):
-    shortAnzsrc = getShortAnzsrcAsList(config)
-    shortAnzsrc.pop(0)
-    df = cfm2df(cfm, range(len(shortAnzsrc)))
-    df_cfm = pd.DataFrame(
-            data=df.values,
-            index=shortAnzsrc,
-            columns=shortAnzsrc
-    )
-    plt.figure(figsize = (40,28))
-    sn.heatmap(df_cfm, annot=True)
-    return plt.plot()

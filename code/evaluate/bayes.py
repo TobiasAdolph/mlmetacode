@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from util.util import loadConfig, loadBinary, loadJsonFromFile, convertCfmAbsToPerc
-from train.mlp import getConfusionMatrix, plotConfusionMatrix
+from util.util import loadConfig, loadBinary, loadJsonFromFile
+from train.mlp import getConfusionMatrix
 from tensorflow.python.keras import models
 from matplotlib.pyplot import savefig
 import numpy as np
