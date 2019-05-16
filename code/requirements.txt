@@ -4,6 +4,7 @@ numpy
 pytest
 pytest-cov
 pyyaml
+requests
+seaborn
 sklearn
 tensorflow
-seaborn
