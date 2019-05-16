@@ -354,6 +354,7 @@ def isAscii(s):
     return all(ord(c) < 128 for c in s)
 
 def isEnglish(field):
+    # TODO use https://pypi.org/project/langdetect/
     if field.get("lang", "?") == "en":
         return True
     if isAscii(field["value"]):
