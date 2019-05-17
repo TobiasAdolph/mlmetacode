@@ -1,0 +1,4 @@
+{  "Submission.Loader": "DiskLoader",
+    "OaiPmhETL.hostURL": "https://www.archaeologybulletin.org/jms/index.php/up/oai",
+    "OaiPmhETL.metadataPrefix": "oai_dc",
+    "Submission.saveFolder": "/var/lib/jetty/cache/records"}

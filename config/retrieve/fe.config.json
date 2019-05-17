@@ -1,0 +1,5 @@
+{  "Submission.Loader": "DiskLoader",
+    "OaiPmhETL.hostURL": "https://utrechtjournal.org/jms/index.php/up/oai",
+    "OaiPmhETL.metadataPrefix": "oai_dc",
+    "OaiPmhETL.set": "up:RES",
+    "Submission.saveFolder": "/var/lib/jetty/cache/records"}

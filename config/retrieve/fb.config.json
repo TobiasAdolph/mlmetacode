@@ -1,0 +1,5 @@
+{  "Submission.Loader": "DiskLoader",
+    "OaiPmhETL.hostURL": "https://chesterrep.openrepository.com/oai/request",
+    "OaiPmhETL.metadataPrefix": "oai_dc",
+    "OaiPmhETL.set": "col_10034_6732",
+    "Submission.saveFolder": "/var/lib/jetty/cache/records"}
