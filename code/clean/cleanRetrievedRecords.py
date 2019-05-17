@@ -1,16 +1,34 @@
 import glob
 import json
-import pprint
-import sys
-import re
+import logging
 import os
+import re
+import sys
 from concurrent.futures import ProcessPoolExecutor
 
 ################################################################################
 # CONFIGURATION
 ################################################################################
 base_dir="/home/di72jiv/Documents/src/gerdi/ml/2019-03-02/"
-dataRegex = re.compile('[0-9a-f]{2}\.json$')
+dataRegex = re.compile('[0]{2}\.json$')
+
+########################################
+# LOGGING
+########################################
+logger = logging.getLogger('clean')
+logger.setLevel(logging.DEBUG)
+
+fh = logging.FileHandler('clean.log')
+fh.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter('%(levelname)s|%(asctime)s -- %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
 # used to check the subject[subjectScheme] payload to determine whether this is
 # a dewey decimal subject
 ddcNames = [
@@ -429,7 +447,8 @@ def addTo(name, bucket, seen, addee):
     bucket[addee[name]] = bucket.get(addee[name], 0) + 1
 
 def processChunk(fileName):
-    print("\tProcessing %s" % fileName)
+    logger.info("\tProcessing %s" % fileName)
+    # todo: add labels for additional sources
     documents = 0
     schemeURIs = {}
     subjectSchemes = {}
@@ -442,6 +461,7 @@ def processChunk(fileName):
             alreadySeenSubjectSchemes = []
             documents += 1
             # todo: add quality-checks
+            # todo: store fields as given by dmode
             selectable = False
             for subject in document["subjects"]:
                 addTo("schemeURI",
@@ -489,7 +509,7 @@ def processChunk(fileName):
 # DIVIDE
 ################################################################################
 worker = 4
-print("Starting %i workers" % worker)
+logger.info("Starting %i workers" % worker)
 files = [f for f in os.listdir(base_dir) if dataRegex.match(f)]
 #files = files[:1]
 with ProcessPoolExecutor(worker) as ex:
@@ -498,7 +518,7 @@ with ProcessPoolExecutor(worker) as ex:
 ################################################################################
 # CONQUER
 ################################################################################
-print("Combining worker output")
+logger.info("Combining worker output")
 documents = 0
 result = {}
 anzsrc2subject = {}
@@ -538,12 +558,12 @@ with open("schemeURI.json", "w") as sf:
     json.dump(schemeURI, sf)
 
 
-print("General Statistics:")
-print("\tNumber of documents:  %i" %documents)
-print("\tSize of cleaned recs: %i" % sum(len(discp) for discp in result))
-print("Discipline match before data cleanup")
+logger.info("General Statistics:")
+logger.info("\tNumber of documents:  %i" %documents)
+logger.info("\tSize of cleaned recs: %i" % sum(len(discp) for discp in result))
+logger.info("Discipline match before data cleanup")
 for key in sorted(anzsrc2subject.keys()):
-    print("\t%s: %s" % (key, anzsrc2subject[key].get("total", 0)))
-print("Discipline match after data cleanup")
+    logger.info("\t%s: %s" % (key, anzsrc2subject[key].get("total", 0)))
+logger.info("Discipline match after data cleanup")
 for key in sorted(result.keys()):
-    print("\t%s: %s" % (anzsrcBaseClasses[key], len(result[key])))
+    logger.info("\t%s: %s" % (anzsrcBaseClasses[key], len(result[key])))
