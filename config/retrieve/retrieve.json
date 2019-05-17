@@ -2,15 +2,15 @@
     "hvConfigRegex": "([0-9]|[a-f]){2}.config.json",
     "hvConfigDir": "../config/retrieve",
     "hvs": [
-        "dc-harvester.default.svc.cluster.local:8080/oaipmh/harvest",
-        "dc-harvester2.default.svc.cluster.local:8080/oaipmh/harvest"
+        "http://dc-harvester.default.svc.cluster.local:8080/oaipmh/harvest",
+        "http://dc-harvester2.default.svc.cluster.local:8080/oaipmh/harvest"
     ],
     "hvDataBaseDir": "../data",
     "hvUnloadSrc": [
-        "dc-harvester-578c97589b-29rdca",
+        "dc-harvester-578c97589b-29rdc",
         "dc-harvester2-5c7d957d4d-xqtn4"
     ],
-    "hvUnloadCmd": "docker cp {}:var/lib/jetty/cache/records/OaiPmhETL.json {}",
-    "hvRangeTo": 10,
-    "sleep": 5
+    "hvUnloadCmd": "kubectl cp {}:cache/records/OaiPmhETL.json {}",
+    "hvRangeTo": 100000,
+    "sleep": 15 
 }

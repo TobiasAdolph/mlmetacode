@@ -8,8 +8,17 @@ import subprocess
 import sys
 import time
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+fh = logging.FileHandler('retrieve.log')
+fh.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 def doHarvest(payload):
     config = payload[0]
@@ -18,7 +27,7 @@ def doHarvest(payload):
                            fileName).group(1)
     target = os.path.join(config["targetDir"], retrievalID + ".json")
     if os.path.isfile(target):
-        logger.warn("{} already exists, skipping")
+        logger.warn("{} already exists, skipping".format(retrievalID))
         return True
     logger.info("================> do harvest with {} ({})".format(retrievalID, fileName))
     hvIdx = getFreeHarvester()
@@ -77,7 +86,8 @@ def startHarvester(hv):
     logger.debug("{} {} {}".format(r.status_code, r.reason, r.text))
 
 def unloadHarvester(hvIdx, config, target):
-    logger.debug("unload {}".format(hvIdx))
+    command =  config["hvUnloadCmd"].format(config["hvUnloadSrc"][hvIdx],target)
+    logger.debug("unload with {}".format(command))
     subprocess.run(config["hvUnloadCmd"].format(config["hvUnloadSrc"][hvIdx],
                                              target).split())
 
