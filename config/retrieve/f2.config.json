@@ -1,0 +1,4 @@
+{  "Submission.Loader": "DiskLoader",
+    "OaiPmhETL.hostURL": "http://iconarp.selcuk.edu.tr/iconarp/oai",
+    "OaiPmhETL.metadataPrefix": "oai_dc",
+    "Submission.saveFolder": "/var/lib/jetty/cache/records"}

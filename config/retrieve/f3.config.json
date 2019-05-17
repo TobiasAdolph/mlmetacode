@@ -1,0 +1,4 @@
+{  "Submission.Loader": "DiskLoader",
+    "OaiPmhETL.hostURL": "http://www.bipcons.ce.tuiasi.ro/oai/oai2.php",
+    "OaiPmhETL.metadataPrefix": "oai_dc",
+    "Submission.saveFolder": "/var/lib/jetty/cache/records"}
