@@ -3,4 +3,5 @@
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.from": "",
     "OaiPmhETL.until": "",
+    "OaiPmhETL.subjectOnly": "false",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}

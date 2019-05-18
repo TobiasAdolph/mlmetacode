@@ -3,42 +3,54 @@
 ## Law and Legal Studies (w/o further sources: 199)
 * Univeristy on Pennsylvania Law School Scholary Repository: 2005 articles (titles and descriptions):
   https://scholarship.law.upenn.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:faculty_scholarship
+  ff.config.json
 * Utrecht Journal of International and European Law: 77 articles (titles and descriptions):
   https://utrechtjournal.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=up:RES
+  fe.config.json
 * Intr2Dok: 4974 records (but not all in English and not all with descriptions)
   http://intr2dok.vifa-recht.de/servlets/OAIDataProvider?verb=ListRecords&metadataPrefix=oai_datacite
+  fd.config.json
 
 ## Philosophy and Religious Studies (w/o further sources: 373)
 * https://philpapers.org 39.171 submissions. Might need some quality check:
   https://philpapers.org/oai.pl?verb=ListRecords&metdataPrefix=oai_dc
+  fc.config.json
 * ChesterRep (https://chesterrep.openrepository.com/handle/10034/6732): 296 heterogenous religious data
   https://chesterrep.openrepository.com/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_10034_6732
+  fb.config.json
 
 ## Studies in creative arts and writing (w/o further sources: 433)
 * Chapman University Repository (College of the Performing Arts): 5500 items
   https://digitalcommons.chapman.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:copa
+  fa.config.json
 * Repository@TWU, repository of Texas Woman's University
     * 67 records School of the Arts-Dance
       https://twu-ir.tdl.org/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_11274_8833
+      f9.config.json
     * 150 records School of the Arts-Music
       https://twu-ir.tdl.org/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_11274_8834
+      f8.config.json
     * 38 records Arts-School of the Arts-Visual Arts
       https://twu-ir.tdl.org/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_11274_8836
+      f7.config.json
 
 
 ## History and Archaeology (w/o further sources: 494)
 * Bulleting of the History of Archaeology: https://www.archaeologybulletin.org/ 571 Records
   https://www.archaeologybulletin.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc
+  f6.config.json
 * University Library System, University of Pittsburgh: 38 records (not all with descriptions, but data-centric)
   http://jwhi.pitt.edu/ojs/index.php/jwhi/oai?verb=ListRecords&metadataPrefix=oai_dc
+  f5.config.json
 * The UTRGV DSpace Repository, of University of Texas Rio Grande Valley: 16 records
   https://utrgv-ir.tdl.org/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_2152.6_894
-
-
+  f4.config.json
 
 ## Built Environment and Design (w/o further sources: 953)
 * http://www.bipcons.ce.tuiasi.ro/: The Bulletin of the Polytechnic Institute of Jassy, Construction. Architecture Section: 610
   (resumption token does not work on browser check)
   http://www.bipcons.ce.tuiasi.ro/oai/oai2.php?verb=ListRecords&metadataPrefix=oai_dc
+  f3.config.json
 * Iconarp International Journal of Architecture and Planning: 139 records
   http://iconarp.selcuk.edu.tr/iconarp/oai?verb=ListRecords&metadataPrefix=oai_dc
+  f3.config.json
