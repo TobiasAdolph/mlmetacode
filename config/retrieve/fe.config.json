@@ -2,4 +2,7 @@
     "OaiPmhETL.hostURL": "https://utrechtjournal.org/jms/index.php/up/oai",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.set": "up:RES",
+    "OaiPmhETL.from": "",
+    "OaiPmhETL.until": "",
+    "OaiPmhETL.subjectOnly": "true",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}

@@ -1,4 +1,6 @@
 {  "Submission.Loader": "DiskLoader",
     "OaiPmhETL.hostURL": "https://philpapers.org/oai.pl",
     "OaiPmhETL.metadataPrefix": "oai_dc",
+    "OaiPmhETL.from": "",
+    "OaiPmhETL.until": "",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}

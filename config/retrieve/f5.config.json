@@ -1,5 +1,6 @@
-
 {  "Submission.Loader": "DiskLoader",
     "OaiPmhETL.hostURL": "http://jwhi.pitt.edu/ojs/index.php/jwhi/oai",
     "OaiPmhETL.metadataPrefix": "oai_dc",
+    "OaiPmhETL.from": "",
+    "OaiPmhETL.until": "",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}

@@ -2,4 +2,6 @@
     "OaiPmhETL.hostURL": "https://digitalcommons.chapman.edu/do/oai",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.set": "publication:copa",
+    "OaiPmhETL.from": "",
+    "OaiPmhETL.until": "",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}

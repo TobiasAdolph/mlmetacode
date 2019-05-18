@@ -2,4 +2,6 @@
     "OaiPmhETL.hostURL": "https://twu-ir.tdl.org/oai/request",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.set": "col_11274_8834",
+    "OaiPmhETL.from": "",
+    "OaiPmhETL.until": "",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}
