@@ -40,12 +40,16 @@ def loadConfig(path="config.json"):
 
     # Derived values
     config["hash"] = configHash
-    config["rawDataDir"] = os.path.join(config["baseDir"], config["dtype"])
+    config["rawDataDir"] = os.path.join(config["baseDir"], config["dtimestamp"])
+    config["inputDataDir"] = os.path.join(config["baseDir"], config["dtype"])
     config["processedDataDir"] = os.path.join(config["baseDir"], config["hash"])
     config["configDir"] = os.path.join(configBasePath)
+    config["logDir"] = os.path.join(config["baseDir"], "log")
+    config["dmaxDir"] = os.path.join(config["baseDir"], "dmax")
 
-    if not os.path.isdir(config["processedDataDir"]):
-        os.mkdir(config["processedDataDir"])
+    for directory in(config["processedDataDir"], config["logDir"]):
+        if not os.path.isdir(directory):
+            os.mkdir(directory)
     for subdir in ["retrieve", "clean", "sample", "train", "evaluate", "use"]:
         subdirPath = os.path.join(config["processedDataDir"], subdir)
         if not os.path.isdir(subdirPath):
@@ -68,7 +72,7 @@ def getDictHash(payload):
 def loadJsonFromFile(config, name, subpath=""):
     """Wrapper around json.load() (probably bad practice)
 
-    Searches for name in processedDataDir, rawDataDir and configDir, as given
+    Searches for name in processedDataDir, inputDataDir and configDir, as given
     by config.
 
     # Arguments
@@ -81,7 +85,7 @@ def loadJsonFromFile(config, name, subpath=""):
     """
     paths = [
             os.path.join(config["processedDataDir"], subpath, name),
-            os.path.join(config["rawDataDir"], subpath, name),
+            os.path.join(config["inputDataDir"], subpath, name),
             os.path.join(config["configDir"], subpath, name) ]
     for path in paths:
         if os.path.isfile(path):
@@ -147,7 +151,7 @@ def loadTextLabelsOrEmpty(config, name):
         return ([], [])
 
 def loadTextAndLabels(config):
-    """Loads text and labels from the rawDataDir specified in config
+    """Loads text and labels from the inputDataDir specified in config
 
     # Arguments
         config: a dictionary with necessary paths
@@ -157,12 +161,12 @@ def loadTextAndLabels(config):
     """
     data = {}
     dataFilesRegex = re.compile('([0-9]{2})\.data\.json$')
-    for f in os.listdir(config["rawDataDir"]):
+    for f in os.listdir(config["inputDataDir"]):
         m = re.match(dataFilesRegex, f)
         if m:
             category = int(m.group(1)) - 1
             data[category] = []
-            with open(os.path.join(config["rawDataDir"], f)) as df:
+            with open(os.path.join(config["inputDataDir"], f)) as df:
                 dataFromFile = json.load(df)
             for key, value in dataFromFile.items():
                 payload = []

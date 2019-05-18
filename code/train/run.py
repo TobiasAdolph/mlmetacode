@@ -19,7 +19,7 @@ if not os.path.isfile(args.config):
 config = util.loadConfig(args.config)
 print("Run model training with configuration {}".format(config["hash"]))
 
-print("Preparing data from directory {}".format(config["rawDataDir"]))
+print("Preparing data from directory {}".format(config["inputDataDir"]))
 
 text    = []
 labels  = []
