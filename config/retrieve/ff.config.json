@@ -1,5 +1,5 @@
 {  "Submission.Loader": "DiskLoader",
-    "OaiPmhETL.hostURL": "https://scholarship.law.upenn.edu/do/oai",
+    "OaiPmhETL.hostURL": "https://scholarship.law.upenn.edu/do/oai/",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.set": "publication:faculty_scholarship",
     "OaiPmhETL.from": "",

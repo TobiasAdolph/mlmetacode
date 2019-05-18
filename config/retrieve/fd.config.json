@@ -1,6 +1,6 @@
 {  "Submission.Loader": "DiskLoader",
     "OaiPmhETL.hostURL": "http://intr2dok.vifa-recht.de/servlets/OAIDataProvider",
-    "OaiPmhETL.metadataPrefix": "oai_datacite",
+    "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.from": "",
     "OaiPmhETL.until": "",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}
