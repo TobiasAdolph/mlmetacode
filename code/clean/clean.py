@@ -301,17 +301,17 @@ for r in res:
         schemeURI[key] = schemeURI.get(key, 0) + value
 
 for key in result.keys():
-    with open(os.path.join(config["dmaxDir"], key + ".data.json"), 'w') as crf:
-        json.dump(result[key], crf)
+    with open(os.path.join(config["dmaxDir"], key + ".data.json"), 'w') as f:
+        json.dump(result[key], f)
 
-with open("anzsrc2subject.json", "w") as mf:
-    json.dump(anzsrc2subject, mf)
+with open(os.path.join(config["rawDataDir"], "anzsrc2subject.json"), "w") as f:
+    json.dump(anzsrc2subject, f)
 
-with open("subjectScheme.json", "w") as sf:
-    json.dump(subjectScheme, sf)
+with open(os.path.join(config["rawDataDir"], "subjectScheme.json"), "w") as f:
+    json.dump(subjectScheme, f)
 
-with open("schemeURI.json", "w") as sf:
-    json.dump(schemeURI, sf)
+with open(os.path.join(config["rawDataDir"], "schemeURI.json"), "w") as f:
+    json.dump(schemeURI, f)
 
 logger.info("Discipline match after data cleanup")
 dataSize = 0
