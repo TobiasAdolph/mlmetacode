@@ -2,4 +2,6 @@
     "OaiPmhETL.hostURL": "https://scholarship.law.upenn.edu/do/oai",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.set": "publication:faculty_scholarship",
+    "OaiPmhETL.from": "",
+    "OaiPmhETL.until": "",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}
