@@ -7,10 +7,10 @@
     ],
     "hvDataBaseDir": "../data",
     "hvUnloadSrc": [
-        "dc-harvester-578c97589b-29rdc",
-        "dc-harvester2-5c7d957d4d-xqtn4"
+        "dc-harvester-6859694f86-5fqmw",
+        "dc-harvester2-7db8b659b6-tbfwv"
     ],
     "hvUnloadCmd": "kubectl cp {}:cache/records/OaiPmhETL.json {}",
     "hvRangeTo": 100000,
-    "sleep": 15 
+    "sleep": 20
 }
