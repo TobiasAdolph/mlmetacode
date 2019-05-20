@@ -40,9 +40,13 @@ def loadConfig(path="config.json"):
 
     # Derived values
     config["hash"] = configHash
-    config["rawDataDir"] = os.path.join(config["baseDir"], config["dtimestamp"])
+    config["rawDataDir"] = os.path.join(config["baseDir"],
+                                        config["dtimestamp"],
+                                        "raw")
     config["inputDataDir"] = os.path.join(config["baseDir"], config["dtype"])
-    config["processedDataDir"] = os.path.join(config["baseDir"], config["hash"])
+    config["processedDataDir"] = os.path.join(config["baseDir"],
+                                              config["dtimestamp"],
+                                             "processed")
     config["configDir"] = os.path.join(configBasePath)
     config["logDir"] = os.path.join(config["baseDir"], "log")
     config["dmaxDir"] = os.path.join(config["baseDir"], "dmax")

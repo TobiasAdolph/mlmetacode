@@ -26,13 +26,12 @@ if not os.path.isfile(args.config):
 with open(args.config, "r") as f:
     config = json.load(f)
 
-#print("Retrieve data with configuration {}".format(config["hash"]))
-
 
 print("Starting {} workers".format(len(config["hvs"])))
 
 targetDir = os.path.join(config["hvDataBaseDir"],
-                              datetime.today().strftime('%Y-%m-%d'))
+                            datetime.today().strftime('%Y-%m-%d'),
+                            "raw")
 
 
 if not os.path.isdir(targetDir):
@@ -51,6 +50,3 @@ with ProcessPoolExecutor(
     initargs = (hvs, )
 ) as ex:
     res = zip(workpackage, ex.map(retrieveHelpers.doHarvest, workpackage))
-
-import pprint
-pprint.pprint(res)

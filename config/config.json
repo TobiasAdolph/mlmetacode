@@ -3,7 +3,7 @@
     "batchSize": 128,
     "categories": "anzsrc.json",
     "dmode": "title_description",
-    "dregex": "[0-9a-f]{2}\\.json",
+    "dregex": ".*[a-f0-9]{2}\\.json",
     "sregex": "f[0-9a-f]{1}\\.json",
     "dropoutRate": 0.2,
     "dtimestamp": "2019-05-18",
