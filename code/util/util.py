@@ -54,7 +54,7 @@ def loadConfig(path="config.json"):
     for directory in(config["processedDataDir"], config["logDir"]):
         if not os.path.isdir(directory):
             os.mkdir(directory)
-    for subdir in ["retrieve", "clean", "sample", "train", "evaluate", "use"]:
+    for subdir in ["clean", "sample", "train", "evaluate", "use"]:
         subdirPath = os.path.join(config["processedDataDir"], subdir)
         if not os.path.isdir(subdirPath):
             os.mkdir(subdirPath)

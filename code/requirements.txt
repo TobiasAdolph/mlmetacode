@@ -1,3 +1,4 @@
+ijson
 jupyter_console
 git+https://github.com/Mimino666/langdetect
 matplotlib

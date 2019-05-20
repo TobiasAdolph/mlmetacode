@@ -2,6 +2,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import argparse
 import glob
+import ijson
 import json
 import logging
 import re
@@ -34,19 +35,27 @@ with open(os.path.join(
     "specialDataProviders.json"), "r") as f:
     specialDict  = json.load(f)
 
+DDCValueRegex = re.compile('(^\d+\.\d+,)+')
+JELSubjecSchemeRegex = re.compile('^JEL.*')
+
+chunksDir = os.path.join(config["processedDataDir"], "clean", "chunks")
+
+if not os.path.isdir(chunksDir):
+    os.mkdir(chunksDir)
+
 ########################################
 # LOGGING
 ########################################
 logger = logging.getLogger('clean')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 fh = logging.FileHandler(os.path.join(config["logDir"], 'clean.log'))
 ch = logging.StreamHandler()
-formatter = logging.Formatter('%(levelname)s|%(asctime)s -- %(message)s')
+formatter = logging.Formatter('%(asctime)s|%(process)d -- %(message)s')
 fh.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
-logger.info("Startin cleanRetrievedRecords with config {}".format(config["hash"]))
+logger.info("Starting clean with config {}".format(config["hash"]))
 
 ################################################################################
 # FUNCTIONS
@@ -62,8 +71,7 @@ def isANZSRC(subject):
 def isDDC(subject):
     if "subjectScheme" not in subject.keys():
         return False
-    coordinateRegex = re.compile('(^\d+\.\d+,)+')
-    if coordinateRegex.match(subject["value"].strip()):
+    if DDCValueRegex.match(subject["value"].strip()):
         return False
     if subject["subjectScheme"] in ddcNames:
         return True
@@ -72,25 +80,10 @@ def isDDC(subject):
 def isJEL(subject):
     if "subjectScheme" not in subject.keys():
         return False
-    if re.match(r'^JEL.*', subject["subjectScheme"]):
+    if JELSubjecSchemeRegex.match(subject["subjectScheme"]):
         return True
     else:
         return False
-
-def isAnnotatable(subject):
-    if isDDC(subject) or isJEL(subject) or isANZSRC(subject):
-        if re.match(r'^[a-zA-Z0-9].*', subject["value"]):
-            return True
-    return False
-
-def getEnglishValueOrEmpty(field, document):
-    if field in document.keys():
-        for instance in document[field]:
-            if not instance["value"] or len(instance["value"].split()) < 7:
-                continue
-            if detect(instance["value"]) == "en":
-                return instance["value"]
-    return ""
 
 def registerMapping(anzsrc, payload, anzsrc2subject):
     if anzsrc not in anzsrc2subject.keys():
@@ -127,30 +120,10 @@ def getBaseAnzsrc(subject):
         return anzsrc
     return ""
 
-def getFullAnnotation(subjects, anzsrc2subject):
-    ddc = []
-    annotations = []
-    seenAnzsrcMappings = []
-    for subject in subjects:
-        anzsrc = getBaseAnzsrc(subject)
-        if not anzsrc:
-            continue
-        if not anzsrc in seenAnzsrcMappings:
-            seenAnzsrcMappings.append(anzsrc)
-            registerMapping(anzsrc, subject["value"], anzsrc2subject)
-            annotations.append(anzsrc)
-    return annotations
-
-def getAnnotation(subjects, anzsrc2subject):
-    annotations = []
-    for annotation in getFullAnnotation(subjects, anzsrc2subject):
-        annotations.append(annotation[:2].strip())
-    return annotations
-
 def getMinLength(field):
     if field == "description":
         return 15
-    return 3
+    return 1
 
 def getPayload(config, document):
     payload= {}
@@ -160,16 +133,16 @@ def getPayload(config, document):
         if fieldPlural not in document.keys():
             continue
         for instance in document[fieldPlural]:
-            if len(instance["value"].split()) < getMinLength(field):
+            if not instance["value"]:
                 continue
             try:
                 if not detect(instance["value"]) == "en":
                     continue
             except LangDetectException as e:
-                logger.warning("Cannot process {}: {}".format(instance["value"],e))
+                logger.debug("Cannot process {}: {}".format(instance["value"],e))
                 continue
             payloadPart += " " + instance["value"]
-        if not payloadPart:
+        if len(payloadPart.split()) < getMinLength(field):
             continue
         payload[field] = payloadPart
     return payload
@@ -180,9 +153,12 @@ def isSpecialChunk(fileName):
         return True
     return False
 
-def processChunk(fileName):
-    logger.info("\tProcessing %s" % fileName)
-    # todo: add labels for additional sources
+def processFile(fileName):
+    resultFile = os.path.join(config["processedDataDir"], "clean", "chunks", fileName)
+    if os.path.isfile(resultFile):
+        logger.info("\t{}: already processed".format(fileName))
+        return True
+    logger.info("\t{}: Start processing".format(fileName))
     result = {
         "documents" : 0,
         "notAnnotatable": 0,
@@ -194,60 +170,67 @@ def processChunk(fileName):
         "payload" : {},
     }
     with open(os.path.join(config["rawDataDir"], fileName)) as f:
-        chunk = json.load(f)
-        for document in chunk["documents"]:
+        for document in ijson.items(f, 'documents.item'):
             seenSchemeURIs = []
             seenSubjectSchemes = []
+            labels = set()
             result["documents"] += 1
-            # todo: add quality-checks
 
-            selectable = False
             if isSpecialChunk(fileName):
-                selectable = True
-            for subject in document["subjects"]:
-                # count the documents with this schemeURI (once)
-                if "schemeURI" in subject.keys():
-                    schemeURI = subject["schemeURI"]
-                    if schemeURI not in seenSchemeURIs:
-                        seenSchemeURIs.append(schemeURI)
-                        result["schemeURIs"][schemeURI] = (
-                            result["schemeURIs"].get(schemeURI, 0) + 1)
-                # count the doucments with this subjectScheme (once)
-                if "subjectScheme" in subject.keys():
-                    subjectScheme = subject["subjectScheme"]
-                    if subjectScheme not in seenSchemeURIs:
-                        seenSchemeURIs.append(subjectScheme)
-                        result["subjectSchemes"][subjectScheme] = (
-                            result["subjectSchemes"].get(subjectScheme, 0) + 1)
-                if isAnnotatable(subject):
-                    selectable = True
+                labels.add(specialDict[fileName])
 
-            if not selectable:
+            if "subjects" not in document.keys():
+                # special chunks may have no subject (fixed label)
+                if isSpecialChunk(filenName):
+                    result["notAnnotatable"] += 1
+                    continue
+            else:
+                for subject in document["subjects"]:
+                    # count the documents with this schemeURI (once)
+                    if "schemeURI" in subject.keys():
+                        schemeURI = subject["schemeURI"]
+                        if schemeURI not in seenSchemeURIs:
+                            seenSchemeURIs.append(schemeURI)
+                            result["schemeURIs"][schemeURI] = (
+                                result["schemeURIs"].get(schemeURI, 0) + 1)
+                    # count the documents with this subjectScheme (once)
+                    if "subjectScheme" in subject.keys():
+                        subjectScheme = subject["subjectScheme"]
+                        if subjectScheme not in seenSchemeURIs:
+                            seenSchemeURIs.append(subjectScheme)
+                            result["subjectSchemes"][subjectScheme] = (
+                                result["subjectSchemes"].get(subjectScheme, 0) + 1)
+                    # add to label if fitting
+                    anzsrc = getBaseAnzsrc(subject)
+                    if not anzsrc:
+                        continue
+
+                    registerMapping(anzsrc,
+                                    subject["value"],
+                                    result["anzsrc2subject"])
+                    labels.add(anzsrc[:2].strip())
+
+            if not labels:
                 result["notAnnotatable"] += 1
                 continue
+            elif len(labels) != 1:
+                result["multiAnnotations"] += 1
+                continue
 
-            if isSpecialChunk(fileName):
-                annotation = specialDict[fileName]
-            else:
-                annotations = getAnnotation(document["subjects"],
-                      result["anzsrc2subject"])
-                if len(annotations) != 1:
-                    result["multiAnnotations"] += 1
-                    continue
-                annotation = annotations[0]
-
+            label = labels.pop()
             payload = getPayload(config, document)
             if not len(payload) == len(config["dmode"].split("_")):
                 result["payloadNotFit"] += 1
                 continue
 
-            if not annotation in result["payload"].keys():
-                result["payload"][annotation] = {}
-            result["payload"][annotation][document["identifier"]["value"]] = (
-                payload
-            )
-    logger.info("\tFinished processing {}".format(fileName))
-    return result
+            if not label in result["payload"].keys():
+                result["payload"][label] = {}
+
+            payloadHash = util.getDictHash(payload)
+            result["payload"][label][payloadHash] = payload
+    with open(resultFile, "w") as f:
+        json.dump(result, f)
+    return True
 
 ################################################################################
 # DIVIDE
@@ -255,78 +238,88 @@ def processChunk(fileName):
 worker = 4
 logger.info("Starting %i workers" % worker)
 dataRegex = re.compile(config["dregex"])
-files = [f for f in os.listdir(config["rawDataDir"]) if dataRegex.match(f)]
-#files = files[:1]
+
+
+files = [f for f in glob.glob(config["rawDataDir"] + "/*") if dataRegex.match(f)]
+
+files.sort(key=lambda x: os.path.getsize(x), reverse=True)
+files = [os.path.basename(f) for f in files]
+
 with ProcessPoolExecutor(
         max_workers = worker,
         initializer = init_factory
     ) as ex:
-    res = zip(files, ex.map(processChunk, files))
+    res = zip(files, ex.map(processFile, files))
 
 ################################################################################
 # CONQUER
 ################################################################################
-# TODO document, despaghettify
+# TODO document
 logger.info("Combining worker output")
-documents = 0
-notAnnotatable = 0
-multiAnnotations = 0
-payloadNotFit = 0
-result = {}
-anzsrc2subject = {}
-subjectScheme = {}
-schemeURI = {}
-numAnnotations = {}
-typeAnnotation = {}
-for r in res:
-    logger.info("processing results of {}".format(r[0]))
-    documents += r[1]["documents"]
-    notAnnotatable += r[1]["notAnnotatable"]
-    multiAnnotations += r[1]["multiAnnotations"]
-    payloadNotFit += r[1]["payloadNotFit"]
-    for key in r[1]["payload"].keys():
-        if not key in result.keys():
-            result[key] = {}
-        for identifier in r[1]["payload"][key]:
-            result[key][identifier] = r[1]["payload"][key][identifier]
-    for anzsrc in anzsrcDict.values():
-        if anzsrc not in anzsrc2subject.keys():
-            anzsrc2subject[anzsrc] = {"total": 0}
-        if anzsrc in r[1]["anzsrc2subject"].keys():
-            for key, value in r[1]["anzsrc2subject"][anzsrc].items():
-                anzsrc2subject[anzsrc][key] = anzsrc2subject[anzsrc].get(key, 0) + value
-    for key, value in r[1]["subjectSchemes"].items():
-        subjectScheme[key] = subjectScheme.get(key, 0) + value
-    for key, value in r[1]["schemeURIs"].items():
-        schemeURI[key] = schemeURI.get(key, 0) + value
+results = {
+    "useableDocuments": 0,
+    "documents" : 0,
+    "notAnnotatable": 0,
+    "multiAnnotations": 0,
+    "payloadNotFit": 0,
+    "schemeURIs" : {},
+    "subjectSchemes" : {},
+    "anzsrc2subject" : {},
+    "payload" : {},
+}
 
-for key in result.keys():
-    with open(os.path.join(config["dmaxDir"], key + ".data.json"), 'w') as f:
-        json.dump(result[key], f)
+files = [f for f in glob.glob(chunksDir + "/*") if dataRegex.match(f)]
 
-with open(os.path.join(config["rawDataDir"], "anzsrc2subject.json"), "w") as f:
-    json.dump(anzsrc2subject, f)
+for anzsrc in anzsrcDict.values():
+    results["anzsrc2subject"][anzsrc] = {"total": 0}
 
-with open(os.path.join(config["rawDataDir"], "subjectScheme.json"), "w") as f:
-    json.dump(subjectScheme, f)
+for f in files:
+    with open(f, "r") as fh:
+        result = json.load(fh)
+    results["documents"] += result["documents"]
+    results["notAnnotatable"] += result["notAnnotatable"]
+    results["multiAnnotations"] += result["multiAnnotations"]
+    results["payloadNotFit"] += result["payloadNotFit"]
 
-with open(os.path.join(config["rawDataDir"], "schemeURI.json"), "w") as f:
-    json.dump(schemeURI, f)
+    for label in result["payload"].keys():
+        results["payload"][label] = results["payload"].get(label, {})
+        for payloadHash in result["payload"][label].keys():
+            results["payload"][label][payloadHash] = result["payload"][label][payloadHash]
+
+        if anzsrc in result["anzsrc2subject"].keys():
+            for key, value in result["anzsrc2subject"][anzsrc].items():
+                results["anzsrc2subject"][anzsrc][key] = (
+                    anzsrc2subject[anzsrc].get(key, 0) + value )
+
+    for key, value in result["subjectSchemes"].items():
+        results["subjectSchemes"][key] = results["subjectSchemes"].get(key, 0) + value
+
+    for key, value in result["schemeURIs"].items():
+        results["schemeURIs"][key] = results["schemeURIs"].get(key, 0) + value
+
+for key in results["payload"].keys():
+    with open(os.path.join(config["processedDataDir"], "clean", key + ".data.json"), 'w') as f:
+        json.dump(results["payload"][key], f)
+
+for key in results.keys():
+    if key in ("anzsrc2subject", "subjectSchemes", "schemeURIs"):
+        with open(os.path.join(config["processedDataDir"], "clean", key + ".json"), "w") as f:
+            json.dump(results[key], f)
 
 logger.info("Discipline match after data cleanup")
-dataSize = 0
+
 longestCategoryName = max(len(v) for k,v in anzsrcDict.items())
-for category in sorted(result.keys()):
-    categorySize = len(result[category])
-    dataSize += categorySize
+for category in sorted(results["payload"].keys()):
+    categorySize = len(results["payload"][category])
+    results["useableDocuments"] += categorySize
     logger.info("\t{:<{longestCategoryName}}: {:>12}".format(
         anzsrcDict[category],
         categorySize,
         longestCategoryName=longestCategoryName))
-logger.info("General Statistics:")
 
-logger.info("\tNumber of non-annotatable docs:    {:>12}".format(notAnnotatable))
-logger.info("\tNumber of multi-annotated docs:    {:>12}".format(multiAnnotations))
-logger.info("\tNumber of docs with unfit payload: {:>12}".format(payloadNotFit))
-logger.info("\tNumber of useable documents:       {:>12}".format(dataSize))
-logger.info("\tNumber of documents:               {:>12}".format(documents))
+logger.info("General Statistics:")
+logger.info("\tNumber of non-annotatable docs:    {:>12}".format(results["notAnnotatable"]))
+logger.info("\tNumber of multi-annotated docs:    {:>12}".format(results["multiAnnotations"]))
+logger.info("\tNumber of docs with unfit payload: {:>12}".format(results["payloadNotFit"]))
+logger.info("\tNumber of useable documents:       {:>12}".format(results["useableDocuments"]))
+logger.info("\tNumber of documents:               {:>12}".format(results["documents"]))

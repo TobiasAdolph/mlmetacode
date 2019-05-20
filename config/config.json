@@ -6,7 +6,7 @@
     "dregex": ".*[a-f0-9]{2}\\.json",
     "sregex": "f[0-9a-f]{1}\\.json",
     "dropoutRate": 0.2,
-    "dtimestamp": "2019-05-18",
+    "dtimestamp": "2019-05-19",
     "dtype": "dmin",
     "epochs": 1000,
     "layers": 2,
