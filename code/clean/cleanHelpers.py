@@ -170,7 +170,7 @@ def processFile(instruction):
     )
     if os.path.isfile(resultFile):
         config["logger"].info("    {} already processed: {}".format(
-            fileName,
+            os.path.basename(fileName),
             resultFile
         ))
         return True
