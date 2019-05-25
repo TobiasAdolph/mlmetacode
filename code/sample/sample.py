@@ -26,16 +26,20 @@ def prepare():
     args = parser.parse_args()
     config = util.loadConfig(args.config)
     config["type"] = args.type
-    config["size"] = args.maxsize
+    config["size"] = int(args.maxsize)
     config["logger"] = util.setupLogging(config, "sample")
+    config["src"] = os.path.join(
+        config["clean"]["outputDir"],
+        "..",
+        config["sample"]["cleanHash"]
+    )
     return config
 
 def getSizes(config):
     sizes = []
-    for f in os.listdir(config["clean"]["outputDir"]):
-        print(f)
+    for f in os.listdir(config["src"]):
         if re.match(config["sample"]["dataInputRegex"], f):
-            with open(os.path.join(config["clean"]["outputDir"], f), "r") as fp:
+            with open(os.path.join(config["src"], f), "r") as fp:
                 sampleSpace = json.load(fp)
                 sizes.append(len(sampleSpace))
     return sizes
@@ -45,12 +49,18 @@ if __name__ == "__main__":
     config["logger"].info(
         "Starting retrieve with config {}".format(config["sample"]["hash"])
     )
-    if config["type"] == "dmax":
-        config["size"] = max(getSizes(srcDir, dataRegex))
-    elif config["type"] == "dmin":
-        config["size"] = min(getSizes(srcDir, dataRegex))
-    elif config["type"] == "dmed":
-        config["size"] = math.floor(statistics.median(getSizes(srcDir, dataRegex)))
+    if config["type"] == "max":
+        config["size"] = max(getSizes(config))
+    elif config["type"] == "min":
+        config["size"] = min(getSizes(config))
+    elif config["type"] == "med":
+        config["size"] = math.floor(statistics.median(getSizes(config)))
+    else:
+        config["type"] += str(config["size"])
+
+    if not os.path.isdir(os.path.join(config["sample"]["outputDir"],
+                                 config["type"])):
+        os.makedirs(os.path.join(config["sample"]["outputDir"], config["type"]))
 
     config["logger"].info("\tMode: {}\n\tSize: {}".format(config["type"],
                                                           config["size"]))
@@ -62,9 +72,9 @@ if __name__ == "__main__":
         "size" : {}
     }
 
-    for f in os.listdir(config["clean"]["outputDir"]):
+    for f in os.listdir(config["src"]):
         if re.match(config["sample"]["dataInputRegex"], f):
-            with open(os.path.join(config["clean"]["outputDir"], f), "r") as fp:
+            with open(os.path.join(config["src"], f), "r") as fp:
                 sampleSpace = json.load(fp)
             result["size"][f] = {"total": len(sampleSpace)}
             sample = {}
@@ -82,7 +92,7 @@ if __name__ == "__main__":
                 result["description"].append(len(value["description"]))
                 result["tNd"].append(len(value["title"]) + len(value["description"]))
 
-            with open(os.path.join(config["sample"]["outputDir"], f), "w") as fp:
+            with open(os.path.join( config["sample"]["outputDir"], config["type"], f), "w") as fp:
                 json.dump(sample, fp)
 
     result["titleMedian"] = statistics.median(result["title"])
@@ -94,5 +104,5 @@ if __name__ == "__main__":
     for key in ("titleMedian", "descriptionMedian", "tNdMedian"):
         config["logger"].info("{}: {}".format(key, result[key]))
 
-    with open(os.path.join(config["sample"]["outputDir"], "statistics.json"), "w") as f:
+    with open(os.path.join(config["sample"]["outputDir"], config["type"], "statistics.json"), "w") as f:
         json.dump(result, f)

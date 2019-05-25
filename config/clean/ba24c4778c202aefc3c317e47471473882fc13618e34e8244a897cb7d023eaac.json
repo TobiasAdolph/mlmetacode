@@ -1,0 +1,1 @@
+{"retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8", "dmode": "title_description", "dataInputRegex": ".*([a-f0-9]{2})\\.json", "dataOutputRegex": ".*[a-f0-9]{2}\\.chunk\\.json", "sregex": "f[0-9a-f]{1}\\.json"}

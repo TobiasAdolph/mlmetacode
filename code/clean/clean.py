@@ -54,7 +54,8 @@ def divide(config):
     config["logger"].info("Starting {} workers".format(config["worker"]))
 
     files = []
-    for f in glob.glob(config["retrieve"]["outputDir"] + "/*"):
+    for f in glob.glob(
+        os.path.join(config["retrieve"]["outputDir"], "..", config["clean"]["retrieveHash"]) + "/*"):
         if config["regex"]["dataInput"].match(f):
             files.append(f)
     files.sort(key=lambda x: os.path.getsize(x), reverse=True)

@@ -69,7 +69,7 @@ def setupLogging(config, step):
     logger.addHandler(fh)
     return logger
 
-def getDictHash(payload, step):
+def getDictHash(payload, step=None):
     """Reproducibly sha256-hashes a python dictionary to the same hash
     value if the keys, values are identical.
 
