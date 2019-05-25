@@ -19,7 +19,7 @@ def prepare():
                      logger
     """
     parser = argparse.ArgumentParser(
-        description='Clean retrieved metadata records'
+        description='CLEAN retrieved metadata records'
     )
 
     parser.add_argument('--config',

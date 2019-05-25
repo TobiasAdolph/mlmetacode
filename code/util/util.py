@@ -10,9 +10,6 @@ import re
 import numpy as np
 import pandas as pd
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import f_classif
 from sklearn.metrics import confusion_matrix
 
 def loadConfig(path="config.json"):
@@ -128,33 +125,28 @@ def dumpJsonToFile(config, name, payload, subpath=""):
     with open(path, "w") as f:
         json.dump(payload, f)
 
-def dumpBinary(config, name, payload, subpath=""):
-    """ Wrapper around pickle.dump() (probably bad practice) dumps an python
-        object
+def dumpBinary(config, name, payload):
+    """ Wrapper around pickle.dump() dumps an python object
 
     # Arguments:
         config:  a dictionary with the processedDataDir path to dump to
         name:    name of the file to be dumped
         payload: python object to be dumped
-        subpath: optional, allows to specifiy a subpath under processedDataDir
     """
-    with open(os.path.join(config["processedDataDir"], subpath, name), "wb") as f:
+    with open(os.path.join(config["vectorize"]["outputDir"], name), "wb") as f:
         pickle.dump(payload, f)
 
-def loadBinary(config, name, subpath=""):
-    """Wrapper around pickle.load() (probably bad practice)
-
-    Searches for a file with name in processedDataDir as given by config.
+def loadBinary(config, name):
+    """Wrapper around pickle.load()
 
     # Arguments
         config:  a dictionary with the paths to search
         name:    name of the file to load
-        subpath: optional, allows to specifiy a subpath under the pathes
-                 configured in config
+
     # Returns
         The loaded binary as a python data structure
     """
-    with open(os.path.join(config["processedDataDir"], subpath, name), "rb") as f:
+    with open(os.path.join(config["vectorize"]["outputDir"], name), "rb") as f:
         return pickle.load(f)
 
 def loadTextLabelsOrEmpty(config, name):
@@ -169,31 +161,6 @@ def loadTextLabelsOrEmpty(config, name):
         return (data[0], data[1])
     except FileNotFoundError:
         return ([], [])
-
-def loadTextAndLabels(config):
-    """Loads text and labels from the inputDataDir specified in config
-
-    # Arguments
-        config: a dictionary with necessary paths
-
-    # Returns
-        A dictionary with labels as keys and a list of texts as values
-    """
-    data = {}
-    dataFilesRegex = re.compile('([0-9]{2})\.data\.json$')
-    for f in os.listdir(config["inputDataDir"]):
-        m = re.match(dataFilesRegex, f)
-        if m:
-            category = int(m.group(1)) - 1
-            data[category] = []
-            with open(os.path.join(config["inputDataDir"], f)) as df:
-                dataFromFile = json.load(df)
-            for key, value in dataFromFile.items():
-                payload = []
-                for modeKey in config["dmode"].split("_"):
-                    payload.append(value[modeKey])
-                data[category].append(" ".join(payload))
-    return data
 
 def loadSample(config, data=None, save=True):
     """Loads text and labels and splits it into train/validate/test sets.
@@ -316,60 +283,6 @@ def getShortAnzsrcAsList(config):
         retval.append(shortAnzsrc["{}".format(i)])
     return retval
 
-def ngramVectorize(texts, labels, config, save=True):
-    """Vectorizes texts as n-gram vectors.
-
-    1 text = 1 tf-idf vector the length of vocabulary of unigrams + bigrams.
-
-    # Arguments
-        train_texts: list, text strings.
-        train_labels: np.ndarray, labels for texts.
-        config: dict, config hash
-        save: Save vectorizer and selector to disk
-
-    # Returns
-        x: vectorized texts
-
-    # References
-        Adapted from
-        https://developers.google.com/machine-learning/guides/text-classification/step-3
-    """
-
-    try:
-        vectorizer = loadBinary(config, "vectorizer.bin", "train")
-    except FileNotFoundError:
-        vectorizer = None
-
-    try:
-        selector = loadBinary(config, "selector.bin", "train")
-    except FileNotFoundError:
-        selector = None
-
-    if not vectorizer:
-        kwargs = {
-                'ngram_range': config["vectorize"]["ngramRange"],
-                'dtype': np.float64,
-                'strip_accents': 'unicode',
-                'decode_error': 'replace',
-                'analyzer': config["vectorize"]["tokenMode"],
-                'min_df': config["vectorize"]["minDocFreq"]
-        }
-        vectorizer = TfidfVectorizer(**kwargs)
-        x = vectorizer.fit_transform(texts)
-    else:
-        x = vectorizer.transform(texts)
-
-    if not selector:
-        selector = SelectKBest(f_classif, k=min(config["vectorize"]["topK"], x.shape[1]))
-        # we need the labels, otherwise we cannot guarantee that the selector selects
-        # something for every label ?
-        selector.fit(x, labels)
-
-    if save:
-        dumpBinary(config, "vectorizer.bin", vectorizer, "train")
-        dumpBinary(config, "selector.bin", selector, "train")
-
-    return selector.transform(x).astype('float64')
 
 def getConfusionMatrix(config, model, test_texts, test_labels):
     """ Calculates a confusion matrix

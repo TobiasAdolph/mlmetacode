@@ -10,7 +10,7 @@ import util.util as util
 
 def prepare():
     parser = argparse.ArgumentParser(
-        description='RETRIEVE: retrieve all raw data.'
+        description='SAMPLE: sample from cleaned data.'
     )
     parser.add_argument('--config',
             required = True,
@@ -47,7 +47,7 @@ def getSizes(config):
 if __name__ == "__main__":
     config = prepare()
     config["logger"].info(
-        "Starting retrieve with config {}".format(config["sample"]["hash"])
+        "Starting sample with config {}".format(config["sample"]["hash"])
     )
     if config["type"] == "max":
         config["size"] = max(getSizes(config))

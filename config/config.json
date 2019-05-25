@@ -19,24 +19,35 @@
         "hvRangeTo": 1000
     },
     "clean": {
+        "retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8",
         "dmode": "title_description",
         "dataInputRegex": ".*([a-f0-9]{2})\\.json",
         "dataOutputRegex": ".*[a-f0-9]{2}\\.chunk\\.json",
         "sregex": "f[0-9a-f]{1}\\.json"
     },
     "sample": {
+        "cleanHash": "ba24c4778c202aefc3c317e47471473882fc13618e34e8244a897cb7d023eaac",
         "dataInputRegex": ".*([0-9]{2})\\.data.json"
     },
     "vectorize": {
-        "ratio1": 0.8,
-        "ratio2": 0.9,
+        "type": "min",
+        "replace" : {
+            "[_:,;]": " ",
+            "[“”\"\\(\\)\\[\\]]| -": ""
+        },
+        "stemming": "none",
+        "dataInputRegex": "([0-9]{2})\\.data\\.json$",
+        "dmode": "title_description",
         "minDocFreq": 2,
         "ngramRange": [1,2],
+        "sampleHash": "34a46ec907735fddf1032086ab4806fc4beaf5318f9ac1806f428cf22e4a30e2",
         "tokenMode": "word",
         "topK": 20000
     },
     "train": {
         "mlp": {
+            "ratio1": 0.8,
+            "ratio2": 0.9,
             "dtype": "dmed",
             "batchSize": 128,
             "dropoutRate": 0.2,
