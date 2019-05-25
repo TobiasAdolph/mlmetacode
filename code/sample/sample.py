@@ -1,79 +1,98 @@
-import re
-import os
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+import argparse
 import json
 import math
 import random
+import re
 import statistics
+import util.util as util
 
-sampleType = "dstat10" # dstat dmax dmin
-sampleName = sampleType
-base_dir = "/home/di72jiv/Documents/src/gerdi/ml/data"
-srcDir  = os.path.join(base_dir, "dmax")
-dataRegex = re.compile('[0-9]{2}\.data\.json$')
-statFile = "statistic.json"
+def prepare():
+    parser = argparse.ArgumentParser(
+        description='RETRIEVE: retrieve all raw data.'
+    )
+    parser.add_argument('--config',
+            required = True,
+            help = "File with the configuration, must contain key 'sample'")
+    parser.add_argument('--type',
+            default = "dmax",
+            choices = ["min", "med", "max", "static"],
+            help = "Mode to sample, if static, you must specify --maxsize")
+    parser.add_argument('--maxsize',
+            default = 1000,
+            help = "Maximum size of the sample for each label, only with type: static")
 
+    args = parser.parse_args()
+    config = util.loadConfig(args.config)
+    config["type"] = args.type
+    config["size"] = args.maxsize
+    config["logger"] = util.setupLogging(config, "sample")
+    return config
 
-def getSizes(srcDir, dataRegex):
+def getSizes(config):
     sizes = []
-    for f in [f for f in os.listdir(srcDir) if dataRegex.match(f)]:
-        with open(os.path.join(srcDir, f), "r") as fp:
-            sampleSpace = json.load(fp)
-            sizes.append(len(sampleSpace))
+    for f in os.listdir(config["clean"]["outputDir"]):
+        print(f)
+        if re.match(config["sample"]["dataInputRegex"], f):
+            with open(os.path.join(config["clean"]["outputDir"], f), "r") as fp:
+                sampleSpace = json.load(fp)
+                sizes.append(len(sampleSpace))
     return sizes
 
-if sampleType.startswith("dstat"):
-    sampleSize = int(sampleType.split("dstat")[1])
-    sampleName = sampleType
-elif sampleType == "dmax":
-    sampleSize = max(getSizes(srcDir, dataRegex))
-elif sampleType == "dmin":
-    sampleSize = min(getSizes(srcDir, dataRegex))
-elif sampleType == "dmed":
-    sampleSize = math.floor(statistics.median(getSizes(srcDir, dataRegex)))
-    print(sampleSize)
+if __name__ == "__main__":
+    config = prepare()
+    config["logger"].info(
+        "Starting retrieve with config {}".format(config["sample"]["hash"])
+    )
+    if config["type"] == "dmax":
+        config["size"] = max(getSizes(srcDir, dataRegex))
+    elif config["type"] == "dmin":
+        config["size"] = min(getSizes(srcDir, dataRegex))
+    elif config["type"] == "dmed":
+        config["size"] = math.floor(statistics.median(getSizes(srcDir, dataRegex)))
 
+    config["logger"].info("\tMode: {}\n\tSize: {}".format(config["type"],
+                                                          config["size"]))
 
-tgtDir  = os.path.join(base_dir, sampleName)
+    result = {
+        "title": [],
+        "description":  [],
+        "tNd": [],
+        "size" : {}
+    }
 
-try:
-    os.stat(tgtDir)
-except:
-    os.mkdir(tgtDir)
+    for f in os.listdir(config["clean"]["outputDir"]):
+        if re.match(config["sample"]["dataInputRegex"], f):
+            with open(os.path.join(config["clean"]["outputDir"], f), "r") as fp:
+                sampleSpace = json.load(fp)
+            result["size"][f] = {"total": len(sampleSpace)}
+            sample = {}
+            sampleKeys = random.sample(
+                list(sampleSpace),
+                min(config["size"], len(sampleSpace))
+            )
+            for key in sampleKeys:
+                sample[key] = sampleSpace[key]
 
-stat = { "title": [], "description":  [], "tNd": [], "size" : {} }
+            result["size"][f]["sample"] = len(sample)
 
-for f in [f for f in os.listdir(srcDir) if dataRegex.match(f)]:
-    with open(os.path.join(srcDir, f), "r") as fp:
-        sampleSpace = json.load(fp)
-        stat["size"][f] = {"total": len(sampleSpace)}
+            for key, value in sample.items():
+                result["title"].append(len(value["title"]))
+                result["description"].append(len(value["description"]))
+                result["tNd"].append(len(value["title"]) + len(value["description"]))
 
-        # TODO: shuffle test + eval
-        # TODO: convert to input format
-        sample = {}
-        for key in random.sample(list(sampleSpace), min(sampleSize, len(sampleSpace))):
-            sample[key] = sampleSpace[key]
+            with open(os.path.join(config["sample"]["outputDir"], f), "w") as fp:
+                json.dump(sample, fp)
 
-        stat["size"][f]["sample"] = len(sample)
+    result["titleMedian"] = statistics.median(result["title"])
+    result["descriptionMedian"] = statistics.median(result["description"])
+    result["tNdMedian"] = statistics.median(result["tNd"])
+    del result["title"]
+    del result["description"]
+    del result["tNd"]
+    for key in ("titleMedian", "descriptionMedian", "tNdMedian"):
+        config["logger"].info("{}: {}".format(key, result[key]))
 
-        for key, value in sample.items():
-            stat["title"].append(
-                    len(value["title"]))
-            stat["description"].append(
-                    len(value["description"]))
-            stat["tNd"].append(
-                    len(value["title"]) + len(value["description"]))
-
-        # no need to sample dmax
-        if not sampleType == "dmax":
-            with open(os.path.join(tgtDir, f), "w") as wp:
-                json.dump(sample, wp)
-
-stat["titleMedian"] = statistics.median(stat["title"])
-stat["descriptionMedian"] = statistics.median(stat["description"])
-stat["tNdMedian"] = statistics.median(stat["tNd"])
-
-del stat["title"]
-del stat["description"]
-del stat["tNd"]
-with open(os.path.join(tgtDir, statFile), "w") as sf:
-    json.dump(stat, sf)
+    with open(os.path.join(config["sample"]["outputDir"], "statistics.json"), "w") as f:
+        json.dump(result, f)

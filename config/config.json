@@ -16,7 +16,7 @@
             "780a8e742637"
         ],
         "hvUnloadCmd": "docker cp {}:/var/lib/jetty/cache/records/OaiPmhETL.json {}",
-        "hvRangeTo": 10
+        "hvRangeTo": 1000
     },
     "clean": {
         "dmode": "title_description",
@@ -25,10 +25,11 @@
         "sregex": "f[0-9a-f]{1}\\.json"
     },
     "sample": {
-        "ratio1": 0.8,
-        "ratio2": 0.9
+        "dataInputRegex": ".*([0-9]{2})\\.data.json"
     },
     "vectorize": {
+        "ratio1": 0.8,
+        "ratio2": 0.9,
         "minDocFreq": 2,
         "ngramRange": [1,2],
         "tokenMode": "word",

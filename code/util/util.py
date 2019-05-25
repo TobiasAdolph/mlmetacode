@@ -36,7 +36,7 @@ def loadConfig(path="config.json"):
     processedDataDir = os.path.join(config["base"]["dir"], "processed")
 
     for step in config.keys():
-        stepHash = getDictHash(config[step])
+        stepHash = getDictHash(config[step], step)
         directories = {
             "configDir": os.path.join(configDir, step),
             "outputDir": os.path.join(processedDataDir, step, stepHash),
@@ -59,7 +59,6 @@ def createDirIfNotExists(path):
     if not os.path.isdir(path):
         os.makedirs(path)
 
-
 def setupLogging(config, step):
     # LOGGING
     logger = logging.getLogger(step)
@@ -70,7 +69,7 @@ def setupLogging(config, step):
     logger.addHandler(fh)
     return logger
 
-def getDictHash(payload):
+def getDictHash(payload, step):
     """Reproducibly sha256-hashes a python dictionary to the same hash
     value if the keys, values are identical.
 
@@ -80,7 +79,15 @@ def getDictHash(payload):
     # Returns
         A SHA256 hash
     """
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+    if step == "retrieve":
+        basePayload = {
+            "hvConfigRegex": payload["hvConfigRegex"],
+            "hvRangeTo": payload["hvRangeTo"]
+        }
+    else:
+        basePayload = payload
+
+    return hashlib.sha256(json.dumps(basePayload, sort_keys=True).encode("utf-8")).hexdigest()
 
 def loadJsonFromFile(config, name, subpath=""):
     """Wrapper around json.load() (probably bad practice)
