@@ -30,53 +30,35 @@ def prepare():
             help        ="Number of workers")
     args = parser.parse_args()
 
-    if not os.path.isfile(args.config):
-        print("{} is not a path to a file".format(args.config))
     config = util.loadConfig(args.config)
     config["worker"] = int(args.worker)
 
     config["anzsrcDict"]  = util.getAnzsrc(config)
     with open(os.path.join(
-        config["configDir"],
+        config["base"]["configDir"],
         "specialDataProviders.json"), "r") as f:
         config["specialDict"]  = json.load(f)
 
     config["regex"] = {
         "ddcValue": re.compile('(^\d+\.\d+,)+'),
         "jelSubjectScheme": re.compile('^JEL.*'),
-        "special": re.compile(config["sregex"]),
-        "data": re.compile(config["dregex"])
+        "special": re.compile(config["clean"]["sregex"]),
+        "dataInput": re.compile(config["clean"]["dataInputRegex"]),
+        "dataOutput": re.compile(config["clean"]["dataOutputRegex"])
     }
 
-    config["chunksDir"] = os.path.join(config["processedDataDir"], "clean", "chunks")
-
-    if not os.path.isdir(config["chunksDir"]):
-        os.mkdir(config["chunksDir"])
-
-
-    # LOGGING
-    logger = logging.getLogger('clean')
-    config["logger"] = logger
-    logger.setLevel(logging.INFO)
-    fh = logging.FileHandler(os.path.join(config["logDir"], 'clean.log'))
-    ch = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s|%(process)d %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-    logger.info("Starting clean with config {}".format(config["hash"]))
+    config["logger"] = util.setupLogging(config, "clean")
     return config
 
 def divide(config):
     config["logger"].info("Starting {} workers".format(config["worker"]))
 
     files = []
-    for f in glob.glob(config["rawDataDir"] + "/*"):
-        if config["regex"]["data"].match(f):
+    for f in glob.glob(config["retrieve"]["outputDir"] + "/*"):
+        if config["regex"]["dataInput"].match(f):
             files.append(f)
     files.sort(key=lambda x: os.path.getsize(x), reverse=True)
-    files = [(config, f) for f in files]
+    workpackage = [(config, f) for f in files]
 
     config["logger"].info("  Will process {} files".format(len(files)))
 
@@ -84,21 +66,21 @@ def divide(config):
         max_workers = config["worker"],
         initializer = init_factory
     ) as ex:
-        res = zip(files, ex.map(cleanHelpers.processFile, files))
+        res = zip(workpackage, ex.map(cleanHelpers.processFile, workpackage))
 
     for r in res:
         if r[1]:
             config["logger"].debug("Success for {}: {}".format(r[0][1], r[1]))
         else:
-            config["logger"].warn("Unsuccesful run for {}".format(r[0][1]))
+            config["logger"].warning("Unsuccesful run for {}".format(r[0][1]))
 
 def conquer(config):
     config["logger"].info("Combining worker output")
     results = cleanHelpers.init_result(config)
 
     files = []
-    for f in glob.glob(config["chunksDir"] + "/*"):
-        if config["regex"]["data"].match(f):
+    for f in glob.glob(config["clean"]["outputDir"] + "/*"):
+        if config["regex"]["dataOutput"].match(f):
             files.append(f)
 
     for f in files:
@@ -108,10 +90,13 @@ def conquer(config):
             results["notAnnotatable"] += result["notAnnotatable"]
             results["multiAnnotations"] += result["multiAnnotations"]
             results["payloadNotFit"] += result["payloadNotFit"]
+            results["duplicates"] += result["duplicates"]
 
         for label in result["payload"].keys():
             results["payload"][label] = results["payload"].get(label, {})
             for payloadHash in result["payload"][label].keys():
+                if payloadHash in results["payload"][label].keys():
+                    results["duplicates"] += 1
                 results["payload"][label][payloadHash] = result["payload"][label][payloadHash]
 
         for label in result["anzsrc2subject"].keys():
@@ -129,15 +114,14 @@ def conquer(config):
             results["schemeURIs"][key] = results["schemeURIs"].get(key, 0) + value
 
     for key in results["payload"].keys():
-        dumpFile = os.path.join(config["processedDataDir"], "clean", key + ".data.json")
+        dumpFile = os.path.join(config["clean"]["outputDir"], key + ".data.json")
         with open(dumpFile, "w") as f:
             json.dump(results["payload"][key], f)
 
-    for key in results.keys():
-        if key not in ("payload"):
-            dumpFile = os.path.join(config["processedDataDir"], "clean", key + ".data.json")
-            with open(dumpFile, "w") as f:
-                json.dump(results[key], f)
+    for key in ("special", "subjectSchemes", "schemeURIs", "anzsrc2subject"):
+        dumpFile = os.path.join(config["clean"]["outputDir"], key + ".json")
+        with open(dumpFile, "w") as f:
+            json.dump(results[key], f)
 
     # Print results to log + on stdout
     config["logger"].info("Discipline match after data cleanup")
@@ -152,6 +136,7 @@ def conquer(config):
             longestCategoryName=longestCategoryName))
     config["logger"].info("General Statistics:")
     printInfos = (
+        "duplicates",
         "notAnnotatable",
         "multiAnnotations",
         "payloadNotFit",
@@ -165,5 +150,8 @@ def conquer(config):
 
 if __name__ == "__main__":
     config = prepare()
+    config["logger"].info("Starting clean with config {}".format(
+        config["clean"]["hash"])
+    )
     divide(config)
     conquer(config)

@@ -20,7 +20,8 @@
     },
     "clean": {
         "dmode": "title_description",
-        "dregex": ".*[a-f0-9]{2}\\.json",
+        "dataInputRegex": ".*([a-f0-9]{2})\\.json",
+        "dataOutputRegex": ".*[a-f0-9]{2}\\.chunk\\.json",
         "sregex": "f[0-9a-f]{1}\\.json"
     },
     "sample": {

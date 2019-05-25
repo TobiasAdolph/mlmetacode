@@ -75,7 +75,7 @@ def getMinLength(field):
 
 def getPayload(config, document):
     payload= {}
-    for field in config["dmode"].split("_"):
+    for field in config["clean"]["dmode"].split("_"):
         fieldPlural = field + "s"
         payloadPart = ""
         if fieldPlural not in document.keys():
@@ -143,6 +143,7 @@ def init_result(config):
         "multiAnnotations": 0,
         "payloadNotFit": 0,
         "useableDocuments": 0,
+        "duplicates": 0,
         "schemeURIs" : {},
         "special" : {},
         "subjectSchemes" : {},
@@ -162,11 +163,10 @@ def processFile(instruction):
     config = instruction[0]
     fileName = instruction[1]
     config["logger"].info("  Processing: {}".format(fileName))
+    cleanId = config["regex"]["dataInput"].match(fileName).group(1)
     resultFile = os.path.join(
-        config["processedDataDir"],
-        "clean",
-        "chunks",
-        os.path.basename(fileName)
+        config["clean"]["outputDir"],
+        cleanId + ".chunk.json"
     )
     if os.path.isfile(resultFile):
         config["logger"].info("    {} already processed: {}".format(
@@ -189,10 +189,12 @@ def processFile(instruction):
             label = labels.pop()
             payload = getPayload(config, document)
 
-            if not len(payload) == len(config["dmode"].split("_")):
+            if not len(payload) == len(config["clean"]["dmode"].split("_")):
                 result["payloadNotFit"] += 1
                 continue
             payloadHash = util.getDictHash(payload)
+            if payloadHash in result["payload"][label].keys():
+                result["duplicates"] += 1
             result["payload"][label][payloadHash] = payload
             if isSpecialChunk(config, fileName):
                 result["special"][label] += 1
