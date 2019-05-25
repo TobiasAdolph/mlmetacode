@@ -1,1 +1,0 @@
-{"baseDir": "../data", "seed": 1234, "units": 64, "ratio1": 0.8, "dropoutRate": 0.2, "ngramRange": [1, 2], "batchSize": 128, "layers": 2, "topK": 20000, "dtype": "dstat1000", "dmode": "title_description", "tokenMode": "word", "learningRate": 0.001, "minDocFreq": 2, "categories": "anzsrc.json", "epochs": 1000, "ratio2": 0.9}

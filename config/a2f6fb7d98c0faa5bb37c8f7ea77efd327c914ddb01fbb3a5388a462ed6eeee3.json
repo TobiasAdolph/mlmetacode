@@ -1,1 +1,0 @@
-{"dropoutRate": 0.2, "dmode": "title_description", "ratio2": 0.95, "tokenMode": "word", "units": 64, "ratio1": 0.75, "baseDir": "../data", "batchSize": 128, "dtype": "dmax", "layers": 2, "learningRate": 0.001, "topK": 20000, "seed": 1234, "categories": "anzsrc.json", "minDocFreq": 2, "ngramRange": [1, 3], "epochs": 1000}

@@ -8,119 +8,121 @@ import subprocess
 import sys
 import time
 
-logger = logging.getLogger('retrieve')
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('retrieve.log')
-fh.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(levelname)s|%(asctime)s -- %(message)s')
-fh.setFormatter(formatter)
-ch.setFormatter(formatter)
-logger.addHandler(fh)
-logger.addHandler(ch)
-
 def doHarvest(payload):
     config = payload[0]
     fileName = payload[1]
-    retrievalID = re.match(r'.*/(([0-9]|[a-f]){2}).config.json',
-                           fileName).group(1)
-    target = os.path.join(config["targetDir"], retrievalID + ".json")
+    config["logger"].info("Starting worker with config {} and fileName {}".format(
+        config["retrieve"]["hash"],
+        fileName
+    ))
+    retrievalId = config["retrieve"]["hvConfigRegexCompiled"].match(fileName).group(1)
+    target = os.path.join(config["retrieve"]["outputDir"], retrievalId + ".json")
     if os.path.isfile(target):
-        logger.warn("{} already exists, skipping".format(retrievalID))
+        config["logger"].info("{} already exists, skipping".format(retrievalId))
         return True
-    logger.info("================> do harvest with {} ({})".format(retrievalID, fileName))
-    hvIdx = getFreeHarvester()
-    if hvIdx == -1:
-        logger.error("Error, no hv is available")
-        raise Exception("ERROR")
-    try:
-        hv = config["hvs"][hvIdx]
-        hvConfig = loadHvConfig(fileName)
-        logger.info("using {} for {} with url and unload to {}".format(
-            hv,
-            fileName,
-            config["hvUnloadSrc"][hvIdx]))
-
-        logger.info("Loading harvester {} for {} with hvconfig {}".format(
-            hv,
-            fileName,
-            hvConfig["OaiPmhETL.hostURL"]))
-        loadHarvester(hvConfig, hv, config)
-        startHarvester(hv)
-        hvState = "HARVESTING"
-        while hvState in ["HARVESTING", "QUEUED"]:
-            time.sleep(config["sleep"])
-            logger.debug("Harvester {} for {} slept {} seconds, checking harvester".format(
-                hv,
-                fileName,
-                config["sleep"]))
-            (hvState, hvHealth) = checkHarvester(hv)
-        logger.info("Harvester {} for {} finished with state {} and health {}".format(
-            hv,
-            fileName,
-            hvState,
-            hvHealth)
-        )
-        returnHarvester(hvIdx)
-        if hvState == "IDLE":
-            time.sleep(5)
-            unloadHarvester(hvIdx, config, target)
-            return True
-        else:
-            logger.error("Harvester {} for {} finished with status code {}".format(
-                hv,
-                fileName,
-                hvState)
-            )
-            return False
-
-    except Exception as e:
-        logger.error(e)
-        returnHarvester(hvIdx)
+    config["logger"].info(
+        "================> do harvest with {} ({})".format(retrievalId, fileName)
+    )
+    hvIdx = getFreeHarvester(config)
+    if not hvIdx in range(len(config["retrieve"]["hvs"])):
+        config["logger"].error("Error, no hv is available: {}".format(hvIdx))
         return False
 
-def loadHarvester(hvConfig, hv, config):
+    hv = config["retrieve"]["hvs"][hvIdx]
+    hvConfig = loadHvConfig(config, fileName)
+    config["logger"].info(
+        "Loading Harvester {} \n\tfor target {} \n\tunload to {}".format(
+            hv,
+            retrievalId,
+            config["retrieve"]["hvUnloadSrc"][hvIdx]
+        )
+    )
+    loadHarvester(config, hvConfig, hv)
+    startHarvester(config, hv)
+    hvState = "HARVESTING"
+    while hvState in ["HARVESTING", "QUEUED"]:
+        time.sleep(config["retrieve"]["sleep"])
+        config["logger"].debug(
+            "Harvester {} for {} slept {} seconds, checking harvester".format(
+            hv,
+            retrievalId,
+            config["retrieve"]["sleep"])
+        )
+        (hvState, hvHealth) = checkHarvester(config, hv)
+    config["logger"].info(
+        "Harvester {} for {} finished with state {} and health {}".format(
+            hv,
+            retrievalId,
+            hvState,
+            hvHealth
+        )
+    )
+
+    if hvState == "IDLE":
+        # wait for the harvester to finalize IO of harvest
+        time.sleep(5)
+        unloadHarvester(config, hvIdx, target)
+        returnHarvester(config, hvIdx)
+        return True
+    else:
+        config["logger"].error("Could not unload Harvester {} for {}".format(
+                hv,
+                retrievalId
+            )
+        )
+        returnHarvester(config, hvIdx)
+        return False
+
+def loadHarvester(config, hvConfig, hv):
     headers = {'Content-Type': "application/json"}
     hvUrl = "{}/config/_set".format(hv)
-    if "OaiPmhETL.rangeTo" not in hvConfig.keys():
-        hvConfig["OaiPmhETL.rangeTo"] = config["hvRangeTo"]
-    neutConfig = loadHvConfig(os.path.join(config["hvConfigDir"], "neut.config.json"))
-    # neutralize parameters since Harvester do not care about meaningful order to change params
+    hvConfig["OaiPmhETL.rangeTo"] = min(
+        hvConfig.get("OaiPmhETL.rangeTo", config["retrieve"]["hvRangeTo"]),
+        config["retrieve"]["hvRangeTo"]
+    )
+    neutConfig = loadHvConfig(
+        config,
+        os.path.join(config["retrieve"]["configDir"], "neut.config.json")
+    )
+    # neutralize parameters since Harvester do not care about
+    # meaningful order to change params
     try:
         r = requests.post(hvUrl, data=json.dumps(neutConfig), headers=headers)
-        logger.debug("Neutralizing difficult hv params: {} {}".format(r.status_code, r.reason))
+        config["logger"].debug(
+            "Neutralizing difficult hv params: {} {}".format(r.status_code, r.reason))
     except Exception as e:
-        logger.error(e)
+        config["logger"].error(e)
+        raise
 
     try:
         r = requests.post(hvUrl, data=json.dumps(hvConfig), headers=headers)
-        logger.debug("{} {}".format(r.status_code, r.reason))
+        config["logger"].debug("{} {}".format(r.status_code, r.reason))
     except Exception as e:
-        logger.error(e)
+        config["logger"].error(e)
+        raise
 
-def checkHarvester(hv):
-    logger.debug("Checking harvester {}".format(hv))
+def checkHarvester(config, hv):
+    config["logger"].debug("Checking harvester {}".format(hv))
     hvUrl = hv
     r = requests.get(hvUrl)
-    logger.info("{} {} {}".format(r.status_code, r.reason, r.text))
-    hvState = json.loads(r.text)["state"]
-    hvHealth = json.loads(r.text)["health"]
-    logger.info("Harvester state: {} - health {}".format(hvState, hvHealth))
-    return (hvState, hvHealth)
+    config["logger"].debug("{} {} {}".format(r.status_code, r.reason, r.text))
+    return (
+        json.loads(r.text)["state"],
+        json.loads(r.text)["health"]
+    )
 
-def startHarvester(hv):
+def startHarvester(config, hv):
     hvUrl = hv
     r = requests.post(hvUrl)
-    logger.debug("{} {} {}".format(r.status_code, r.reason, r.text))
+    config["logger"].debug("{} {} {}".format(r.status_code, r.reason, r.text))
 
-def unloadHarvester(hvIdx, config, target):
-    command =  config["hvUnloadCmd"].format(config["hvUnloadSrc"][hvIdx],target)
-    logger.debug("unload harvester {} with {}".format(config["hvs"][hvIdx], command))
-    subprocess.run(config["hvUnloadCmd"].format(config["hvUnloadSrc"][hvIdx],
-                                             target).split())
+def unloadHarvester(config, hvIdx, target):
+    command =  config["retrieve"]["hvUnloadCmd"].format(
+        config["retrieve"]["hvUnloadSrc"][hvIdx], target)
+    config["logger"].debug("unload harvester with {}".format(command))
+    subprocess.run(command.split())
 
-def loadHvConfig(hvConfigPath):
+def loadHvConfig(config, hvConfigPath):
     with open(hvConfigPath, "r") as f:
         return json.load(f)
 
@@ -128,22 +130,18 @@ def init_globals(hvs):
     global _HVS
     _HVS = hvs
 
-def getFreeHarvester():
-    logger.info("Calling getFreeHarvester")
+def getFreeHarvester(config):
     with _HVS.get_lock():
-        freeIdx = -1
+        freeIdx = None
         for idx, isFree in enumerate(_HVS):
-            logger.debug("{}: {}".format(idx, isFree))
             if isFree:
-                logger.debug("Hv {} is free".format(idx))
+                config["logger"].info("Using hv {}".format(idx))
                 freeIdx = idx
                 _HVS[idx] = False
                 break
-    if freeIdx == -1:
-        logger.error("No hv free for a worker, raise hv in config")
     return freeIdx
 
-def returnHarvester(hvIdx):
-    logger.debug("Returning harvester {}".format(hvIdx))
+def returnHarvester(config, hvIdx):
+    config["logger"].info("Returning harvester {}".format(hvIdx))
     with _HVS.get_lock():
          _HVS[hvIdx] = True

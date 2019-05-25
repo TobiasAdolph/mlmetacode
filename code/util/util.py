@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import math
 import os
 import pickle
@@ -7,8 +8,8 @@ import random
 import re
 
 import numpy as np
-
 import pandas as pd
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
@@ -30,36 +31,44 @@ def loadConfig(path="config.json"):
     with open(path, "r") as cf:
         config = json.load(cf)
 
-    configHash = getDictHash(config)
-    configBasePath = os.path.dirname(path)
-    copyOfConfig = os.path.join(configBasePath, configHash + ".json")
+    configDir        = os.path.dirname(path)
+    logDir           = os.path.join(config["base"]["dir"], "log")
+    processedDataDir = os.path.join(config["base"]["dir"], "processed")
 
-    if not os.path.isfile(copyOfConfig):
-        with open(copyOfConfig, "w") as f:
-            json.dump(config, f)
-
-    # Derived values
-    config["hash"] = configHash
-    config["rawDataDir"] = os.path.join(config["baseDir"],
-                                        config["dtimestamp"],
-                                        "raw")
-    config["inputDataDir"] = os.path.join(config["baseDir"], config["dtype"])
-    config["processedDataDir"] = os.path.join(config["baseDir"],
-                                              config["dtimestamp"],
-                                             "processed")
-    config["configDir"] = os.path.join(configBasePath)
-    config["logDir"] = os.path.join(config["baseDir"], "log")
-    config["dmaxDir"] = os.path.join(config["baseDir"], "dmax")
-
-    for directory in(config["processedDataDir"], config["logDir"]):
-        if not os.path.isdir(directory):
-            os.mkdir(directory)
-    for subdir in ["clean", "sample", "train", "evaluate", "use"]:
-        subdirPath = os.path.join(config["processedDataDir"], subdir)
-        if not os.path.isdir(subdirPath):
-            os.mkdir(subdirPath)
+    for step in config.keys():
+        stepHash = getDictHash(config[step])
+        directories = {
+            "configDir": os.path.join(configDir, step),
+            "outputDir": os.path.join(processedDataDir, step, stepHash),
+            "logDir":    os.path.join(logDir, step, stepHash)
+        }
+        for dirType, dirPath in directories.items():
+            createDirIfNotExists(dirPath)
+        saveCopy = os.path.join(directories["configDir"], stepHash + ".json")
+        if not os.path.isfile(saveCopy):
+            with open(saveCopy, "w") as f:
+                json.dump(config[step], f)
+        config[step]["hash"] = stepHash
+        for directory in directories:
+            config[step][directory] = directories[directory]
+        config[step]["logFile"] = os.path.join(directories["logDir"], step + ".log")
 
     return config
+
+def createDirIfNotExists(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+
+def setupLogging(config, step):
+    # LOGGING
+    logger = logging.getLogger(step)
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(config[step]["logFile"])
+    formatter = logging.Formatter('%(asctime)s|%(process)d %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    return logger
 
 def getDictHash(payload):
     """Reproducibly sha256-hashes a python dictionary to the same hash
@@ -252,7 +261,7 @@ def getAnzsrc(config):
     # Returns
         a dictionary with keys (01) mapping to names (physical science)
     """
-    with open(os.path.join(config["configDir"], "anzsrc.json"), "r") as f:
+    with open(os.path.join(config["base"]["configDir"], "anzsrc.json"), "r") as f:
         return json.load(f)
 
 def getAnzsrcAsList(config):
@@ -263,7 +272,7 @@ def getAnzsrcAsList(config):
         config: a dictionary with the necessary path information
 
     # Returns
-        a python list (idx + 1 is the idx of the discipline) 
+        a python list (idx + 1 is the idx of the discipline)
     """
     retval = []
     anzsrc = getAnzsrc(config)
@@ -281,7 +290,7 @@ def getShortAnzsrc(config):
     # Returns
         a dictionary with keys (01) mapping to names (physical science)
     """
-    with open(os.path.join(config["configDir"], "shortAnzsrc.json"), "r") as f:
+    with open(os.path.join(config["base"]["configDir"], "shortAnzsrc.json"), "r") as f:
         return json.load(f)
 
 def getShortAnzsrcAsList(config):
@@ -331,12 +340,12 @@ def ngramVectorize(texts, labels, config, save=True):
 
     if not vectorizer:
         kwargs = {
-                'ngram_range': config["ngramRange"],
+                'ngram_range': config["vectorize"]["ngramRange"],
                 'dtype': np.float64,
                 'strip_accents': 'unicode',
                 'decode_error': 'replace',
-                'analyzer': config["tokenMode"],
-                'min_df': config["minDocFreq"]
+                'analyzer': config["vectorize"]["tokenMode"],
+                'min_df': config["vectorize"]["minDocFreq"]
         }
         vectorizer = TfidfVectorizer(**kwargs)
         x = vectorizer.fit_transform(texts)
@@ -344,7 +353,7 @@ def ngramVectorize(texts, labels, config, save=True):
         x = vectorizer.transform(texts)
 
     if not selector:
-        selector = SelectKBest(f_classif, k=min(config["topK"], x.shape[1]))
+        selector = SelectKBest(f_classif, k=min(config["vectorize"]["topK"], x.shape[1]))
         # we need the labels, otherwise we cannot guarantee that the selector selects
         # something for every label ?
         selector.fit(x, labels)
