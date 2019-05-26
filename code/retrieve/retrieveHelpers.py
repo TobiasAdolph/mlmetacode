@@ -120,7 +120,11 @@ def unloadHarvester(config, hvIdx, target):
     command =  config["retrieve"]["hvUnloadCmd"].format(
         config["retrieve"]["hvUnloadSrc"][hvIdx], target)
     config["logger"].debug("unload harvester with {}".format(command))
-    subprocess.run(command.split())
+    cp = subprocess.run(command.split())
+    if not cp.returncode == 0:
+        emptyPayload = { "documents": [] }
+        with open(target, "w") as f:
+            json.dump(emptyPayload, f)
 
 def loadHvConfig(config, hvConfigPath):
     with open(hvConfigPath, "r") as f:
