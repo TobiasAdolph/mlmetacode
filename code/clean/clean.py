@@ -41,7 +41,7 @@ def prepare():
 
     config["regex"] = {
         "ddcValue": re.compile('(^\d+\.\d+,)+'),
-        "jelSubjectScheme": re.compile('^JEL.*'),
+        "jelSubjectScheme": re.compile('^JEL.*|^jel.*'),
         "special": re.compile(config["clean"]["sregex"]),
         "dataInput": re.compile(config["clean"]["dataInputRegex"]),
         "dataOutput": re.compile(config["clean"]["dataOutputRegex"])
@@ -55,7 +55,7 @@ def divide(config):
 
     files = []
     for f in glob.glob(
-        os.path.join(config["retrieve"]["outputDir"], "..", config["clean"]["retrieveHash"]) + "/*"):
+        os.path.join(config["retrieve"]["baseDir"], config["clean"]["retrieveHash"]) + "/*"):
         if config["regex"]["dataInput"].match(f):
             files.append(f)
     files.sort(key=lambda x: os.path.getsize(x), reverse=True)

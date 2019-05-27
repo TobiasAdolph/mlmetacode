@@ -36,6 +36,7 @@ def loadConfig(path="config.json"):
         stepHash = getDictHash(config[step], step)
         directories = {
             "configDir": os.path.join(configDir, step),
+            "baseDir": os.path.join(processedDataDir, step),
             "outputDir": os.path.join(processedDataDir, step, stepHash),
             "logDir":    os.path.join(logDir, step, stepHash)
         }

@@ -61,7 +61,7 @@ def getBaseAnzsrc(config, subject):
         if anzsrcKey in config["anzsrcDict"].keys():
             anzsrc = config["anzsrcDict"][anzsrcKey]
         else:
-            anzsrc = config["anzsrcDict"]["00"]
+            anzsrc = None
         return anzsrc
     elif isJEL(config, subject):
         anzsrc = config["anzsrcDict"]["14"]
@@ -158,6 +158,20 @@ def init_result(config):
 
     return result
 
+def mergeSubjectInfo2Result(result, subjectInfo):
+    for key in subjectInfo.keys():
+        if key == "anzsrc2subject":
+            result[key] = result.get(key, {})
+            for anzsrc, anzsrcValues in subjectInfo[key].items():
+                if anzsrc not in result[key].keys():
+                    result[key][anzsrc] = { "total": 0}
+                for mapped, count in anzsrcValues.items():
+                    result[key][anzsrc][mapped] = result[key][anzsrc].get(mapped, 0) + count
+                    result[key][anzsrc]["total"] += count
+        else:
+            for entry, value in subjectInfo[key].items():
+                result[key][entry] = result[key].get(entry, 0) + value
+
 
 def processFile(instruction):
     config = instruction[0]
@@ -174,31 +188,48 @@ def processFile(instruction):
             resultFile
         ))
         return True
+    try:
+        with open(fileName) as f:
+            result = init_result(config)
+            for document in ijson.items(f, 'documents.item'):
+                result["documents"] += 1
+                subjectInfo = {
+                    "schemeURIs": {},
+                    "subjectSchemes": {},
+                    "anzsrc2subject": {}
+                }
+                labels = getLabels(config, document, subjectInfo, fileName)
+                if not labels:
+                    result["notAnnotatable"] += 1
+                    continue
+                elif len(labels) != 1:
+                    result["multiAnnotations"] += 1
+                    continue
+                label = labels.pop()
+                payload = getPayload(config, document)
 
-    with open(fileName) as f:
-        result = init_result(config)
-        for document in ijson.items(f, 'documents.item'):
-            result["documents"] += 1
-            labels = getLabels(config, document, result, fileName)
-            if not labels:
-                result["notAnnotatable"] += 1
-                continue
-            elif len(labels) != 1:
-                result["multiAnnotations"] += 1
-                continue
-            label = labels.pop()
-            payload = getPayload(config, document)
-
-            if not len(payload) == len(config["clean"]["dmode"].split("_")):
-                result["payloadNotFit"] += 1
-                continue
-            payloadHash = util.getDictHash(payload)
-            if payloadHash in result["payload"][label].keys():
-                result["duplicates"] += 1
-            result["payload"][label][payloadHash] = payload
-            if isSpecialChunk(config, fileName):
-                result["special"][label] += 1
-    config["logger"].info("    Save results for: {}".format(resultFile))
-    with open(resultFile, "w") as f:
-        json.dump(result, f)
-    return True
+                if not len(payload) == len(config["clean"]["dmode"].split("_")):
+                    result["payloadNotFit"] += 1
+                    continue
+                payloadHash = util.getDictHash(payload)
+                if payloadHash in result["payload"][label].keys():
+                    result["duplicates"] += 1
+                result["payload"][label][payloadHash] = payload
+                mergeSubjectInfo2Result(result, subjectInfo)
+                if isSpecialChunk(config, fileName):
+                    result["special"][label] += 1
+        config["logger"].info("    Save results for: {}".format(resultFile))
+        with open(resultFile, "w") as f:
+            json.dump(result, f)
+        return True
+    except Exception as e:
+        config["logger"].error(
+            "Failure in processing file {}: {} {} {} {}".format(
+                fileName,
+                sys.exc_info()[-1].tb_lineno,
+                e.__class__,
+                e.__doc__,
+                e
+            )
+        )
+        raise

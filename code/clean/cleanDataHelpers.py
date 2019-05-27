@@ -2,17 +2,18 @@ import re
 # used to check the subject[subjectScheme] payload to determine whether this is
 # a dewey decimal subject
 ddcNames = [
-        "Dewey decimal Classification",
-        "Dewey-Dezimalklassifikation (DDC) (http://ddc-deutsch.de/)",
-        "DeweyDecimalClassification",
-        "dewey",
-        "ddccode",
+        "DDC",
         "ddc",
+        "dewey",
+        "DeweyDecimalClassification",
+        "ddccode",
         "Dewey Classification"
             " (http://opac.bncf.firenze.sbn.it/opac/controller.jsp"
             "?action=dewey_browse&deweypath_cod=9)",
-        "DDC (Dewey-Dezimalklassifikation) (http://www.ddc-deutsch.de)",
-        "DDC"]
+        "Dewey decimal Classification",
+        "ddc-dbn",
+        "eterms:DDC"
+]
 
 # Used to map the payload (subject["value"]) of a DDC-subject to the base classes
 # of ANZSRC. Unhandled DDC classes:
