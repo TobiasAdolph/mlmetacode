@@ -12,18 +12,33 @@
             "http://localhost:8002/oaipmh/harvest"
         ],
         "hvUnloadSrc": [
-            "3dfd10fd6098",
-            "780a8e742637"
+            "1fd68a023b03",
+            "4b9c4a13815b"
         ],
         "hvUnloadCmd": "docker cp {}:/var/lib/jetty/cache/records/OaiPmhETL.json {}",
         "hvRangeTo": 1000
     },
     "clean": {
-        "retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8",
+        "retrieveHash": "0797f318a1b1d0be80fa2c224d8678b80e76c7f951b4c29a83b25eeca369fce5",
         "dmode": "title_description",
-        "dataInputRegex": ".*([a-f0-9]{2})\\.json",
-        "dataOutputRegex": ".*[a-f0-9]{2}\\.chunk\\.json",
-        "sregex": "f[0-9a-f]{1}\\.json"
+        "regex": {
+            "ddcValue": "(^\\d+\\.\\d+,)+",
+            "ddcSchemeURI": "https{0,1}://dewey.info/*",
+            "jelSubjectScheme": "^JEL.*|^jel.*",
+            "special": "f[0-9a-f]{1}\\.json",
+            "dataInput": ".*([a-f0-9]{2})\\.json",
+            "dataOutput": ".*[a-f0-9]{2}\\.chunk\\.json"
+        },
+        "minLength": {
+            "description": 15,
+            "title": 1
+        },
+        "schemes": [
+            "anzsrc",
+            "jel",
+            "ddc",
+            "narcis"
+        ]
     },
     "sample": {
         "cleanHash": "ba24c4778c202aefc3c317e47471473882fc13618e34e8244a897cb7d023eaac",

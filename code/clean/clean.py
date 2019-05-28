@@ -3,7 +3,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import argparse
 import glob
 import json
-import logging
 import re
 import util.util as util
 import cleanHelpers
@@ -40,11 +39,12 @@ def prepare():
         config["specialDict"]  = json.load(f)
 
     config["regex"] = {
-        "ddcValue": re.compile('(^\d+\.\d+,)+'),
-        "jelSubjectScheme": re.compile('^JEL.*|^jel.*'),
-        "special": re.compile(config["clean"]["sregex"]),
-        "dataInput": re.compile(config["clean"]["dataInputRegex"]),
-        "dataOutput": re.compile(config["clean"]["dataOutputRegex"])
+        "ddcValue": re.compile(config["clean"]["regex"]["ddcValue"]),
+        "ddcSchemeURI": re.compile(config["clean"]["regex"]["ddcSchemeURI"]),
+        "jelSubjectScheme": re.compile(config["clean"]["regex"]["jelSubjectScheme"]),
+        "special": re.compile(config["clean"]["regex"]["special"]),
+        "dataInput": re.compile(config["clean"]["regex"]["dataInput"]),
+        "dataOutput": re.compile(config["clean"]["regex"]["dataOutput"])
     }
 
     config["logger"] = util.setupLogging(config, "clean")
@@ -151,6 +151,7 @@ def conquer(config):
 
 if __name__ == "__main__":
     config = prepare()
+    print("Starting with config {}".format(config["clean"]["hash"]))
     config["logger"].info("Starting clean with config {}".format(
         config["clean"]["hash"])
     )

@@ -21,7 +21,22 @@ def prepare():
             help        ="Discplay category (only necessary for anzsrc2subject)")
     args = parser.parse_args()
 
-    config = util.loadConfig(args.config)
+    config = {}
+    with open(args.config, "r") as f:
+        loadedConfig = json.load(f)
+        if "clean" in loadedConfig.keys():
+            config = loadedConfig
+        else:
+            config["clean"] = loadedConfig
+    config["clean"]["outputDir"] = os.path.join(
+        "../data",
+        "processed",
+        "clean",
+        util.getDictHash(config["clean"]))
+    config["base"] = {
+        "configDir": "../config/base"
+    }
+
     config["type"] = args.type
     config["anzsrc"] = args.anzsrc
     return config

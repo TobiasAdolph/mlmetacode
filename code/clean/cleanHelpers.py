@@ -17,11 +17,11 @@ def isANZSRC(subject):
     return False
 
 def isDDC(config, subject):
-    if "subjectScheme" not in subject.keys():
-        return False
     if config["regex"]["ddcValue"].match(subject["value"].strip()):
         return False
-    if subject["subjectScheme"] in ddcNames:
+    if subject.get("subjectScheme", "") in ddcNames:
+        return True
+    if config["regex"]["ddcSchemeURI"].match(subject.get("schemeURI", "")):
         return True
     return False
 
@@ -32,6 +32,13 @@ def isJEL(config, subject):
         return True
     else:
         return False
+
+def isNarcis(config, subject):
+    if subject.get("schemeURI", "") == "http://www.narcis.nl/classification":
+        return True
+    if subject.get("subjectScheme", "") == "NARCIS-classification":
+        return True
+    return False
 
 def registerMapping(anzsrc, payload, anzsrc2subject):
     if anzsrc not in anzsrc2subject.keys():
@@ -45,13 +52,15 @@ def registerMapping(anzsrc, payload, anzsrc2subject):
 
 def getBaseAnzsrc(config, subject):
     payload = subject["value"].lower().strip()
-    if isDDC(config, subject):
+    if isDDC(config, subject) and "ddc" in config["clean"].keys():
         for pair in mappingDDC:
             anzsrc = pair[0]
             regex  = pair[1]
             if regex.match(payload):
                 return anzsrc
-    elif isANZSRC(subject):
+    elif isANZSRC(subject) and "anzsrc" in config["clean"].keys():
+        if not re.match(r'^\d{5}.*', payload):
+            return None
         anzsrcNumber = re.search('\d+', payload).group()
         if len(anzsrcNumber) % 2 == 0:
             anzsrcKey = payload[:2]
@@ -63,15 +72,19 @@ def getBaseAnzsrc(config, subject):
         else:
             anzsrc = None
         return anzsrc
-    elif isJEL(config, subject):
+    elif isJEL(config, subject) and "jel" in config["clean"].keys():
         anzsrc = config["anzsrcDict"]["14"]
         return anzsrc
+    elif isNarcis(config, subject) and "narcis" in config["clean"].keys():
+        for pair in mappingNarcis:
+            anzsrc = pair[0]
+            regex  = pair[1]
+            if regex.match(subject.get("valueURI", "")):
+                return anzsrc
     return ""
 
-def getMinLength(field):
-    if field == "description":
-        return 15
-    return 1
+def getMinLength(config, field):
+    return config["clean"]["minLength"].get(field, 1)
 
 def getPayload(config, document):
     payload= {}
@@ -90,7 +103,7 @@ def getPayload(config, document):
                 config["logger"].debug("Cannot process {}: {}".format(instance["value"],e))
                 continue
             payloadPart += " " + instance["value"]
-        if len(payloadPart.split()) < getMinLength(field):
+        if len(payloadPart.split()) < getMinLength(config, field):
             continue
         payload[field] = payloadPart
     return payload
@@ -199,12 +212,21 @@ def processFile(instruction):
                     "anzsrc2subject": {}
                 }
                 labels = getLabels(config, document, subjectInfo, fileName)
+
+                mergeSubjectInfo2Result(
+                    result, {
+                        "subjectSchemes": subjectInfo["subjectSchemes"],
+                        "schemeURIs": subjectInfo["schemeURIs"]
+                    }
+                )
+
                 if not labels:
                     result["notAnnotatable"] += 1
                     continue
-                elif len(labels) != 1:
+                if len(labels) != 1:
                     result["multiAnnotations"] += 1
                     continue
+
                 label = labels.pop()
                 payload = getPayload(config, document)
 
@@ -215,7 +237,9 @@ def processFile(instruction):
                 if payloadHash in result["payload"][label].keys():
                     result["duplicates"] += 1
                 result["payload"][label][payloadHash] = payload
-                mergeSubjectInfo2Result(result, subjectInfo)
+                mergeSubjectInfo2Result(
+                    result, { "anzsrc2subject": subjectInfo["anzsrc2subject"] }
+                )
                 if isSpecialChunk(config, fileName):
                     result["special"][label] += 1
         config["logger"].info("    Save results for: {}".format(resultFile))

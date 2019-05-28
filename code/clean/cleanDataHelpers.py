@@ -35,6 +35,12 @@ ddcNames = [
 # positives
 
 mappingDDC = [
+        ["05 environmental sciences",
+            re.compile(
+                '^57[7-9].*'
+                '|ddc 57[7-8]'
+            )
+        ],
         ["04 earth sciences",
             re.compile(
                 '^55[^.]+.*'
@@ -88,11 +94,16 @@ mappingDDC = [
                 )
         ],
         ["09 engineering",
-            re.compile(
-                '^62[^.]+.*'
-                '|^ddc 62[^.]+.*'
-                '|.*technik::620.*'
-                )
+                re.compile(
+                    '^62[^.]+.*'
+                    '|^66[^.]+.*'
+                    '|^67[^.]+.*'
+                    '|^68[^.]+.*'
+                    '|^ddc 62[^.]+.*'
+                    '|^ddc 66[^.]+.*'
+                    '|^ddc 67[^.]+.*'
+                    '|^ddc 68[^.]+.*'
+                    )
         ],
         ["02 physical science",
             re.compile(
@@ -218,24 +229,6 @@ mappingDDC = [
 
                     )
         ],
-        ["09 engineering",
-                re.compile(
-                    '^62[^.]+.*'
-                    '|^66[^.]+.*'
-                    '|^67[^.]+.*'
-                    '|^68[^.]+.*'
-                    '|^ddc 62[^.]+.*'
-                    '|^ddc 66[^.]+.*'
-                    '|^ddc 67[^.]+.*'
-                    '|^ddc 68[^.]+.*'
-                    )
-        ],
-        ["10 technology",
-                re.compile(
-                    '^60[^.]+.*'
-                    '|^ddc 60[^.]+.*'
-                    '|.*600 \| technik.*$')
-        ],
         ["19 studies in creative arts and writing",
                 re.compile(
                     '^07[^.]+.*'
@@ -273,6 +266,115 @@ mappingDDC = [
                     '|^ddc 69[^.]+.*'
                     '|^ddc 71[^.]+.*'
                     '|^ddc 72[^.]+.*'
+                    )
+        ]
+]
+# ORDER MATTERS
+mappingNarcis = [
+        ["05 environmental sciences",
+            re.compile(
+                'http://www.narcis.nl/classfication/D224\d{2}'
+            )
+        ],
+        ["04 earth sciences",
+            re.compile(
+                'http://www.narcis.nl/classfication/D15\d{3}'
+            )
+        ],
+        ["11 medical and health sciences",
+            re.compile(
+                'http://www.narcis.nl/classfication/D2(3|4)\d{3}'
+                )
+        ],
+        ["06 biological sciences",
+            re.compile(
+                'http://www.narcis.nl/classfication/D22\d{3}'
+                )
+        ],
+        ["08 information and computing sciences",
+            re.compile(
+                'http://www.narcis.nl/classfication/D16\d{3}'
+                )
+        ],
+        ["14 economics",
+            re.compile(
+                'http://www.narcis.nl/classfication/D70\d{3}'
+                )
+        ],
+        ["09 engineering",
+            re.compile(
+                'http://www.narcis.nl/classfication/(D14310|D14220|D1443\d{1}|D1444\d{1}|D146\d{2})'
+                )
+        ],
+        ["02 physical science",
+            re.compile(
+                'http://www.narcis.nl/classfication/(D12\d{3}|D17\d{3})'
+                )
+        ],
+        ["21 history and archaeology",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D34\d{3}|D37\d{3})'
+                    )
+        ],
+        ["03 chemical science",
+                re.compile(
+                'http://www.narcis.nl/classfication/D13\d{3}'
+                    )
+        ],
+        ["20 language, communication and culture",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D36\d{3}|D63\d{3}|D66\d{3})'
+                    )
+        ],
+        ["16 studies in human society",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D6(0|1|8|9)\d{3}|D42\d{3})'
+                    )
+        ],
+        ["07 agricultural and veterinary science",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D18\d{3}|D26\d{3})'
+                    )
+        ],
+        ["17 psychology and cognitive sciences",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D51\d{3})'
+                    )
+        ],
+        ["10 technology",
+                re.compile(
+                'http://www.narcis.nl/classfication/(E16\d{3}|D141\d{2}|D142(1|3|4)\d{1}|D143(1|2)\d{1}|D145\d{2}|D14(7|8|9)\d{2})'
+
+                    )
+        ],
+        ["13 education",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D52\d{3})'
+                    )
+        ],
+        ["01 mathematical science",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D11\d{3})'
+                    )
+        ],
+        ["18 law and legal studies",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D41\d{3})'
+                    )
+        ],
+        ["22 philosophy and religious studies",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D3(2|3)\d{3})'
+                    )
+        ],
+        ["19 studies in creative arts and writing",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D35(1|2|3)\d{2})'
+                    )
+        ],
+        ["12 built environment and design",
+                re.compile(
+                'http://www.narcis.nl/classfication/(D355\d{2}|D147\d{2})'
                     )
         ]
 ]
