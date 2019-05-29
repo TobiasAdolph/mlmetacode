@@ -79,22 +79,18 @@ def getAnzsrc(config, subject):
         return None
     anzsrcNumber = re.search('\d+', payload).group()
     if len(anzsrcNumber) % 2 == 0:
-        anzsrcKey = payload[:2]
+        return int(payload[:2])
     else:
-        anzsrcKey = "0" + payload[:1]
-
-    if anzsrcKey in config["anzsrcDict"].keys():
-        return config["anzsrcDict"][anzsrcKey]
-    return None
+        return int(payload[:1])
 
 def getDdc(config, subject):
-    return getAnzsrcSchemeFromMapping(mappingDdc, "value", subject)
+    return getAnzsrcSchemeFromMapping(ddc2Anzsrc, "value", subject)
 
 def getNarcis(config, subject):
-    return getAnzsrcSchemeFromMapping(mappingNarcis, "valueURI", subject)
+    return getAnzsrcSchemeFromMapping(narcis2Anzsrc, "valueURI", subject)
 
 def getBk(config, subject):
-    return getAnzsrcSchemeFromMapping(mappingBk, "value", subject)
+    return getAnzsrcSchemeFromMapping(bk2Anzsrc, "value", subject)
 
 def getLinsearch(config, subject):
-    return getAnzsrcSchemeFromMapping(mappingNarcis, "value", subject)
+    return getAnzsrcSchemeFromMapping(linsearch2Anzsrc, "value", subject)

@@ -32,7 +32,8 @@ def prepare():
     config = util.loadConfig(args.config)
     config["worker"] = int(args.worker)
 
-    config["anzsrcDict"]  = util.getAnzsrc(config)
+    config["labels"]  = util.getLabels(config)
+
     with open(os.path.join(
         config["base"]["configDir"],
         "specialDataProviders.json"), "r") as f:
@@ -127,15 +128,15 @@ def conquer(config):
 
     # Print results to log + on stdout
     config["logger"].info("Discipline match after data cleanup")
-    longestCategoryName = max(len(v) for k,v in config["anzsrcDict"].items())
-    for category in sorted(results["payload"].keys()):
-        categorySize = len(results["payload"][category])
-        results["useableDocuments"] += categorySize
-        config["logger"].info("  {:<{longestCategoryName}}: {:>8} ({:>5} special)".format(
-            config["anzsrcDict"][category],
-            categorySize,
-            results["special"][category],
-            longestCategoryName=longestCategoryName))
+    longestLabelName = max(len(label) for label in config["labels"])
+    for label in sorted(results["payload"].keys()):
+        labelSize = len(results["payload"][category])
+        results["useableDocuments"] += labelSize
+        config["logger"].info("  {:<{longestLabelName}}: {:>8} ({:>5} special)".format(
+            config["labels"][category],
+            labelSize,
+            results["special"][label],
+            longestLabelName=longestLabelName))
     config["logger"].info("General Statistics:")
     printInfos = (
         "duplicates",

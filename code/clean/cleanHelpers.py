@@ -62,7 +62,7 @@ def getLabels(config, document, result, fileName):
 
     if isSpecialChunk(config, fileName):
         lookup = os.path.basename(fileName)
-        label = config["anzsrcDict"][config["specialDict"][lookup]][:2]
+        label = config["specialDict"][lookup]
         labels.add(label)
     else:
         for subject in document["subjects"]:
@@ -106,8 +106,8 @@ def init_result(config):
         "payload" : {},
     }
 
-    for label in config["anzsrcDict"]:
-        result["anzsrc2subject"][config["anzsrcDict"][label]] = {"total": 0}
+    for label in config["labels"]:
+        result["anzsrc2subject"][label] = {"total": 0}
         result["special"][label] = 0
         result["payload"][label] = {}
 

@@ -226,6 +226,10 @@ def loadSample(config, data=None, save=True):
             (test_texts, np.array(test_labels))
     )
 
+def getLabels(config):
+    with open(os.path.join(config["base"]["configDir"], "labels.json"), "r") as f:
+        return json.load(f)
+
 def getAnzsrc(config):
     """ Get a dictionary mapping a label (number) to the names of the disciplines
     (physical science)
