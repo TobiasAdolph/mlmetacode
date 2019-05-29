@@ -35,16 +35,8 @@ def prepare():
 
 
     args = parser.parse_args()
-    config ={}
-    with open(args.config, "r") as f:
-        loadedConfig = json.load(f)
-        if "clean" in loadedConfig.keys():
-            config = loadedConfig
-        else:
-            config["clean"] = loadedConfig
-            config["retrieve"] = {
-                "baseDir": os.path.join( "../data", "processed", "retrieve")
-            }
+    config = util.loadConfig(args.config)
+
     config["field"] = args.field
     config["grep"] = args.grep
 

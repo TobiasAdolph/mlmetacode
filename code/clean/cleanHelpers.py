@@ -6,39 +6,7 @@ import re
 import util.util as util
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
-from cleanDataHelpers import ddcNames, mappingDDC
-
-def isANZSRC(subject):
-    if "schemeURI" not in subject.keys():
-        return False
-    if (subject["schemeURI"] == "http://www.abs.gov.au/ausstats"
-            "/abs@.nsf/0/6BB427AB9696C225CA2574180004463E"):
-        return True
-    return False
-
-def isDDC(config, subject):
-    if config["regex"]["ddcValue"].match(subject["value"].strip()):
-        return False
-    if subject.get("subjectScheme", "") in ddcNames:
-        return True
-    if config["regex"]["ddcSchemeURI"].match(subject.get("schemeURI", "")):
-        return True
-    return False
-
-def isJEL(config, subject):
-    if "subjectScheme" not in subject.keys():
-        return False
-    if config["regex"]["jelSubjectScheme"].match(subject["subjectScheme"]):
-        return True
-    else:
-        return False
-
-def isNarcis(config, subject):
-    if subject.get("schemeURI", "") == "http://www.narcis.nl/classification":
-        return True
-    if subject.get("subjectScheme", "") == "NARCIS-classification":
-        return True
-    return False
+from cleanSchemeHelpers import *
 
 def registerMapping(anzsrc, payload, anzsrc2subject):
     if anzsrc not in anzsrc2subject.keys():
@@ -52,36 +20,11 @@ def registerMapping(anzsrc, payload, anzsrc2subject):
 
 def getBaseAnzsrc(config, subject):
     payload = subject["value"].lower().strip()
-    if isDDC(config, subject) and "ddc" in config["clean"].keys():
-        for pair in mappingDDC:
-            anzsrc = pair[0]
-            regex  = pair[1]
-            if regex.match(payload):
-                return anzsrc
-    elif isANZSRC(subject) and "anzsrc" in config["clean"].keys():
-        if not re.match(r'^\d{5}.*', payload):
-            return None
-        anzsrcNumber = re.search('\d+', payload).group()
-        if len(anzsrcNumber) % 2 == 0:
-            anzsrcKey = payload[:2]
-        else:
-            anzsrcKey = "0" + payload[:1]
-
-        if anzsrcKey in config["anzsrcDict"].keys():
-            anzsrc = config["anzsrcDict"][anzsrcKey]
-        else:
-            anzsrc = None
-        return anzsrc
-    elif isJEL(config, subject) and "jel" in config["clean"].keys():
-        anzsrc = config["anzsrcDict"]["14"]
-        return anzsrc
-    elif isNarcis(config, subject) and "narcis" in config["clean"].keys():
-        for pair in mappingNarcis:
-            anzsrc = pair[0]
-            regex  = pair[1]
-            if regex.match(subject.get("valueURI", "")):
-                return anzsrc
-    return ""
+    for scheme in config["clean"]["schemes"]:
+        isScheme = getSchemeTester(scheme)
+        if isScheme and isScheme(config, subject):
+            return getAnzsrcFromScheme(scheme, config, subject)
+    return None
 
 def getMinLength(config, field):
     return config["clean"]["minLength"].get(field, 1)
@@ -100,7 +43,6 @@ def getPayload(config, document):
                 if not detect(instance["value"]) == "en":
                     continue
             except LangDetectException as e:
-                config["logger"].debug("Cannot process {}: {}".format(instance["value"],e))
                 continue
             payloadPart += " " + instance["value"]
         if len(payloadPart.split()) < getMinLength(config, field):

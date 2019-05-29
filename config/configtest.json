@@ -19,7 +19,7 @@
         "hvRangeTo": 1000
     },
     "clean": {
-        "retrieveHash": "0797f318a1b1d0be80fa2c224d8678b80e76c7f951b4c29a83b25eeca369fce5",
+        "retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8",
         "dmode": "title_description",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
@@ -52,6 +52,12 @@
                 "field": "subjectScheme",
                 "regex": "^AFSET$",
                 "anzsrc": "20"
+            },
+            {
+                "name": "inchi",
+                "field": "schemeURI",
+                "regex": "^http://www.inchi-trust.org/$",
+                "anzsrc": "03"
             },
             {
                 "name": "duchas",

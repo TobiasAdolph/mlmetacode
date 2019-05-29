@@ -41,11 +41,12 @@ def prepare():
     config["regex"] = {
         "ddcValue": re.compile(config["clean"]["regex"]["ddcValue"]),
         "ddcSchemeURI": re.compile(config["clean"]["regex"]["ddcSchemeURI"]),
-        "jelSubjectScheme": re.compile(config["clean"]["regex"]["jelSubjectScheme"]),
         "special": re.compile(config["clean"]["regex"]["special"]),
         "dataInput": re.compile(config["clean"]["regex"]["dataInput"]),
         "dataOutput": re.compile(config["clean"]["regex"]["dataOutput"])
     }
+    for static in config["clean"]["static"]:
+        config["regex"][static["name"]] = re.compile(static["regex"])
 
     config["logger"] = util.setupLogging(config, "clean")
     return config
