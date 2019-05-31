@@ -38,6 +38,7 @@
             "ddc",
             "bk",
             "narcis",
+            "bepress",
             "linsearch"
         ],
         "static": [
@@ -52,12 +53,6 @@
                 "field": "subjectScheme",
                 "regex": "^AFSET$",
                 "anzsrc": "20"
-            },
-            {
-                "name": "inchi",
-                "field": "schemeURI",
-                "regex": "^http://www.inchi-trust.org/$",
-                "anzsrc": "03"
             },
             {
                 "name": "duchas",

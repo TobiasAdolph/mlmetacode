@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import re
-from cleanDataHelpers import *
+import cleanDataHelpers
 
 def getSchemeTester(scheme):
     if scheme == "anzsrc":
@@ -14,22 +14,18 @@ def getSchemeTester(scheme):
         return isNarcis
     elif scheme == "linsearch":
         return isLinsearch
+    elif scheme == "bepress":
+        return isBepress
     else:
         return None
 
-def getAnzsrcFromScheme(scheme, config, subject):
+def getLabelFromScheme(scheme, config, subject, row):
     if scheme == "anzsrc":
-        return getAnzsrc(config, subject)
-    elif scheme == "ddc":
-        return getDdc(config, subject)
-    elif scheme == "bk":
-        return getBk(config, subject)
+        return getAnzsrc(config, subject, row)
     elif scheme == "narcis":
-        return getNarcis(config, subject)
-    elif scheme == "linsearch":
-        return getLinsearch(config, subject)
+        return getLabelFromMapping(scheme, "valueURI", subject, row)
     else:
-        return None
+        return getLabelFromMapping(scheme, "value", subject, row)
 
 def isAnzsrc(config, subject):
     if "schemeURI" not in subject.keys():
@@ -42,7 +38,7 @@ def isAnzsrc(config, subject):
 def isDdc(config, subject):
     if config["regex"]["ddcValue"].match(subject["value"].strip()):
         return False
-    if subject.get("subjectScheme", "") in ddcNames:
+    if subject.get("subjectScheme", "") in cleanDataHelpers.ddcNames:
         return True
     if config["regex"]["ddcSchemeURI"].match(subject.get("schemeURI", "")):
         return True
@@ -65,32 +61,33 @@ def isBk(config, subject):
         return True
     return False
 
-def getAnzsrcSchemeFromMapping(mapping, field, subject):
+def isBepress(config, subject):
+    subjectScheme = subject.get("subjectScheme", "").strip().lower()
+    for bsn in (
+        "bepress digital commons three-tiered taxonomy",
+        "digital commons three-tiered list of academic disciplines"):
+        if subjectScheme == bsn:
+            return True
+    return False
+
+def getLabelFromMapping(scheme, field, subject, row):
+    checkAgainst = subject.get(field, "").strip()
+    mapping = cleanDataHelpers.mappings[scheme]
     for pair in mapping:
-        anzsrc = pair[0]
+        label = pair[0]
         regex  = pair[1]
-        if regex.match(subject.get(field, "").lower().strip()):
-            return anzsrc
+        if regex.match(checkAgainst):
+            row[scheme].append(subject.get(field, ""))
+            return label
     return None
 
-def getAnzsrc(config, subject):
+def getAnzsrc(config, subject, row):
     payload = subject.get("value", "").lower().strip()
     if not re.match(r'^\d{5}.*', payload):
         return None
     anzsrcNumber = re.search('\d+', payload).group()
+    row["anzsrc"].append(subject.get("value", ""))
     if len(anzsrcNumber) % 2 == 0:
         return int(payload[:2])
     else:
         return int(payload[:1])
-
-def getDdc(config, subject):
-    return getAnzsrcSchemeFromMapping(ddc2Anzsrc, "value", subject)
-
-def getNarcis(config, subject):
-    return getAnzsrcSchemeFromMapping(narcis2Anzsrc, "valueURI", subject)
-
-def getBk(config, subject):
-    return getAnzsrcSchemeFromMapping(bk2Anzsrc, "value", subject)
-
-def getLinsearch(config, subject):
-    return getAnzsrcSchemeFromMapping(linsearch2Anzsrc, "value", subject)

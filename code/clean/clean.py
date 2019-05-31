@@ -6,6 +6,7 @@ import json
 import re
 import util.util as util
 import cleanHelpers
+import pandas as pd
 
 from concurrent.futures import ProcessPoolExecutor
 from langdetect.detector_factory import init_factory
@@ -65,6 +66,8 @@ def divide(config):
 
     config["logger"].info("  Will process {} files".format(len(files)))
 
+    #workpackage = [workpackage[-35], workpackage[-25], workpackage[-16]]
+
     with ProcessPoolExecutor(
         max_workers = config["worker"],
         initializer = init_factory
@@ -72,14 +75,32 @@ def divide(config):
         res = zip(workpackage, ex.map(cleanHelpers.processFile, workpackage))
 
     for r in res:
-        if r[1]:
-            config["logger"].debug("Success for {}: {}".format(r[0][1], r[1]))
-        else:
+        if not r[1]:
             config["logger"].warning("Unsuccesful run for {}".format(r[0][1]))
 
 def conquer(config):
     config["logger"].info("Combining worker output")
-    results = cleanHelpers.init_result(config)
+    statisticsFields = set([
+        "notAnnot",
+        "multiAnnot",
+        "notFit",
+        "duplicate",
+        "special",
+        "useable",
+        "id",
+        "labels"
+    ])
+    statisticsFields.update(config["clean"]["schemes"])
+    statistics = []
+
+    result = {
+        "subjectScheme": {},
+        "schemeURI": {},
+        "payload" : {}
+    }
+
+    for label in range(len(util.getLabels(config))):
+        result["payload"][label] = {}
 
     files = []
     for f in glob.glob(config["clean"]["outputDir"] + "/*"):
@@ -88,68 +109,83 @@ def conquer(config):
 
     for f in files:
         with open(f, "r") as fh:
-            result = json.load(fh)
-            results["documents"] += result["documents"]
-            results["notAnnotatable"] += result["notAnnotatable"]
-            results["multiAnnotations"] += result["multiAnnotations"]
-            results["payloadNotFit"] += result["payloadNotFit"]
-            results["duplicates"] += result["duplicates"]
+            rows = json.load(fh)
+        for row in rows:
+            if row["useable"]:
+                if len(row["labels"]) != 1:
+                    raise Error("{} in {} is useable, but has more than 1 label".format(
+                        row["id"], f))
+                label = row["labels"][0]
+                if row["payloadHash"] in result["payload"][label].keys():
+                    row["duplicate"] = True
+                    row["useable"] = False
+                else:
+                    result["payload"][label][row["payloadHash"]] = row["payload"]
 
-        for label in result["payload"].keys():
-            results["payload"][label] = results["payload"].get(label, {})
-            for payloadHash in result["payload"][label].keys():
-                if payloadHash in results["payload"][label].keys():
-                    results["duplicates"] += 1
-                results["payload"][label][payloadHash] = result["payload"][label][payloadHash]
+            statistic = {}
+            for field in statisticsFields:
+                statistic[field] = row[field]
+            statistics.append(statistic)
 
-        for label in result["anzsrc2subject"].keys():
-            for key, value in result["anzsrc2subject"][label].items():
-                results["anzsrc2subject"][label][key] = (
-                    results["anzsrc2subject"][label].get(key, 0) + value )
+            for field in ("subjectScheme", "schemeURI"):
+                for fieldInstance in row[field]:
+                    result[field][fieldInstance] = (
+                        result[field].get(fieldInstance, 0) + 1)
+    statistics = pd.DataFrame(statistics)
 
-        for label, value in result["special"].items():
-            results["special"][label] += value
-
-        for key, value in result["subjectSchemes"].items():
-            results["subjectSchemes"][key] = results["subjectSchemes"].get(key, 0) + value
-
-        for key, value in result["schemeURIs"].items():
-            results["schemeURIs"][key] = results["schemeURIs"].get(key, 0) + value
-
-    for key in results["payload"].keys():
-        dumpFile = os.path.join(config["clean"]["outputDir"], key + ".data.json")
+    for key in result["payload"].keys():
+        dumpFile = os.path.join(config["clean"]["outputDir"], str(key) + ".data.json")
         with open(dumpFile, "w") as f:
-            json.dump(results["payload"][key], f)
+            json.dump(result["payload"][key], f)
 
-    for key in ("special", "subjectSchemes", "schemeURIs", "anzsrc2subject"):
+    for key in ("subjectScheme", "schemeURI"):
         dumpFile = os.path.join(config["clean"]["outputDir"], key + ".json")
         with open(dumpFile, "w") as f:
-            json.dump(results[key], f)
+            json.dump(result[key], f)
+
+    with open(os.path.join(config["clean"]["outputDir"], "statistics.csv"), "w") as f:
+        statistics.to_csv(f)
 
     # Print results to log + on stdout
     config["logger"].info("Discipline match after data cleanup")
     longestLabelName = max(len(label) for label in config["labels"])
-    for label in sorted(results["payload"].keys()):
-        labelSize = len(results["payload"][category])
-        results["useableDocuments"] += labelSize
-        config["logger"].info("  {:<{longestLabelName}}: {:>8} ({:>5} special)".format(
-            config["labels"][category],
+    for label in sorted(result["payload"].keys()):
+        labelSize = len(result["payload"][label])
+        config["logger"].info("  {:<{longestLabelName}}: {:>8}".format(
+            config["labels"][label],
             labelSize,
-            results["special"][label],
             longestLabelName=longestLabelName))
     config["logger"].info("General Statistics:")
     printInfos = (
-        "duplicates",
-        "notAnnotatable",
-        "multiAnnotations",
-        "payloadNotFit",
-        "useableDocuments",
-        "documents"
+        "duplicate",
+        "notAnnot",
+        "multiAnnot",
+        "notFit",
+        "useable"
     )
     longestPrintInfo = max(len(v) for v in printInfos)
     for printInfo in printInfos:
         config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-            printInfo, results[printInfo], longestPrintInfo=longestPrintInfo))
+            printInfo, sum(statistics[printInfo]), longestPrintInfo=longestPrintInfo))
+
+    config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
+            "Documents", len(statistics), longestPrintInfo=longestPrintInfo))
+
+    config["logger"].info("")
+
+    for scheme in config["clean"]["schemes"]:
+        config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
+            scheme, sum((statistics[scheme] != "") & (statistics["useable"])), longestPrintInfo=longestPrintInfo))
+    config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
+        "special", sum((statistics["special"]) & (statistics["useable"])), longestPrintInfo=longestPrintInfo))
+    config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
+            "Useable", sum(statistics["useable"]), longestPrintInfo=longestPrintInfo))
+
+    for scheme in config["clean"]["schemes"]:
+        config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
+            scheme,
+            sum((statistics[scheme] == "") & (statistics["useable"])),
+            longestPrintInfo=longestPrintInfo))
 
 if __name__ == "__main__":
     config = prepare()

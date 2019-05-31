@@ -38,27 +38,8 @@
             "ddc",
             "bk",
             "narcis",
+            "bepress",
             "linsearch"
-        ],
-        "static": [
-            {
-                "name": "jel",
-                "field": "subjectScheme",
-                "regex": "^JEL.*|^jel.*",
-                "anzsrc": "14"
-            },
-            {
-                "name": "afset",
-                "field": "subjectScheme",
-                "regex": "^AFSET$",
-                "anzsrc": "20"
-            },
-            {
-                "name": "duchas",
-                "field": "subjectScheme",
-                "regex": "^DUCHAS$",
-                "anzsrc": "20"
-            }
         ]
     },
     "sample": {

@@ -6,28 +6,14 @@ import re
 import util.util as util
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
-from cleanSchemeHelpers import *
+from cleanSchemeHelpers import getLabelFromScheme, getSchemeTester
 
-def registerMapping(anzsrc, payload, anzsrc2subject):
-    if anzsrc not in anzsrc2subject.keys():
-        anzsrc2subject[anzsrc] = { payload: 1, "total": 1}
-    elif payload not in anzsrc2subject[anzsrc].keys():
-        anzsrc2subject[anzsrc][payload] = 1
-        anzsrc2subject[anzsrc]["total"] += 1
-    else:
-        anzsrc2subject[anzsrc][payload] += 1
-        anzsrc2subject[anzsrc]["total"] += 1
-
-def getBaseAnzsrc(config, subject):
-    payload = subject["value"].lower().strip()
+def getLabel(config, subject, row):
     for scheme in config["clean"]["schemes"]:
         isScheme = getSchemeTester(scheme)
         if isScheme and isScheme(config, subject):
-            return getAnzsrcFromScheme(scheme, config, subject)
+            return getLabelFromScheme(scheme, config, subject, row)
     return None
-
-def getMinLength(config, field):
-    return config["clean"]["minLength"].get(field, 1)
 
 def getPayload(config, document):
     payload= {}
@@ -45,7 +31,7 @@ def getPayload(config, document):
             except LangDetectException as e:
                 continue
             payloadPart += " " + instance["value"]
-        if len(payloadPart.split()) < getMinLength(config, field):
+        if len(payloadPart.split()) < config["clean"]["minLength"].get(field, 1):
             continue
         payload[field] = payloadPart
     return payload
@@ -55,82 +41,35 @@ def isSpecialChunk(config, fileName):
         return True
     return False
 
-def getLabels(config, document, result, fileName):
-    seenSchemeURIs = []
-    seenSubjectSchemes = []
-    labels = set()
-
-    if isSpecialChunk(config, fileName):
-        lookup = os.path.basename(fileName)
-        label = config["specialDict"][lookup]
-        labels.add(label)
-    else:
-        for subject in document["subjects"]:
-            # count the documents with this schemeURI (once)
-            if "schemeURI" in subject.keys():
-                schemeURI = subject["schemeURI"]
-                if schemeURI not in seenSchemeURIs:
-                    seenSchemeURIs.append(schemeURI)
-                    result["schemeURIs"][schemeURI] = (
-                        result["schemeURIs"].get(schemeURI, 0) + 1)
-            # count the documents with this subjectScheme (once)
-            if "subjectScheme" in subject.keys():
-                subjectScheme = subject["subjectScheme"]
-                if subjectScheme not in seenSchemeURIs:
-                    seenSchemeURIs.append(subjectScheme)
-                    result["subjectSchemes"][subjectScheme] = (
-                        result["subjectSchemes"].get(subjectScheme, 0) + 1)
-            # add to label if fitting
-            anzsrc = getBaseAnzsrc(config, subject)
-            if not anzsrc:
-                continue
-
-            registerMapping(anzsrc,
-                            subject["value"],
-                            result["anzsrc2subject"])
-            labels.add(anzsrc[:2].strip())
-    return labels
-
-def init_result(config):
-    result = {
-        "documents" : 0,
-        "notAnnotatable": 0,
-        "multiAnnotations": 0,
-        "payloadNotFit": 0,
-        "useableDocuments": 0,
-        "duplicates": 0,
-        "schemeURIs" : {},
-        "special" : {},
-        "subjectSchemes" : {},
-        "anzsrc2subject" : {},
-        "payload" : {},
+def initResultRow(config):
+    row = {
+        "notAnnot": False,
+        "multiAnnot": False,
+        "notFit": False,
+        "duplicate": False,
+        "special": False,
+        "useable": False,
+        "schemeURI": set(),
+        "subjectScheme": set(),
+        "labels": set(),
+        "payload": {},
+        "payloadHash": None
     }
+    for scheme in config["clean"]["schemes"]:
+        row[scheme] = []
+    return row
 
-    for label in config["labels"]:
-        result["anzsrc2subject"][label] = {"total": 0}
-        result["special"][label] = 0
-        result["payload"][label] = {}
-
-    return result
-
-def mergeSubjectInfo2Result(result, subjectInfo):
-    for key in subjectInfo.keys():
-        if key == "anzsrc2subject":
-            result[key] = result.get(key, {})
-            for anzsrc, anzsrcValues in subjectInfo[key].items():
-                if anzsrc not in result[key].keys():
-                    result[key][anzsrc] = { "total": 0}
-                for mapped, count in anzsrcValues.items():
-                    result[key][anzsrc][mapped] = result[key][anzsrc].get(mapped, 0) + count
-                    result[key][anzsrc]["total"] += count
-        else:
-            for entry, value in subjectInfo[key].items():
-                result[key][entry] = result[key].get(entry, 0) + value
-
+def finalizeRow(config, result, row):
+    for field in ("schemeURI", "subjectScheme", "labels"):
+        row[field] = list(row[field])
+    for scheme in config["clean"]["schemes"]:
+        row[scheme] = "|".join(row[scheme])
+    result.append(row)
 
 def processFile(instruction):
     config = instruction[0]
-    fileName = instruction[1]
+    filePath = instruction[1]
+    fileName = os.path.basename(filePath)
     config["logger"].info("  Processing: {}".format(fileName))
     cleanId = config["regex"]["dataInput"].match(fileName).group(1)
     resultFile = os.path.join(
@@ -144,47 +83,46 @@ def processFile(instruction):
         ))
         return True
     try:
-        with open(fileName) as f:
-            result = init_result(config)
+        with open(filePath) as f:
+            result = []
+            docCounter = 0
             for document in ijson.items(f, 'documents.item'):
-                result["documents"] += 1
-                subjectInfo = {
-                    "schemeURIs": {},
-                    "subjectSchemes": {},
-                    "anzsrc2subject": {}
-                }
-                labels = getLabels(config, document, subjectInfo, fileName)
-
-                mergeSubjectInfo2Result(
-                    result, {
-                        "subjectSchemes": subjectInfo["subjectSchemes"],
-                        "schemeURIs": subjectInfo["schemeURIs"]
-                    }
-                )
-
-                if not labels:
-                    result["notAnnotatable"] += 1
-                    continue
-                if len(labels) != 1:
-                    result["multiAnnotations"] += 1
-                    continue
-
-                label = labels.pop()
-                payload = getPayload(config, document)
-
-                if not len(payload) == len(config["clean"]["dmode"].split("_")):
-                    result["payloadNotFit"] += 1
-                    continue
-                payloadHash = util.getDictHash(payload)
-                if payloadHash in result["payload"][label].keys():
-                    result["duplicates"] += 1
-                result["payload"][label][payloadHash] = payload
-                mergeSubjectInfo2Result(
-                    result, { "anzsrc2subject": subjectInfo["anzsrc2subject"] }
-                )
+                row = initResultRow(config)
                 if isSpecialChunk(config, fileName):
-                    result["special"][label] += 1
-        config["logger"].info("    Save results for: {}".format(resultFile))
+                    row["id"] = fileName + "_" + str(docCounter)
+                    row["labels"].add(config["specialDict"][fileName])
+                    row["special"] = True
+                    docCounter += 1
+                else: # metadata should be DataCite compliant
+                    row["id"] = document["identifier"]["value"]
+                    for subject in document["subjects"]:
+                        if "schemeURI" in subject.keys():
+                            row["schemeURI"].add(subject["schemeURI"])
+                        if "subjectScheme" in subject.keys():
+                            row["subjectScheme"].add(subject["subjectScheme"])
+                        label = getLabel(config, subject, row)
+                        if not label:
+                            continue
+                        row["labels"].add(label)
+                if not row["labels"]:
+                    row["notAnnot"] = True
+                    finalizeRow(config, result, row)
+                    continue
+                if len(row["labels"]) != 1:
+                    row["multiAnnot"] = True
+                    finalizeRow(config, result, row)
+                    continue
+
+                payload = getPayload(config, document)
+                if not len(payload) == len(config["clean"]["dmode"].split("_")):
+                    row["payloadNotFit"] = True
+
+                row["useable"] = True
+                row["payload"] = payload
+                row["payloadHash"] = util.getDictHash(payload)
+                finalizeRow(config, result, row)
+
+        config["logger"].info("    Save results for: {} ({} documents)".format(cleanId, len(result)))
         with open(resultFile, "w") as f:
             json.dump(result, f)
         return True
