@@ -305,12 +305,12 @@ narcis2Labels = [
         ],
         [ 9, # medical and health sciences",
             re.compile(
-                'http://www.narcis.nl/classfication/D2(3|4)\d{3}'
+                'http://www.narcis.nl/classfication/D2(3|4|5)\d{3}'
                 )
         ],
         [ 5, # biological sciences
             re.compile(
-                'http://www.narcis.nl/classfication/D22\d{3}'
+                'http://www.narcis.nl/classfication/(D22\d{3}|D21[3-7]\d{2})'
                 )
         ],
         [ 7, # information and computing sciences
@@ -345,12 +345,12 @@ narcis2Labels = [
         ],
         [ 18, # language, communication and culture
                 re.compile(
-                'http://www.narcis.nl/classfication/(D36\d{3}|D63\d{3}|D66\d{3})'
+                'http://www.narcis.nl/classfication/(D36\d{3}|D66\d{3})'
                     )
         ],
         [ 14, # studies in human society
                 re.compile(
-                'http://www.narcis.nl/classfication/(D6(0|1|8|9)\d{3}|D42\d{3})'
+                'http://www.narcis.nl/classfication/(D6(1|3|8|9)\d{3}|D42\d{3})'
                     )
         ],
         [ 6, # agricultural and veterinary science
@@ -383,9 +383,14 @@ narcis2Labels = [
                 'http://www.narcis.nl/classfication/(D3(2|3)\d{3})'
                     )
         ],
-        [ 19, # studies in creative arts and writing
+        [ 17, # studies in creative arts and writing
                 re.compile(
-                'http://www.narcis.nl/classfication/(D35(1|2|3)\d{2})'
+                'http://www.narcis.nl/classfication/(D35(2|3|4)\d{2})'
+                    )
+        ],
+        [ 13, # commerce, management, tourism and services
+                re.compile(
+                'http://www.narcis.nl/classfication/D44\d{3}'
                     )
         ]
 ]
@@ -415,7 +420,7 @@ bk2Labels = [
          re.compile( '^(80|81).*') ],
         [ 12, # economics
          re.compile( '^83.*') ],
-        [ 13, #commerce, management, tourism and services
+        [ 13, # commerce, management, tourism and services
          re.compile( '^85.*') ],
         [ 14, # studies in human society
          re.compile( '^(71|73|79|88|89).*') ],
