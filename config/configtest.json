@@ -20,6 +20,8 @@
     },
     "clean": {
         "retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8",
+        "mappingHash": "f3fb549c93c16da6a0bd02d78ee3b54f3f1cf368cb4be4bf79a9b175e53b21d7",
+        "lang": "en",
         "dmode": "title_description",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
@@ -41,26 +43,23 @@
             "bepress",
             "linsearch"
         ],
-        "static": [
-            {
-                "name": "jel",
-                "field": "subjectScheme",
-                "regex": "^JEL.*|^jel.*",
-                "anzsrc": "14"
-            },
-            {
-                "name": "afset",
-                "field": "subjectScheme",
-                "regex": "^AFSET$",
-                "anzsrc": "20"
-            },
-            {
-                "name": "duchas",
-                "field": "subjectScheme",
-                "regex": "^DUCHAS$",
-                "anzsrc": "20"
-            }
-        ]
+        "seed": 180485,
+        "special": {
+            "f2.json": 10,
+            "f3.json": 10,
+            "f4.json": 19,
+            "f5.json": 19,
+            "f6.json": 19,
+            "f7.json": 17,
+            "f8.json": 17,
+            "f9.json": 17,
+            "fa.json": 17,
+            "fb.json": 20,
+            "fc.json": 20,
+            "fd.json": 16,
+            "fe.json": 16,
+            "ff.json": 16
+        }
     },
     "sample": {
         "cleanHash": "ba24c4778c202aefc3c317e47471473882fc13618e34e8244a897cb7d023eaac",

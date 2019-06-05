@@ -15,6 +15,50 @@ ddcNames = [
         "eterms:DDC"
 ]
 
+# ORDER IS IRRELEVANT
+anzsrc2Labels = [
+        [ 1, # mathematical science
+         re.compile( '^01.*') ],
+        [ 2, # physical science
+         re.compile( '^02.*') ],
+        [ 3, # chemical science
+         re.compile( '^03.*') ],
+        [ 4, # earth sciences
+         re.compile( '^0(4|5).*') ],
+        [ 5, # biological sciences
+         re.compile( '^06.*') ],
+        [ 6, # agricultural and veterinary science
+         re.compile( '^07.*') ],
+        [ 7, # information and computing sciences
+         re.compile( '^08.*') ],
+        [ 8, # engineering and technology
+         re.compile( '^(09|10).*') ],
+        [ 9, # medical and health sciences
+         re.compile( '^11.*') ],
+        [ 10, # built environment and design
+         re.compile( '^12.*') ],
+        [ 11, # education
+         re.compile( '^13.*') ],
+        [ 12, # economics
+         re.compile( '^14.*') ],
+        [ 13, #commerce, management, tourism and services
+         re.compile( '^15.*') ],
+        [ 14, # studies in human society
+         re.compile( '^16.*') ],
+        [ 15, # psychology and cognitive sciences
+         re.compile( '^17.*') ],
+        [ 16, # law and legal studies
+         re.compile( '^18.*') ],
+        [ 17, # studies in creative arts and writing
+         re.compile( '^19.*') ],
+        [ 18, # language, communication and culture
+         re.compile( '^20.*') ],
+        [ 19, # history and archaeology
+         re.compile( '^21.*') ],
+        [ 20, # philosophy and religious studies
+         re.compile( '^22.*') ]
+]
+
 # Used to map the payload (subject["value"]) of a DDC-subject to the base classes
 # of ANZSRC. Unhandled DDC classes:
 #  ^03[^.] | Encyclopedias & books of facts
@@ -23,7 +67,6 @@ ddcNames = [
 #  ^06[^.] | Associations, organizations & museums
 #  ^08[^.] | Quotations
 #  ^09[^.] | Manuscripts & rare books
-#  ^35[^.] | Public administration & military science
 #  ^39[^.] | Customs, etiquette, & folklore
 #  ^50[^.] | Science (too specific, subcategories are partly handled)
 #  ^64[^.] | Home & family management
@@ -33,15 +76,8 @@ ddcNames = [
 
 # ! order matters: first come first serve, rearranging might result in false
 # positives
-
-ddc2Anszrc = [
-        [ 5, # 5, #"05 environmental sciences",
-            re.compile(
-                '^57[7-9].*'
-                '|ddc 57[7-8]'
-            )
-        ],
-        [ 4, # 4, #"04 earth sciences",
+ddc2Labels = [
+        [ 4, # earth and environmental sciences
             re.compile(
                 '^55[^.]+.*'
                 '|^56[^.]+.*'
@@ -49,18 +85,17 @@ ddc2Anszrc = [
                 '|^ddc 56[^.]+.*'
                 '|.*earth sciences and geology$'
                 '|.*550\s*\|\s*geowissenschaften.*'
-                '|^912$'
                 '|geowissenschaften$'
             )
         ],
-        [ 11, # 11, #"11 medical and health sciences",
+        [ 9, # medical and health sciences
             re.compile(
                 '^61[^.]+.*'
                 '|^ddc 61[^.]+.*'
                 '|^medizin und gesundheit'
                 )
         ],
-        [ 6, # 6, #"06 biological sciences",
+        [ 5, # biological sciences
             re.compile(
                 '^57[^.]+.*'
                 '|^58[^.]+.*'
@@ -74,7 +109,7 @@ ddc2Anszrc = [
                 '|biology'
                 )
         ],
-        [ 8, # 8, #"08 information and computing sciences",
+        [ 7, # information and computing sciences
             re.compile(
                 '^00[^.]+.*'
                 '|^01[^.]+.*'
@@ -86,26 +121,28 @@ ddc2Anszrc = [
                 '|^bibliotheks- und informationswissenschaften$'
                 )
         ],
-        [ 14, # 14, #"14 economics",
+        [ 12, # economics
             re.compile(
                 '^33[^.]+.*'
                 '|^ddc 33[^.]+.*'
                 '|^wirtschaft$'
                 )
         ],
-        [ 9, # 9, #"09 engineering",
+        [ 8, # engineering and technology
                 re.compile(
-                    '^62[^.]+.*'
+                    '^60[^.]+.*'
+                    '|^62[^.]+.*'
                     '|^66[^.]+.*'
                     '|^67[^.]+.*'
                     '|^68[^.]+.*'
+                    '|^ddc 60[^.]+.*'
                     '|^ddc 62[^.]+.*'
                     '|^ddc 66[^.]+.*'
                     '|^ddc 67[^.]+.*'
                     '|^ddc 68[^.]+.*'
                     )
         ],
-        [ 2, # 2, #"02 physical science",
+        [ 2, # physical science
             re.compile(
                 '^52[^.]+.*'
                 '|^53[^.]+.*'
@@ -114,7 +151,7 @@ ddc2Anszrc = [
                 '|.*530 \| physik.*'
                 )
         ],
-        [ 21, # 21, #"21 history and archaeology",
+        [ 19, # history and archaeology
                 re.compile(
                     '^90[^.]+.*'
                     '|^93[^.]+.*'
@@ -135,14 +172,14 @@ ddc2Anszrc = [
                     '|^271.*'
                     )
         ],
-        [ 3, # 3, #"03 chemical science",
+        [ 3, # chemical science
                 re.compile(
                     '^54[^.]+.*'
                     '|^54[^.]+.*'
                     '|.*540 \| chemie.*'
                     )
         ],
-        [ 20, # 20, #"20 language, communication and culture",
+        [ 18, # language, communication and culture
                 re.compile(
                     '^4\d+[^.]+.*'
                     '|^8\d+[^.-]+.*'
@@ -156,13 +193,15 @@ ddc2Anszrc = [
                     '|.*dewey decimal classification::800 \| literatur, rhetorik, literaturwissenschaft.*$'
                     )
         ],
-        [ 16, # 16, #"16 studies in human society",
+        [ 14, # studies in human society
                 re.compile(
                     '^30[^.]+.*'
                     '|^32[^.]+.*'
+                    '|^35[^.]+.*'
                     '|^36[^.]+.*'
                     '|^ddc 30[^.]+.*'
                     '|^ddc 32[^.]+.*'
+                    '|^ddc 35[^.]+.*'
                     '|^ddc 36[^.]+.*'
                     '|.*sozialwissenschaften, soziologie, anthropologie::330$'
                     '|.*sozialwissenschaften, soziologie, anthropologie::330.*'
@@ -173,7 +212,7 @@ ddc2Anszrc = [
                     '|^sozialwissenschaften$'
                     )
         ],
-        [ 7, # 7, #"07 agricultural and veterinary science",
+        [ 6, # agricultural and veterinary science
                 re.compile(
                     '^63[^.]+.*'
                     '|^ddc 63[^.]+.*'
@@ -181,20 +220,14 @@ ddc2Anszrc = [
                     '|.*technik::630.*'
                     )
         ],
-        [ 17, # 17, #"17 psychology and cognitive sciences",
+        [ 15, # psychology and cognitive sciences
                 re.compile(
                     '^15[^.]+.*'
                     '|^ddc 15[^.]+.*'
                     '|^psychologie$'
                     )
         ],
-        [ 10, # 10, #"10 technology",
-                re.compile(
-                    '^60[^.]+.*'
-                    '|^ddc 60[^.]+.*'
-                    )
-        ],
-        [ 13, # 13, #"13 education",
+        [ 11, # education
                 re.compile(
                     '^37[^.]+.*'
                     '^507.*'
@@ -203,7 +236,7 @@ ddc2Anszrc = [
                     '|.*sozialwissenschaften, soziologie, anthropologie::370.*'
                     )
         ],
-        [ 1, # 1, #"01 mathematical science",
+        [ 1, # mathematical science
                 re.compile(
                     '^31\d+.*'
                     '|^51[^.]+.*'
@@ -212,7 +245,7 @@ ddc2Anszrc = [
                     '|.*510 \| mathematik.*'
                     )
         ],
-        [ 18, # 18, #"18 law and legal studies",
+        [ 16, # law and legal studies
                 re.compile(
                     '^34[^.]+.*'
                     '|^ddc 34[^.]+.*'
@@ -220,7 +253,7 @@ ddc2Anszrc = [
                     '|^recht$'
                     )
         ],
-        [ 22, # 22, #"22 philosophy and religious studies",
+        [ 20, # philosophy and religious studies
                 re.compile(
                     '^(1|2)\d+.*'
                     '|^507.*'
@@ -229,7 +262,7 @@ ddc2Anszrc = [
 
                     )
         ],
-        [ 19, # 19, #"19 studies in creative arts and writing",
+        [ 17, # studies in creative arts and writing
                 re.compile(
                     '^07[^.]+.*'
                     '|^70[^.]+.*'
@@ -249,7 +282,7 @@ ddc2Anszrc = [
                     '|^ddc 78[^.]+.*'
                     )
         ],
-        [ 15, # 15, #"15 commerce, management, tourism and services",
+        [ 13, # commerce, management, tourism and services
                 re.compile(
                     '^38[^.]+.*'
                     '|^65[^.].*'
@@ -258,7 +291,7 @@ ddc2Anszrc = [
                     '|.*sozialwissenschaften, soziologie, anthropologie::380.*'
                     )
         ],
-        [ 12, # 12, #"12 built environment and design",
+        [ 10, # built environment and design
                 re.compile(
                     '^69[^.*]'
                     '|^71[^.*]'
@@ -271,194 +304,177 @@ ddc2Anszrc = [
 ]
 
 # ORDER MATTERS
-narcis2Anzsrc = [
-        [ 5, #"05 environmental sciences",
-            re.compile(
-                'http://www.narcis.nl/classfication/D224\d{2}'
-            )
-        ],
-        [ 4, #"04 earth sciences",
+narcis2Labels = [
+        [ 4, # earth  and environmental sciences",
             re.compile(
                 'http://www.narcis.nl/classfication/D15\d{3}'
             )
         ],
-        [ 11, #"11 medical and health sciences",
+        [ 9, # medical and health sciences",
             re.compile(
                 'http://www.narcis.nl/classfication/D2(3|4)\d{3}'
                 )
         ],
-        [ 6, #"06 biological sciences",
+        [ 5, # biological sciences
             re.compile(
                 'http://www.narcis.nl/classfication/D22\d{3}'
                 )
         ],
-        [ 8, #"08 information and computing sciences",
+        [ 7, # information and computing sciences
             re.compile(
                 'http://www.narcis.nl/classfication/D16\d{3}'
                 )
         ],
-        [ 14, #"14 economics",
+        [ 10, # built environment and design
+                re.compile(
+                'http://www.narcis.nl/classfication/(D355\d{2}|D147\d{2})'
+                    )
+        ],
+        [ 8, # engineering and technology
             re.compile(
-                'http://www.narcis.nl/classfication/D70\d{3}'
+                'http://www.narcis.nl/classfication/(D14\d{3})'
                 )
         ],
-        [ 9, #"09 engineering",
-            re.compile(
-                'http://www.narcis.nl/classfication/(D14310|D14220|D1443\d{1}|D1444\d{1}|D146\d{2})'
-                )
-        ],
-        [ 2, #"02 physical science",
+        [ 2, # physical science
             re.compile(
                 'http://www.narcis.nl/classfication/(D12\d{3}|D17\d{3})'
                 )
         ],
-        [ 21, #"21 history and archaeology",
+        [ 19, # history and archaeology
                 re.compile(
                 'http://www.narcis.nl/classfication/(D34\d{3}|D37\d{3})'
                     )
         ],
-        [ 3, #"03 chemical science",
+        [ 3, # chemical science
                 re.compile(
                 'http://www.narcis.nl/classfication/D13\d{3}'
                     )
         ],
-        [ 20, #"20 language, communication and culture",
+        [ 18, # language, communication and culture
                 re.compile(
                 'http://www.narcis.nl/classfication/(D36\d{3}|D63\d{3}|D66\d{3})'
                     )
         ],
-        [ 16, #"16 studies in human society",
+        [ 14, # studies in human society
                 re.compile(
                 'http://www.narcis.nl/classfication/(D6(0|1|8|9)\d{3}|D42\d{3})'
                     )
         ],
-        [ 7, #"07 agricultural and veterinary science",
+        [ 6, # agricultural and veterinary science
                 re.compile(
                 'http://www.narcis.nl/classfication/(D18\d{3}|D26\d{3})'
                     )
         ],
-        [ 17, #"17 psychology and cognitive sciences",
+        [ 15, # psychology and cognitive sciences
                 re.compile(
                 'http://www.narcis.nl/classfication/(D51\d{3})'
                     )
         ],
-        [ 10, #"10 technology",
-                re.compile(
-                'http://www.narcis.nl/classfication/(E16\d{3}|D141\d{2}|D142(1|3|4)\d{1}|D143(1|2)\d{1}|D145\d{2}|D14(7|8|9)\d{2})'
-
-                    )
-        ],
-        [ 13, #"13 education",
+        [ 11, # education
                 re.compile(
                 'http://www.narcis.nl/classfication/(D52\d{3})'
                     )
         ],
-        [ 1, #"01 mathematical science",
+        [ 1, # mathematical science
                 re.compile(
                 'http://www.narcis.nl/classfication/(D11\d{3})'
                     )
         ],
-        [ 18, #"18 law and legal studies",
+        [ 16, # law and legal studies
                 re.compile(
                 'http://www.narcis.nl/classfication/(D41\d{3})'
                     )
         ],
-        [ 22, #"22 philosophy and religious studies",
+        [ 20, # philosophy and religious studies
                 re.compile(
                 'http://www.narcis.nl/classfication/(D3(2|3)\d{3})'
                     )
         ],
-        [ 19, #"19 studies in creative arts and writing",
+        [ 19, # studies in creative arts and writing
                 re.compile(
                 'http://www.narcis.nl/classfication/(D35(1|2|3)\d{2})'
-                    )
-        ],
-        [ 12, #"12 built environment and design",
-                re.compile(
-                'http://www.narcis.nl/classfication/(D355\d{2}|D147\d{2})'
                     )
         ]
 ]
 # ORDER IS IRRELEVANT
-bk2Anzsrc = [
-        [ 1, #"01 mathematical science"
+bk2Labels = [
+        [ 1, # mathematical science
          re.compile( '^31.*') ],
-        [ 2, #"02 physical science",
+        [ 2, # physical science
          re.compile( '^(33|39).*') ],
-        [ 3, #"03 chemical science",
+        [ 3, # chemical science
          re.compile( '^35.*') ],
-        [ 4, #"04 earth sciences",
+        [ 4, # earth sciences
          re.compile( '^38.*') ],
-        [ 6, #"06 biological sciences",
+        [ 5, # biological sciences
          re.compile( '^42.*') ],
-        [ 7, #"07 agricultural and veterinary science",
+        [ 6, # agricultural and veterinary science
          re.compile( '^(46|48).*') ],
-        [ 8, #"08 information and computing sciences",
+        [ 7, # information and computing sciences
          re.compile( '^54.*') ],
-        [ 9, #"09 engineering",
-         re.compile( '^(51|52|53).*') ],
-        [ 10, #"10 technology",
-         re.compile( '^(50|58).*') ],
-        [ 11, #"11 medical and health sciences",
+        [ 8, # engineering and technology
+         re.compile( '^(50|51|52|53|55|58).*') ],
+        [ 9, # medical and health sciences
          re.compile( '^44.*') ],
-        [ 12, #"12 built environment and design",
+        [ 10, # built environment and design
          re.compile( '^56.*') ],
-        [ 13, #"13 education",
+        [ 11, # education
          re.compile( '^(80|81).*') ],
-        [ 14, #"14 economics",
-         re.compile( '^8(3|5).*') ],
-        [ 16, #"16 studies in human society",
-         re.compile( '^(71|89).*') ],
-        [ 17, #"17 psychology and cognitive sciences",
+        [ 12, # economics
+         re.compile( '^83.*') ],
+        [ 13, #commerce, management, tourism and services
+         re.compile( '^85.*') ],
+        [ 14, # studies in human society
+         re.compile( '^(71|73|79|88|89).*') ],
+        [ 15, # psychology and cognitive sciences
          re.compile( '^77.*') ],
-        [ 18, #"18 law and legal studies",
+        [ 16, # law and legal studies
          re.compile( '^86.*') ],
-        [ 19, #"19 studies in creative arts and writing",
+        [ 17, # studies in creative arts and writing
          re.compile( '^(20|21|24).*') ],
-        [ 20, #"20 language, communication and culture",
+        [ 18, # language, communication and culture
          re.compile( '^(05|17|18|73).*') ],
-        [ 21, #"21 history and archaeology",
+        [ 19, # history and archaeology
          re.compile( '^15.*') ],
-        [ 22, #"22 philosophy and religious studies",
+        [ 20, # philosophy and religious studies
          re.compile( '^(08|11).*') ]
 ]
 
 # ORDER IS IRRELEVANT
-linsearch2Anzsrc = [
-        [ 1, #"01 mathematical science"
+linsearch2Labels = [
+        [ 1, # mathematical science
           re.compile( '^Mathematics$', re.IGNORECASE) ],
-        [ 2, #"02 physical science"
+        [ 2, # physical science
           re.compile( '^Physics$', re.IGNORECASE) ],
-        [ 3, #"03 chemical science"
+        [ 3, # chemical science
           re.compile( '^Chemistry$', re.IGNORECASE) ],
-        [ 4, #"04 earth sciences"
+        [ 4, # earth and enviornemntal sciences
           re.compile( '^Earth Science$', re.IGNORECASE)],
-        [ 6, #"06 biological sciences"
+        [ 5, # biological sciences
           re.compile( '^Biology$', re.IGNORECASE) ],
-        [ 7, #"07 agricultural and veterinary science"
+        [ 6, # agricultural and veterinary science
           re.compile( '^Horticulture$', re.IGNORECASE) ],
-        [ 8, #"08 information and computing sciences"
+        [ 7, # information and computing sciences
           re.compile( '^Computer Science$', re.IGNORECASE) ],
-        [ 9, #"09 engineering"
+        [ 8, # engineering and technology
           re.compile( '^Engineering$', re.IGNORECASE) ],
-        [ 12, #"12 built environment and design"
+        [ 10, # built environment and design
           re.compile( '^Architecture', re.IGNORECASE) ],
-        [ 13, #"13 education"
+        [ 11, # education
           re.compile( 'Educational Science', re.IGNORECASE) ],
-        [ 14, #"14 economics"
-          re.compile( 'Economics', re.IGNORECASE) ],
-        [ 18, #"18 law and legal studies"
+        [ 16, # law and legal studies
           re.compile( '^Law$', re.IGNORECASE) ],
-        [ 20, #"20 language, communication and culture"
+        [ 18, # language, communication and culture
           re.compile( '^Lingustics$', re.IGNORECASE) ],
-        [ 21, #"21 history and archaeology"
+        [ 19, # history and archaeology
           re.compile( '^History$', re.IGNORECASE) ],
-        [ 22, #"22 philosophy and religious studies"
+        [ 20, # philosophy and religious studies
           re.compile( '^(Philosophy|Theology)$', re.IGNORECASE) ]
 ]
 
-bepress2Anzsrc = [
-        [ 1, #"01 mathematical science",
+# ORDER IS IRRELEVANT
+bepress2Labels = [
+        [ 1, # mathematical science
             re.compile(
              'Applied Mathematics$'
              '|Control Theory$'
@@ -502,7 +518,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 2, #"02 physical science",
+        [ 2, # physical science
             re.compile(
              'Astrophysics and Astronomy$'
              '|Cosmology, Relativity, and Gravity$'
@@ -528,7 +544,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 3, #"03 chemical science",
+        [ 3, # chemical science
             re.compile(
              'Chemistry$'
              '|Analytical Chemistry$'
@@ -544,7 +560,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 4, #"04 earth sciences",
+        [ 4, # earth and environmental sciences
             re.compile(
              'Earth Sciences$'
              '|Biogeochemistry$'
@@ -564,14 +580,8 @@ bepress2Anzsrc = [
              '|Stratigraphy$'
              '|Tectonics and Structure$'
              '|Volcanology$'
-             '|Other Earth Sciences$',
-                re.IGNORECASE
-
-            )
-        ],
-        [ 5, #"05 environmental sciences",
-            re.compile(
-             'Environmental Sciences$'
+             '|Other Earth Sciences$'
+             '|Environmental Sciences$'
              '|Environmental Education$'
              '|Environmental Health and Protection$'
              '|Environmental Indicators and Impact Assessment$'
@@ -593,7 +603,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 6, #"06 biological sciences",
+        [ 5, # biological sciences
             re.compile(
              'Ecology and Evolutionary Biology$'
              '|Behavior and Ethology$'
@@ -660,7 +670,7 @@ bepress2Anzsrc = [
              re.IGNORECASE
             )
         ],
-        [ 7, #"07 agricultural and veterinary science",
+        [ 6, # agricultural and veterinary science
             re.compile(
              '^Agribusiness$'
              '|Agriculture$'
@@ -705,7 +715,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 8, #"08 information and computing sciences",
+        [ 7, # information and computing sciences
             re.compile(
              'Computer Engineering $'
              '|Computer and Systems Architecture $'
@@ -740,7 +750,7 @@ bepress2Anzsrc = [
 
             )
         ],
-        [ 9, #"09 engineering",
+        [ 8, # engineering and technology
             re.compile(
              'Engineering$'
              '|Aerospace Engineering$'
@@ -821,13 +831,8 @@ bepress2Anzsrc = [
              '|Operational Research$'
              '|Systems Engineering$'
              '|Other Operations$'
-             '|Research, Systems Engineering and Industrial Engineering$',
-             re.IGNORECASE
-            )
-        ],
-        [ 10, #"10 technology",
-            re.compile(
-             'Biomedical Engineering and Bioengineering $'
+             '|Research, Systems Engineering and Industrial Engineering$'
+             '|Biomedical Engineering and Bioengineering $'
              '|Bioelectrical and Neuroengineering $'
              '|Bioimaging and Biomedical Optics $'
              '|Biological Engineering $'
@@ -855,10 +860,10 @@ bepress2Anzsrc = [
              '|Nanoscience and Nanotechnology $'
              '|Biotechnology$'
              '|Nanotechnology$',
-                re.IGNORECASE
+             re.IGNORECASE
             )
         ],
-        [ 11, #"11 medical and health sciences",
+        [ 9, # medical and health sciences
             re.compile(
               'Kinesiology$'
               '|Biomechanics$'
@@ -1111,7 +1116,7 @@ bepress2Anzsrc = [
               re.IGNORECASE
             )
         ],
-        [ 12, #"12 built environment and design",
+        [ 10, # built environment and design
             re.compile(
                 'Architectural Engineering$'
                 '|Architectural History and Criticism$'
@@ -1125,7 +1130,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
              )
         ],
-        [ 13, #"13 education",
+        [ 11, # education
             re.compile(
              'Education'
              '|Adult and Continuing Education'
@@ -1187,7 +1192,7 @@ bepress2Anzsrc = [
              re.IGNORECASE
             )
         ],
-        [ 14, #"14 economics",
+        [ 12, # economics
             re.compile(
              'Economics$'
              '|Behavioral Economics$'
@@ -1209,7 +1214,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 15, #"15 commerce, management, tourism and services",
+        [ 13, # commerce, management, tourism and services
             re.compile(
              'Business$'
              '|Accounting$'
@@ -1253,7 +1258,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 16, #"16 studies in human society",
+        [ 14, # studies in human society
             re.compile(
              'Feminist, Gender, and Sexuality Studies$'
              '|Lesbian, Gay, Bisexual, and Transgender Studies$'
@@ -1345,7 +1350,7 @@ bepress2Anzsrc = [
 
             )
         ],
-        [ 17, #"17 psychology and cognitive sciences",
+        [ 15, # psychology and cognitive sciences
             re.compile(
              'Psychology$'
              '|Applied Behavior Analysis$'
@@ -1375,7 +1380,7 @@ bepress2Anzsrc = [
                 re.IGNORECASE
             )
         ],
-        [ 18, #"18 law and legal studies",
+        [ 16, # law and legal studies
             re.compile(
              'Law$'
              '|Accounting Law$'
@@ -1503,7 +1508,7 @@ bepress2Anzsrc = [
              re.IGNORECASE
             )
         ],
-        [ 19, #"19 studies in creative arts and writing",
+        [ 17, # studies in creative arts and writing
             re.compile(
                  'American Film Studies$'
                  '|Art and Design$'
@@ -1562,7 +1567,7 @@ bepress2Anzsrc = [
                  re.IGNORECASE
             )
         ],
-        [ 20, #"20 language, communication and culture",
+        [ 18, # language, communication and culture
             re.compile(
                  'African Languages and Societies$'
                  '|Africana Studies$'
@@ -1650,7 +1655,7 @@ bepress2Anzsrc = [
                  re.IGNORECASE
             )
         ],
-        [ 21, #"21 history and archaeology",
+        [ 19, # history and archaeology
             re.compile(
                  'Ancient History, Greek and Roman through Late Antiquity$'
                  '|Classical Archaeology and Art History$'
@@ -1686,7 +1691,7 @@ bepress2Anzsrc = [
 
             )
         ],
-        [ 22, #"22 philosophy and religious studies",
+        [ 20, # philosophy and religious studies
             re.compile(
                  'Ancient Philosophy$'
                  '|Philosophy$'
@@ -1732,9 +1737,10 @@ bepress2Anzsrc = [
 ]
 
 mappings = {
-    "ddc": ddc2Anszrc,
-    "narcis": narcis2Anzsrc,
-    "bk": bk2Anzsrc,
-    "bepress": bepress2Anzsrc,
-    "linsearch": linsearch2Anzsrc
+    "anzsrc": anzsrc2Labels,
+    "ddc": ddc2Labels,
+    "narcis": narcis2Labels,
+    "bk": bk2Labels,
+    "bepress": bepress2Labels,
+    "linsearch": linsearch2Labels
 }

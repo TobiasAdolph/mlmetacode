@@ -26,7 +26,7 @@ def getPayload(config, document):
             if not instance["value"]:
                 continue
             try:
-                if not detect(instance["value"]) == "en":
+                if not detect(instance["value"]) == config["clean"]["lang"]:
                     continue
             except LangDetectException as e:
                 continue
@@ -90,7 +90,7 @@ def processFile(instruction):
                 row = initResultRow(config)
                 if isSpecialChunk(config, fileName):
                     row["id"] = fileName + "_" + str(docCounter)
-                    row["labels"].add(config["specialDict"][fileName])
+                    row["labels"].add(config["clean"]["special"][fileName])
                     row["special"] = True
                     docCounter += 1
                 else: # metadata should be DataCite compliant
@@ -115,7 +115,9 @@ def processFile(instruction):
 
                 payload = getPayload(config, document)
                 if not len(payload) == len(config["clean"]["dmode"].split("_")):
-                    row["payloadNotFit"] = True
+                    row["notFit"] = True
+                    finalizeRow(config, result,row)
+                    continue
 
                 row["useable"] = True
                 row["payload"] = payload

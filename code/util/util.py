@@ -60,7 +60,7 @@ def createDirIfNotExists(path):
 def setupLogging(config, step):
     # LOGGING
     logger = logging.getLogger(step)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     fh = logging.FileHandler(config[step]["logFile"])
     formatter = logging.Formatter('%(asctime)s|%(process)d %(message)s')
     fh.setFormatter(formatter)
@@ -86,6 +86,18 @@ def getDictHash(payload, step=None):
         basePayload = payload
 
     return hashlib.sha256(json.dumps(basePayload, sort_keys=True).encode("utf-8")).hexdigest()
+
+def getFileHash(filePath):
+    """
+        taken from https://stackoverflow.com/a/44873382
+    """
+    h  = hashlib.sha256()
+    b  = bytearray(128*1024)
+    mv = memoryview(b)
+    with open(filePath, 'rb', buffering=0) as f:
+        for n in iter(lambda : f.readinto(mv), 0):
+            h.update(mv[:n])
+    return h.hexdigest()
 
 def loadJsonFromFile(config, name, subpath=""):
     """Wrapper around json.load() (probably bad practice)

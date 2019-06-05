@@ -20,6 +20,8 @@
     },
     "clean": {
         "retrieveHash": "0797f318a1b1d0be80fa2c224d8678b80e76c7f951b4c29a83b25eeca369fce5",
+        "mappingHash": "f3fb549c93c16da6a0bd02d78ee3b54f3f1cf368cb4be4bf79a9b175e53b21d7",
+        "lang": "en",
         "dmode": "title_description",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
@@ -40,7 +42,24 @@
             "narcis",
             "bepress",
             "linsearch"
-        ]
+        ],
+        "seed": 180485,
+        "special": {
+            "f2.json": 10,
+            "f3.json": 10,
+            "f4.json": 19,
+            "f5.json": 19,
+            "f6.json": 19,
+            "f7.json": 17,
+            "f8.json": 17,
+            "f9.json": 17,
+            "fa.json": 17,
+            "fb.json": 20,
+            "fc.json": 20,
+            "fd.json": 16,
+            "fe.json": 16,
+            "ff.json": 16
+        }
     },
     "sample": {
         "cleanHash": "ba24c4778c202aefc3c317e47471473882fc13618e34e8244a897cb7d023eaac",

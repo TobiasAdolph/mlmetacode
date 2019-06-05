@@ -20,14 +20,14 @@ def getSchemeTester(scheme):
         return None
 
 def getLabelFromScheme(scheme, config, subject, row):
-    if scheme == "anzsrc":
-        return getAnzsrc(config, subject, row)
-    elif scheme == "narcis":
+    if scheme == "narcis":
         return getLabelFromMapping(scheme, "valueURI", subject, row)
     else:
         return getLabelFromMapping(scheme, "value", subject, row)
 
 def isAnzsrc(config, subject):
+    if not re.match(r'^\d{5}.*', subject["value"]):
+        return False
     if "schemeURI" not in subject.keys():
         return False
     if (subject["schemeURI"] == "http://www.abs.gov.au/ausstats"
@@ -72,6 +72,8 @@ def isBepress(config, subject):
 
 def getLabelFromMapping(scheme, field, subject, row):
     checkAgainst = subject.get(field, "").strip()
+    if not checkAgainst:
+        return None
     mapping = cleanDataHelpers.mappings[scheme]
     for pair in mapping:
         label = pair[0]
@@ -80,14 +82,3 @@ def getLabelFromMapping(scheme, field, subject, row):
             row[scheme].append(subject.get(field, ""))
             return label
     return None
-
-def getAnzsrc(config, subject, row):
-    payload = subject.get("value", "").lower().strip()
-    if not re.match(r'^\d{5}.*', payload):
-        return None
-    anzsrcNumber = re.search('\d+', payload).group()
-    row["anzsrc"].append(subject.get("value", ""))
-    if len(anzsrcNumber) % 2 == 0:
-        return int(payload[:2])
-    else:
-        return int(payload[:1])

@@ -5,11 +5,12 @@ import glob
 import json
 import re
 import util.util as util
+import hashlib
 import cleanHelpers
 import pandas as pd
-
 from concurrent.futures import ProcessPoolExecutor
 from langdetect.detector_factory import init_factory
+from langdetect import DetectorFactory
 
 def prepare():
     """ Prepares a cleaning run
@@ -31,14 +32,24 @@ def prepare():
     args = parser.parse_args()
 
     config = util.loadConfig(args.config)
+    print("Starting with config {}".format(config["clean"]["hash"]))
+    config["logger"] = util.setupLogging(config, "clean")
     config["worker"] = int(args.worker)
 
+    usedMappingHash = util.getFileHash("clean/cleanDataHelpers.py")
+    if usedMappingHash != config["clean"]["mappingHash"]:
+        config["logger"].error("Hash of used and configured mapping differ:"
+                               "\n\t{} (used)"
+                               "\n\t{} (configured)"
+                               "\n\tRestore old mapping or change config".format(
+                                   usedMappingHash,
+                                   config["clean"]["mappingHash"]
+                               )
+        )
+        os.sys.exit(1)
+        for n in iter(lambda : f.readinto(mv), 0):
+            h.update(mv[:n])
     config["labels"]  = util.getLabels(config)
-
-    with open(os.path.join(
-        config["base"]["configDir"],
-        "specialDataProviders.json"), "r") as f:
-        config["specialDict"]  = json.load(f)
 
     config["regex"] = {
         "ddcValue": re.compile(config["clean"]["regex"]["ddcValue"]),
@@ -47,10 +58,6 @@ def prepare():
         "dataInput": re.compile(config["clean"]["regex"]["dataInput"]),
         "dataOutput": re.compile(config["clean"]["regex"]["dataOutput"])
     }
-    for static in config["clean"]["static"]:
-        config["regex"][static["name"]] = re.compile(static["regex"])
-
-    config["logger"] = util.setupLogging(config, "clean")
     return config
 
 def divide(config):
@@ -66,8 +73,9 @@ def divide(config):
 
     config["logger"].info("  Will process {} files".format(len(files)))
 
-    #workpackage = [workpackage[-35], workpackage[-25], workpackage[-16]]
+    #workpackage = [workpackage[-55], workpackage[-75], workpackage[-86]]
 
+    DetectorFactory.seed = config["clean"]["seed"]
     with ProcessPoolExecutor(
         max_workers = config["worker"],
         initializer = init_factory
@@ -85,22 +93,19 @@ def conquer(config):
         "multiAnnot",
         "notFit",
         "duplicate",
+        "duplicateId",
         "special",
         "useable",
-        "id",
-        "labels"
+        "id"
     ])
     statisticsFields.update(config["clean"]["schemes"])
-    statistics = []
 
     result = {
         "subjectScheme": {},
-        "schemeURI": {},
-        "payload" : {}
+        "schemeURI"    : {}
     }
-
-    for label in range(len(util.getLabels(config))):
-        result["payload"][label] = {}
+    useablePayloadHashes = {}
+    statistics    = []
 
     files = []
     for f in glob.glob(config["clean"]["outputDir"] + "/*"):
@@ -111,18 +116,34 @@ def conquer(config):
         with open(f, "r") as fh:
             rows = json.load(fh)
         for row in rows:
+            row["duplicateId"] = ""
             if row["useable"]:
                 if len(row["labels"]) != 1:
                     raise Error("{} in {} is useable, but has more than 1 label".format(
                         row["id"], f))
                 label = row["labels"][0]
-                if row["payloadHash"] in result["payload"][label].keys():
-                    row["duplicate"] = True
-                    row["useable"] = False
-                else:
-                    result["payload"][label][row["payloadHash"]] = row["payload"]
+                if row["payloadHash"] in useablePayloadHashes.keys():
+                    for alreadyInHash in useablePayloadHashes[row["payloadHash"]]:
+                        if alreadyInHash["payload"]["description"] == row["payload"]["description"]:
+                            row["duplicateId"] = alreadyInHash["id"]
+                            row["duplicate"] = True
+                            row["useable"] = False
+                            break
+                        else:
+                            config["logger"].info(
+                                "{} and {} have the same hash, but differ in content".format(
+                                    alreadyInHash["id"], row["id"]
+                                )
+                            )
+                useablePayloadHashes[row["payloadHash"]] = useablePayloadHashes.get(row["payloadHash"], [])
 
+                useablePayloadHashes[row["payloadHash"]].append(row)
             statistic = {}
+            for label in range(1, len(config["labels"])):
+                statistic[str(label)] = False
+                if label in row["labels"]:
+                    statistic[str(label)] = True
+
             for field in statisticsFields:
                 statistic[field] = row[field]
             statistics.append(statistic)
@@ -131,38 +152,85 @@ def conquer(config):
                 for fieldInstance in row[field]:
                     result[field][fieldInstance] = (
                         result[field].get(fieldInstance, 0) + 1)
-    statistics = pd.DataFrame(statistics)
 
-    for key in result["payload"].keys():
-        dumpFile = os.path.join(config["clean"]["outputDir"], str(key) + ".data.json")
+    payload = {}
+    for payloadHash, payloadHashArray in useablePayloadHashes.items():
+        for p in payloadHashArray:
+            label = p["labels"][0]
+            if label == 22:
+                import pprint
+                pprint.pprint(payloadHashArray)
+            payload[label] = payload.get(label, [])
+            payload[label].append(p["payload"])
+
+    statistics = pd.DataFrame(statistics)
+    store = pd.HDFStore(os.path.join(config["clean"]["outputDir"], "stat.h5"))
+    store['statistics'] = statistics
+
+    for label in payload.keys():
+        dumpFile = os.path.join(config["clean"]["outputDir"], str(label) + ".data.json")
         with open(dumpFile, "w") as f:
-            json.dump(result["payload"][key], f)
+            json.dump(payload[label], f)
 
     for key in ("subjectScheme", "schemeURI"):
         dumpFile = os.path.join(config["clean"]["outputDir"], key + ".json")
         with open(dumpFile, "w") as f:
             json.dump(result[key], f)
 
-    with open(os.path.join(config["clean"]["outputDir"], "statistics.csv"), "w") as f:
-        statistics.to_csv(f)
-
     # Print results to log + on stdout
     config["logger"].info("Discipline match after data cleanup")
-    longestLabelName = max(len(label) for label in config["labels"])
-    for label in sorted(result["payload"].keys()):
-        labelSize = len(result["payload"][label])
-        config["logger"].info("  {:<{longestLabelName}}: {:>8}".format(
-            config["labels"][label],
+    formatString = "{:>5}: {:>8} {:>7} {:>7}"
+    headers = ["Label", "Total", "Special", "MultiS"]
+    for scheme in config["clean"]["schemes"]:
+        formatString += " {:>7}"
+        headers.append(scheme)
+    config["logger"].info(formatString.format(*headers))
+    statisticsU = statistics[statistics.useable]
+    totalMultiSchemes = 0
+    for label in sorted(payload.keys()):
+        if label < 1:
+            continue
+        labelSize = len(statisticsU[statisticsU[str(label)]])
+        labelSpecial = len(statisticsU[(statisticsU.special) & (statisticsU[str(label)])])
+        labelSchemes = []
+        for scheme in config["clean"]["schemes"]:
+            labelSchemes.append(
+                len(statisticsU[
+                        (statisticsU[scheme] != "") &
+                        (statisticsU[str(label)]
+                    )]
+                )
+            )
+        labelMultiSchemes = sum(labelSchemes) + labelSpecial - labelSize
+        totalMultiSchemes += labelMultiSchemes
+        config["logger"].info(formatString.format(
+            label,
             labelSize,
-            longestLabelName=longestLabelName))
+            labelSpecial,
+            labelMultiSchemes,
+            *labelSchemes
+        ))
+    totalSchemes = []
+    for scheme in config["clean"]["schemes"]:
+        totalSchemes.append(len(statisticsU[statisticsU[scheme] != ""]))
+    config["logger"].info(formatString.format(
+            "all",
+            len(statisticsU),
+            len(statisticsU[statisticsU["special"]]),
+            totalMultiSchemes,
+            *totalSchemes
+        ))
+
+
     config["logger"].info("General Statistics:")
     printInfos = (
-        "duplicate",
         "notAnnot",
-        "multiAnnot",
-        "notFit",
-        "useable"
+         "multiAnnot",
+         "notFit",
+         "duplicate",
+         "useable"
     )
+
     longestPrintInfo = max(len(v) for v in printInfos)
     for printInfo in printInfos:
         config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
@@ -171,25 +239,8 @@ def conquer(config):
     config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
             "Documents", len(statistics), longestPrintInfo=longestPrintInfo))
 
-    config["logger"].info("")
-
-    for scheme in config["clean"]["schemes"]:
-        config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-            scheme, sum((statistics[scheme] != "") & (statistics["useable"])), longestPrintInfo=longestPrintInfo))
-    config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-        "special", sum((statistics["special"]) & (statistics["useable"])), longestPrintInfo=longestPrintInfo))
-    config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-            "Useable", sum(statistics["useable"]), longestPrintInfo=longestPrintInfo))
-
-    for scheme in config["clean"]["schemes"]:
-        config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-            scheme,
-            sum((statistics[scheme] == "") & (statistics["useable"])),
-            longestPrintInfo=longestPrintInfo))
-
 if __name__ == "__main__":
     config = prepare()
-    print("Starting with config {}".format(config["clean"]["hash"]))
     config["logger"].info("Starting clean with config {}".format(
         config["clean"]["hash"])
     )
