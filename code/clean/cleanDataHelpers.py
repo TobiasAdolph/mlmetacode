@@ -79,10 +79,10 @@ anzsrc2Labels = [
 ddc2Labels = [
         [ 4, # earth and environmental sciences
             re.compile(
-                '^55[^.]+.*'
-                '|^56[^.]+.*'
-                '|^ddc 55[^.]+.*'
-                '|^ddc 56[^.]+.*'
+                '^55\d{1}.*'
+                '|^56\d{1}.*'
+                '|^ddc 55\d{1}.*'
+                '|^ddc 56\d{1}.*'
                 '|.*earth sciences and geology$'
                 '|.*550\s*\|\s*geowissenschaften.*'
                 '|geowissenschaften$'
@@ -90,19 +90,29 @@ ddc2Labels = [
         ],
         [ 9, # medical and health sciences
             re.compile(
-                '^61[^.]+.*'
-                '|^ddc 61[^.]+.*'
+                '^61\d{1}.*'
+                '|^ddc 61\d{1}.*'
                 '|^medizin und gesundheit'
                 )
         ],
+        [ 6, # agricultural and veterinary science
+                re.compile(
+                    '^63\d{1}.*'
+                    '|^571.9.*'
+                    '|^591.5.*'
+                    '|^ddc 63\d{1}.*'
+                    '|^landwirtschaft und verwandte bereiche$'
+                    '|.*technik::630.*'
+                    )
+        ],
         [ 5, # biological sciences
             re.compile(
-                '^57[^.]+.*'
-                '|^58[^.]+.*'
-                '|^59[^.]+.*'
-                '|^ddc 57[^.]+.*'
-                '|^ddc 58[^.]+.*'
-                '|^ddc 59[^.]+.*'
+                '^57\d{1}.*'
+                '|^58\d{1}.*'
+                '|^59\d{1}.*'
+                '|^ddc 57\d{1}.*'
+                '|^ddc 58\d{1}.*'
+                '|^ddc 59\d{1}.*'
                 '|.*naturwissenschaften::570.*'
                 '|.*naturwissenschaften::580.*'
                 '|.*naturwissenschaften::590.*'
@@ -111,82 +121,80 @@ ddc2Labels = [
         ],
         [ 7, # information and computing sciences
             re.compile(
-                '^00[^.]+.*'
-                '|^01[^.]+.*'
-                '|^02[^.]+.*'
-                '|^ddc 00[^.]+.*'
-                '|^ddc 01[^.]+.*'
-                '|^ddc 02[^.]+.*'
+                '^00[0,3-6].*'
+                '|^01\d{1}.*'
+                '|^02\d{1}.*'
+                '|^ddc 00[0,3-6].*'
+                '|^ddc 01\d{1}.*'
+                '|^ddc 02\d{1}.*'
                 '|.*allgemeines, wissenschaft::000.*$'
                 '|^bibliotheks- und informationswissenschaften$'
                 )
         ],
         [ 12, # economics
             re.compile(
-                '^33[^.]+.*'
-                '|^ddc 33[^.]+.*'
+                '^33\d{1}.*'
+                '|^ddc 33\d{1}.*'
                 '|^wirtschaft$'
                 )
         ],
         [ 8, # engineering and technology
                 re.compile(
-                    '^60[^.]+.*'
-                    '|^62[^.]+.*'
-                    '|^66[^.]+.*'
-                    '|^67[^.]+.*'
-                    '|^68[^.]+.*'
-                    '|^ddc 60[^.]+.*'
-                    '|^ddc 62[^.]+.*'
-                    '|^ddc 66[^.]+.*'
-                    '|^ddc 67[^.]+.*'
-                    '|^ddc 68[^.]+.*'
+                    '^60\d{1}.*'
+                    '|^62\d{1}.*'
+                    '|^66\d{1}.*'
+                    '|^67\d{1}.*'
+                    '|^68\d{1}.*'
+                    '|^ddc 60\d{1}.*'
+                    '|^ddc 62\d{1}.*'
+                    '|^ddc 66\d{1}.*'
+                    '|^ddc 67\d{1}.*'
+                    '|^ddc 68\d{1}.*'
                     )
         ],
         [ 2, # physical science
             re.compile(
-                '^52[^.]+.*'
-                '|^53[^.]+.*'
-                '|^ddc 52[^.]+.*'
-                '|^ddc 53[^.]+.*'
+                '^52\d{1}.*'
+                '|^53\d{1}.*'
+                '|^ddc 52\d{1}.*'
+                '|^ddc 53\d{1}.*'
                 '|.*530 \| physik.*'
                 )
         ],
         [ 19, # history and archaeology
                 re.compile(
-                    '^90[^.]+.*'
-                    '|^93[^.]+.*'
-                    '|^94[^.]+.*'
-                    '|^95[^.]+.*'
-                    '|^96[^.]+.*'
-                    '|^97[^.]+.*'
-                    '|^98[^.]+.*'
-                    '|^99[^.]+.*'
-                    '|^ddc 90[^.]+.*'
-                    '|^ddc 93[^.]+.*'
-                    '|^ddc 94[^.]+.*'
-                    '|^ddc 95[^.]+.*'
-                    '|^ddc 96[^.]+.*'
-                    '|^ddc 97[^.]+.*'
-                    '|^ddc 98[^.]+.*'
-                    '|^ddc 99[^.]+.*'
-                    '|^271.*'
+                    '^90\d{1}.*'
+                    '|^93\d{1}.*'
+                    '|^94\d{1}.*'
+                    '|^95\d{1}.*'
+                    '|^96\d{1}.*'
+                    '|^97\d{1}.*'
+                    '|^98\d{1}.*'
+                    '|^99\d{1}.*'
+                    '|^ddc 90\d{1}.*'
+                    '|^ddc 93\d{1}.*'
+                    '|^ddc 94\d{1}.*'
+                    '|^ddc 95\d{1}.*'
+                    '|^ddc 96\d{1}.*'
+                    '|^ddc 97\d{1}.*'
+                    '|^ddc 98\d{1}.*'
+                    '|^ddc 99\d{1}.*'
                     )
         ],
         [ 3, # chemical science
                 re.compile(
-                    '^54[^.]+.*'
-                    '|^54[^.]+.*'
+                    '^54\d{1}.*'
+                    '|^54\d{1}.*'
                     '|.*540 \| chemie.*'
                     )
         ],
         [ 18, # language, communication and culture
                 re.compile(
-                    '^4\d+[^.]+.*'
-                    '|^8\d+[^.-]+.*'
+                    '^4\d{2}.*'
+                    '|^8\d{2}.*'
                     '|^306.*'
-                    '|^ddc 4[^.]+.*'
-                    '|^ddc 8[^.]+.*'
-                    '|^ddc 306.*'
+                    '|^ddc 4\d{2}.*'
+                    '|^ddc 8\d{2}.*'
                     '|^8 language\. linguistics\. literature$'
                     '|^81 linguistics and languages'
                     '|.*dewey decimal classification::400 \| sprache, linguistik.*$'
@@ -195,14 +203,14 @@ ddc2Labels = [
         ],
         [ 14, # studies in human society
                 re.compile(
-                    '^30[^.]+.*'
-                    '|^32[^.]+.*'
-                    '|^35[^.]+.*'
-                    '|^36[^.]+.*'
-                    '|^ddc 30[^.]+.*'
-                    '|^ddc 32[^.]+.*'
-                    '|^ddc 35[^.]+.*'
-                    '|^ddc 36[^.]+.*'
+                    '^30\d{1}.*'
+                    '|^32\d{1}.*'
+                    '|^35\d{1}.*'
+                    '|^36\d{1}.*'
+                    '|^ddc 30\d{1}.*'
+                    '|^ddc 32\d{1}.*'
+                    '|^ddc 35\d{1}.*'
+                    '|^ddc 36\d{1}.*'
                     '|.*sozialwissenschaften, soziologie, anthropologie::330$'
                     '|.*sozialwissenschaften, soziologie, anthropologie::330.*'
                     '|.*sozialwissenschaften, soziologie, anthropologie::360.*'
@@ -212,93 +220,78 @@ ddc2Labels = [
                     '|^sozialwissenschaften$'
                     )
         ],
-        [ 6, # agricultural and veterinary science
-                re.compile(
-                    '^63[^.]+.*'
-                    '|^ddc 63[^.]+.*'
-                    '|^landwirtschaft und verwandte bereiche$'
-                    '|.*technik::630.*'
-                    )
-        ],
         [ 15, # psychology and cognitive sciences
                 re.compile(
-                    '^15[^.]+.*'
-                    '|^ddc 15[^.]+.*'
+                    '^15\d{1}.*'
+                    '|^ddc 15\d{1}.*'
                     '|^psychologie$'
                     )
         ],
         [ 11, # education
                 re.compile(
-                    '^37[^.]+.*'
-                    '^507.*'
-                    '|^ddc 37[^.]+.*'
-                    '|^ddc 507.*'
+                    '^37\d{1}.*'
+                    '|^ddc 37\d{1}.*'
                     '|.*sozialwissenschaften, soziologie, anthropologie::370.*'
                     )
         ],
         [ 1, # mathematical science
                 re.compile(
-                    '^31\d+.*'
-                    '|^51[^.]+.*'
-                    '|^ddc 31[^.]+.*'
-                    '|^ddc 51[^.]+.*'
+                    '^51\d{1}.*'
+                    '|^ddc 51\d{1}.*'
                     '|.*510 \| mathematik.*'
                     )
         ],
         [ 16, # law and legal studies
                 re.compile(
-                    '^34[^.]+.*'
-                    '|^ddc 34[^.]+.*'
+                    '^34\d{1}.*'
+                    '|^ddc 34\d{1}.*'
                     '|.*sozialwissenschaften, soziologie, anthropologie::340.*'
                     '|^recht$'
                     )
         ],
         [ 20, # philosophy and religious studies
                 re.compile(
-                    '^(1|2)\d+.*'
-                    '|^507.*'
-                    '|^ddc (1|2)[^.]+.*'
-                    '|^ddc 507.*'
-
+                    '^(1|2)\d{2}.*'
+                    '|^ddc (1|2)\d{2}.*'
                     )
         ],
         [ 17, # studies in creative arts and writing
                 re.compile(
-                    '^07[^.]+.*'
-                    '|^70[^.]+.*'
-                    '|^73[^.]+.*'
-                    '|^74[^.]+.*'
-                    '|^75[^.]+.*'
-                    '|^76[^.]+.*'
-                    '|^77[^.]+.*'
-                    '|^78[^.]+.*'
-                    '|^ddc 07[^.]+.*'
-                    '|^ddc 70[^.]+.*'
-                    '|^ddc 73[^.]+.*'
-                    '|^ddc 74[^.]+.*'
-                    '|^ddc 75[^.]+.*'
-                    '|^ddc 76[^.]+.*'
-                    '|^ddc 77[^.]+.*'
-                    '|^ddc 78[^.]+.*'
+                    '^07\d{1}.*'
+                    '|^70\d{1}.*'
+                    '|^73\d{1}.*'
+                    '|^74\d{1}.*'
+                    '|^75\d{1}.*'
+                    '|^76\d{1}.*'
+                    '|^77\d{1}.*'
+                    '|^78\d{1}.*'
+                    '|^ddc 07\d{1}.*'
+                    '|^ddc 70\d{1}.*'
+                    '|^ddc 73\d{1}.*'
+                    '|^ddc 74\d{1}.*'
+                    '|^ddc 75\d{1}.*'
+                    '|^ddc 76\d{1}.*'
+                    '|^ddc 77\d{1}.*'
+                    '|^ddc 78\d{1}.*'
                     )
         ],
         [ 13, # commerce, management, tourism and services
                 re.compile(
-                    '^38[^.]+.*'
-                    '|^65[^.].*'
-                    '|^ddc 38[^.]+.*'
-                    '|^ddc 65[^.]+.*'
+                    '^38\d{1}.*'
+                    '|^65\d{1}.*'
+                    '|^ddc 38\d{1}.*'
+                    '|^ddc 65\d{1}.*'
                     '|.*sozialwissenschaften, soziologie, anthropologie::380.*'
                     )
         ],
         [ 10, # built environment and design
                 re.compile(
-                    '^69[^.*]'
-                    '|^71[^.*]'
-                    '|^72[^.*]'
-                    '|^ddc 69[^.]+.*'
-                    '|^ddc 71[^.]+.*'
-                    '|^ddc 72[^.]+.*'
+                    '^69\d{1}'
+                    '|^71\d{1}'
+                    '|^72\d{1}'
+                    '|^ddc 69\d{1}.*'
+                    '|^ddc 71\d{1}.*'
+                    '|^ddc 72\d{1}.*'
                     )
         ]
 ]
