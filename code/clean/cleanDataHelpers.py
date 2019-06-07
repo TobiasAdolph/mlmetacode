@@ -18,45 +18,45 @@ ddcNames = [
 # ORDER IS IRRELEVANT
 anzsrc2Labels = [
         [ 1, # mathematical science
-         re.compile( '^01.*') ],
+         re.compile( '^(01|1)\d{4}[^0-9].*') ],
         [ 2, # physical science
-         re.compile( '^02.*') ],
+         re.compile( '^(02|2)\d{4}[^0-9].*') ],
         [ 3, # chemical science
-         re.compile( '^03.*') ],
+         re.compile( '^(03|3)\d{4}.*') ],
         [ 4, # earth sciences
-         re.compile( '^0(4|5).*') ],
+         re.compile( '^(04|4|05|5)\d{4}.*') ],
         [ 5, # biological sciences
-         re.compile( '^06.*') ],
+         re.compile( '^(06|6)\d{4}.*') ],
         [ 6, # agricultural and veterinary science
-         re.compile( '^07.*') ],
+         re.compile( '^(07|7)\d{4}.*') ],
         [ 7, # information and computing sciences
-         re.compile( '^08.*') ],
+         re.compile( '^(08|8)\d{4}.*') ],
         [ 8, # engineering and technology
-         re.compile( '^(09|10).*') ],
+         re.compile( '^(09|9|10)\d{4}') ],
         [ 9, # medical and health sciences
-         re.compile( '^11.*') ],
+         re.compile( '^11\d{4}.*') ],
         [ 10, # built environment and design
-         re.compile( '^12.*') ],
+         re.compile( '^12\d{4}.*') ],
         [ 11, # education
-         re.compile( '^13.*') ],
+         re.compile( '^13\d{4}.*') ],
         [ 12, # economics
-         re.compile( '^14.*') ],
+         re.compile( '^14\d{4}.*') ],
         [ 13, #commerce, management, tourism and services
-         re.compile( '^15.*') ],
+         re.compile( '^15\d{4}.*') ],
         [ 14, # studies in human society
-         re.compile( '^16.*') ],
+         re.compile( '^16\d{4}.*') ],
         [ 15, # psychology and cognitive sciences
-         re.compile( '^17.*') ],
+         re.compile( '^17\d{4}.*') ],
         [ 16, # law and legal studies
-         re.compile( '^18.*') ],
+         re.compile( '^18\d{4}.*') ],
         [ 17, # studies in creative arts and writing
-         re.compile( '^19.*') ],
+         re.compile( '^19\d{4}.*') ],
         [ 18, # language, communication and culture
-         re.compile( '^20.*') ],
+         re.compile( '^20\d{4}.*') ],
         [ 19, # history and archaeology
-         re.compile( '^21.*') ],
+         re.compile( '^21\d{4}.*') ],
         [ 20, # philosophy and religious studies
-         re.compile( '^22.*') ]
+         re.compile( '^22\d{4}.*') ]
 ]
 
 # Used to map the payload (subject["value"]) of a DDC-subject to the base classes
@@ -203,7 +203,7 @@ ddc2Labels = [
         ],
         [ 14, # studies in human society
                 re.compile(
-                    '^30\d{1}.*'
+                    '^30[1-9]{1}.*'
                     '|^32\d{1}.*'
                     '|^35\d{1}.*'
                     '|^36\d{1}.*'
@@ -211,7 +211,6 @@ ddc2Labels = [
                     '|^ddc 32\d{1}.*'
                     '|^ddc 35\d{1}.*'
                     '|^ddc 36\d{1}.*'
-                    '|.*sozialwissenschaften, soziologie, anthropologie::330$'
                     '|.*sozialwissenschaften, soziologie, anthropologie::330.*'
                     '|.*sozialwissenschaften, soziologie, anthropologie::360.*'
                     '|^soziale probleme und sozialdienste; verbände$'

@@ -185,7 +185,6 @@ def conquer(config):
     statisticsU = statistics[statistics.useable]
     totalMultiSchemes = 0
     for label in sorted(payload.keys()):
-
         if label < 1:
             continue
         labelSize = len(statisticsU[statisticsU[str(label)]])
