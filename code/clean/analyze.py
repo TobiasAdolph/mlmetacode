@@ -33,8 +33,16 @@ def prepare():
     return config
 
 def printScheme2Labels(stat, scheme, label):
-    selection = stat[(stat[label]) & (stat[scheme] != "") & (stat["useable"])]
-    print(selection.groupby(scheme)[scheme].count().sort_values(ascending=False))
+    if label != "0":
+        selection = stat[(stat[label]) & (stat[scheme] != "") & (stat["useable"])]
+        print(selection.groupby(scheme)[scheme].count().sort_values(ascending=False))
+    else:
+        selection = stat[(stat[scheme] != "")]
+        for idx, label in enumerate(util.getLabels(config)):
+            if idx < 1:
+                continue
+            selection = selection[~selection[str(idx)]]
+        print(selection.groupby(scheme)[scheme].count().sort_values(ascending=False))
 
 if __name__ == "__main__":
     config = prepare()
