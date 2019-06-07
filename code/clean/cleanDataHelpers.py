@@ -394,7 +394,7 @@ narcis2Labels = [
                     )
         ]
 ]
-# ORDER IS IRRELEVANT
+# ORDER Matters
 bk2Labels = [
         [ 1, # mathematical science
          re.compile( '^31.*') ],
@@ -409,19 +409,19 @@ bk2Labels = [
         [ 6, # agricultural and veterinary science
          re.compile( '^(46|48).*') ],
         [ 7, # information and computing sciences
-         re.compile( '^54.*') ],
+         re.compile( '^(06|54).*') ],
         [ 8, # engineering and technology
-         re.compile( '^(50|51|52|53|55|58).*') ],
+         re.compile( '^(50|51|52|53|55\.[1-7]|57|58).*') ],
         [ 9, # medical and health sciences
          re.compile( '^44.*') ],
         [ 10, # built environment and design
          re.compile( '^56.*') ],
         [ 11, # education
-         re.compile( '^(80|81).*') ],
+         re.compile( '^(80|81|79\.6).*') ],
         [ 12, # economics
          re.compile( '^83.*') ],
         [ 13, # commerce, management, tourism and services
-         re.compile( '^85.*') ],
+         re.compile( '^(55\.8|85).*') ],
         [ 14, # studies in human society
          re.compile( '^(71|73|79|88|89).*') ],
         [ 15, # psychology and cognitive sciences
@@ -431,7 +431,7 @@ bk2Labels = [
         [ 17, # studies in creative arts and writing
          re.compile( '^(20|21|24).*') ],
         [ 18, # language, communication and culture
-         re.compile( '^(05|17|18|73).*') ],
+         re.compile( '^(05|17|18).*') ],
         [ 19, # history and archaeology
          re.compile( '^15.*') ],
         [ 20, # philosophy and religious studies

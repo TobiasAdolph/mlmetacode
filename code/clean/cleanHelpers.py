@@ -101,9 +101,8 @@ def processFile(instruction):
                         if "subjectScheme" in subject.keys():
                             row["subjectScheme"].add(subject["subjectScheme"])
                         label = getLabel(config, subject, row)
-                        if not label:
-                            continue
-                        row["labels"].add(label)
+                        if label:
+                            row["labels"].add(label)
                 if not row["labels"]:
                     row["notAnnot"] = True
                     finalizeRow(config, result, row)
