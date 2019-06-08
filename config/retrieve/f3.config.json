@@ -1,5 +1,5 @@
 {  "Submission.Loader": "DiskLoader",
-    "OaiPmhETL.hostURL": "https://www.archaeologybulletin.org/jms/index.php/up/oai",
+    "OaiPmhETL.hostURL": "https://www.advetresearch.com/index.php/avr/oai",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.from": "",
     "OaiPmhETL.until": "",

@@ -1,0 +1,1 @@
+{"hvConfigRegex": ".*([0-9a-f]{2}).config.json$", "hvs": ["http://localhost:8001/oaipmh/harvest", "http://localhost:8002/oaipmh/harvest"], "hvUnloadSrc": ["1fd68a023b03", "4b9c4a13815b"], "hvUnloadCmd": "docker cp {}:/var/lib/jetty/cache/records/OaiPmhETL.json {}", "hvRangeTo": 100000}

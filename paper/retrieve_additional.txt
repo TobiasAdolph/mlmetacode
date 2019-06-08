@@ -55,8 +55,8 @@
 * The UTRGV DSpace Repository, of University of Texas Rio Grande Valley: 16 records
   https://utrgv-ir.tdl.org/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_2152.6_894
   f4.config.json
-* Bulletin of the History of Archaeology 517 records (not all with description)
-  https://www.archaeologybulletin.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc
+* DOAJ History  
+  https://www.doaj.org/oai.article?verb=ListRecords&metadataPrefix=oai_dc&set=TENDOkhpc3RvcnkgKEdlbmVyYWwpIGFuZCBoaXN0b3J5IG9mIEV1cm9wZQ~~
   f1.config.json
 
 ## 6 Veterinary and agricultural science (w/o further sources: 997)

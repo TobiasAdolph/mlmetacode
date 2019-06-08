@@ -12,21 +12,20 @@
             "http://localhost:8002/oaipmh/harvest"
         ],
         "hvUnloadSrc": [
-            "1fd68a023b03",
-            "4b9c4a13815b"
+            "46f48f6a832e",
+            "6505543f78fe"
         ],
         "hvUnloadCmd": "docker cp {}:/var/lib/jetty/cache/records/OaiPmhETL.json {}",
         "hvRangeTo": 1000
     },
     "clean": {
         "retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8",
-        "mappingHash": "a6f407c5dd35811e13f867fa04837de7f49f01e6ce3630e5afb94196bdfcdee4",
-        "lang": "de",
+        "mappingHash": "2cc9765ec445d0eee3728abe4e20e505ed02f7329010c5cbb82893a4b75019ed",
+        "lang": "en",
         "dmode": "title_description",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
             "ddcSchemeURI": "https{0,1}://dewey.info/*",
-
             "special": "f[0-9a-f]{1}\\.json",
             "dataInput": ".*([a-f0-9]{2})\\.json",
             "dataOutput": ".*[a-f0-9]{2}\\.chunk\\.json"
@@ -45,6 +44,9 @@
         ],
         "seed": 180485,
         "special": {
+            "f1.json": 19,
+            "f2.json": 17,
+            "f3.json": 6,
             "f4.json": 19,
             "f5.json": 19,
             "f6.json": 19,
@@ -53,7 +55,10 @@
             "f9.json": 17,
             "fa.json": 17,
             "fb.json": 20,
-            "fc.json": 20
+            "fc.json": 20,
+            "fd.json": 16,
+            "fe.json": 16,
+            "ff.json": 16
         }
     },
     "sample": {

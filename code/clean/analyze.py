@@ -14,8 +14,8 @@ def prepare():
             required    = True,
             help        ="File with the configuration for the cleaning run")
     parser.add_argument('--type',
-            default    =  "subjectSchemes",
-            choices    = ("subjectSchemes", "schemeURIs", "scheme2label"),
+            default    =  "subjectScheme",
+            choices    = ("subjectScheme", "schemeURI", "scheme2label"),
             help        ="Display subject schemes")
     parser.add_argument('--label',
             default    =  "1",

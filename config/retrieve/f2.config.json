@@ -1,9 +1,10 @@
-{  "Submission.Loader": "DiskLoader",
-    "OaiPmhETL.hostURL": "https://www.doaj.org/oai.article?verb=ListRecords",
+{  "OaiPmhETL.hostURL": "https://www.doaj.org/oai.article",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.from": "",
     "OaiPmhETL.until": "",
     "OaiPmhETL.set": "TENDOkZpbmUgQXJ0cw~~",
     "OaiPmhETL.rangeTo": 1000,
     "OaiPmhETL.subjectOnly": "false",
-    "Submission.saveFolder": "/var/lib/jetty/cache/records"}
+    "Submission.Loader": "DiskLoader"}
+
+
