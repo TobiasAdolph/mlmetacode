@@ -4,5 +4,6 @@
     "OaiPmhETL.from": "",
     "OaiPmhETL.until": "",
     "OaiPmhETL.set": "TENDOkZpbmUgQXJ0cw~~",
+    "OaiPmhETL.rangeTo": 1000,
     "OaiPmhETL.subjectOnly": "false",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}

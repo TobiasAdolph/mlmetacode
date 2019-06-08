@@ -3,6 +3,6 @@
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.from": "",
     "OaiPmhETL.until": "",
-    "OaiPmhETL.rangeTo": 25000,
+    "OaiPmhETL.rangeTo": 1000,
     "OaiPmhETL.subjectOnly": "false",
     "Submission.saveFolder": "/var/lib/jetty/cache/records"}
