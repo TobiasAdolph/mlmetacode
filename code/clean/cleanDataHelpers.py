@@ -250,8 +250,12 @@ ddc2Labels = [
         ],
         [ 20, # philosophy and religious studies
                 re.compile(
-                    '^(1|2)\d{2}.*'
-                    '|^ddc (1|2)\d{2}.*'
+                    '^101.*'
+                    '|^1[1-46-9]\d{1}.*'
+                    '|^2\d{2}.*'
+                    '|^ddc 101.*'
+                    '|^ddc 1[1-46-9]\d{1}.*'
+                    '|^ddc 2\d{2}.*'
                     )
         ],
         [ 17, # studies in creative arts and writing
