@@ -21,7 +21,7 @@
     "clean": {
         "retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8",
         "mappingHash": "a6f407c5dd35811e13f867fa04837de7f49f01e6ce3630e5afb94196bdfcdee4",
-        "lang": "en",
+        "lang": "de",
         "dmode": "title_description",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
@@ -45,8 +45,6 @@
         ],
         "seed": 180485,
         "special": {
-            "f2.json": 10,
-            "f3.json": 10,
             "f4.json": 19,
             "f5.json": 19,
             "f6.json": 19,
@@ -55,10 +53,7 @@
             "f9.json": 17,
             "fa.json": 17,
             "fb.json": 20,
-            "fc.json": 20,
-            "fd.json": 16,
-            "fe.json": 16,
-            "ff.json": 16
+            "fc.json": 20
         }
     },
     "sample": {

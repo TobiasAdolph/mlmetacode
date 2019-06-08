@@ -16,7 +16,7 @@
             "4b9c4a13815b"
         ],
         "hvUnloadCmd": "docker cp {}:/var/lib/jetty/cache/records/OaiPmhETL.json {}",
-        "hvRangeTo": 1000
+        "hvRangeTo": 100000
     },
     "clean": {
         "retrieveHash": "0797f318a1b1d0be80fa2c224d8678b80e76c7f951b4c29a83b25eeca369fce5",
@@ -45,8 +45,9 @@
         ],
         "seed": 180485,
         "special": {
-            "f2.json": 10,
-            "f3.json": 10,
+            "f1.json": 19,
+            "f2.json": 17,
+            "f3.json": 6,
             "f4.json": 19,
             "f5.json": 19,
             "f6.json": 19,

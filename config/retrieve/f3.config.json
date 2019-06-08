@@ -1,5 +1,5 @@
 {  "Submission.Loader": "DiskLoader",
-    "OaiPmhETL.hostURL": "http://www.bipcons.ce.tuiasi.ro/oai/oai2.php",
+    "OaiPmhETL.hostURL": "https://www.archaeologybulletin.org/jms/index.php/up/oai",
     "OaiPmhETL.metadataPrefix": "oai_dc",
     "OaiPmhETL.from": "",
     "OaiPmhETL.until": "",
