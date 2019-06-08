@@ -1,6 +1,10 @@
+# Procedure:
+1 See whether there is a "clean" source on https://www.re3data.org that supports OAI-PMH
+2 See whether there is a "clean" source on https://www.openarchives.org/Register/BrowseSites
+3 See whether there is a "clean" source on https://doaj.org/search that supports OAI-PMH
 # Additional OAI-PMH SOURCES:
 
-## Law and Legal Studies (w/o further sources: 199)
+## 16 Law and Legal Studies (w/o further sources: 776)
 * Univeristy on Pennsylvania Law School Scholary Repository: 2005 articles (titles and descriptions):
   https://scholarship.law.upenn.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:faculty_scholarship
   ff.config.json
@@ -11,7 +15,7 @@
   http://intr2dok.vifa-recht.de/servlets/OAIDataProvider?verb=ListRecords&metadataPrefix=oai_datacite
   fd.config.json
 
-## Philosophy and Religious Studies (w/o further sources: 373)
+## 20 Philosophy and Religious Studies (w/o further sources: ?)
 * https://philpapers.org 39.171 submissions. Might need some quality check:
   https://philpapers.org/oai.pl?verb=ListRecords&metdataPrefix=oai_dc
   fc.config.json
@@ -19,7 +23,7 @@
   https://chesterrep.openrepository.com/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_10034_6732
   fb.config.json
 
-## Studies in creative arts and writing (w/o further sources: 433)
+## 17 Studies in creative arts and writing (w/o further sources: 674)
 * Chapman University Repository (College of the Performing Arts): 5500 items
   https://digitalcommons.chapman.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:copa
   fa.config.json
@@ -33,9 +37,15 @@
     * 38 records Arts-School of the Arts-Visual Arts
       https://twu-ir.tdl.org/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_11274_8836
       f7.config.json
+* DOAJ Fine Arts 10846
+    https://www.doaj.org/oai.article?verb=ListRecords&metadataPrefix=oai_dc&set=TENDOkZpbmUgQXJ0cw~~
+    f2.config.json
+* if not suffictient: The International Journal of Applied Arts Studies (IJAPAS) http://ijapas.org/index.php/ijapas: 48 records
+    http://ijapas.org/index.php/ijapas/oai?verb=ListRecords&metadataPrefix=oai_dc
+    f0.config.json
 
 
-## History and Archaeology (w/o further sources: 494)
+## 19 History and Archaeology (w/o further sources: 609)
 * Bulleting of the History of Archaeology: https://www.archaeologybulletin.org/ 571 Records
   https://www.archaeologybulletin.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc
   f6.config.json
@@ -45,12 +55,11 @@
 * The UTRGV DSpace Repository, of University of Texas Rio Grande Valley: 16 records
   https://utrgv-ir.tdl.org/oai/request?verb=ListRecords&metadataPrefix=oai_dc&set=col_2152.6_894
   f4.config.json
+* Bulletin of the History of Archaeology 517 records (not all with description)
+  https://www.archaeologybulletin.org/jms/index.php/up/oai/?verb=ListRecords&metadataPrefix=oai_dc
+  f1.config.json
 
-## Built Environment and Design (w/o further sources: 953)
-* http://www.bipcons.ce.tuiasi.ro/: The Bulletin of the Polytechnic Institute of Jassy, Construction. Architecture Section: 610
-  (resumption token does not work on browser check)
-  http://www.bipcons.ce.tuiasi.ro/oai/oai2.php?verb=ListRecords&metadataPrefix=oai_dc
-  f3.config.json
-* Iconarp International Journal of Architecture and Planning: 139 records
-  http://iconarp.selcuk.edu.tr/iconarp/oai?verb=ListRecords&metadataPrefix=oai_dc
+## 6 Veterinary and agricultural science (w/o further sources: 997)
+* Journal of Advanced Veterinary Research: 246 records
+  https://www.advetresearch.com/index.php/avr/oai?verb=ListRecords&metadataPrefix=oai_dc
   f3.config.json
