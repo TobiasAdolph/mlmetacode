@@ -4,9 +4,11 @@ import argparse
 import json
 import math
 import random
-import re
+import string
 import statistics
 import util.util as util
+import pandas as pd
+import numpy as np
 
 def prepare():
     parser = argparse.ArgumentParser(
@@ -17,7 +19,7 @@ def prepare():
             help = "File with the configuration, must contain key 'sample'")
     parser.add_argument('--type',
             default = "dmax",
-            choices = ["min", "med", "max", "static"],
+            choices = ["min", "median", "mean", "max", "static"],
             help = "Mode to sample, if static, you must specify --maxsize")
     parser.add_argument('--maxsize',
             default = 1000,
@@ -29,80 +31,77 @@ def prepare():
     config["size"] = int(args.maxsize)
     config["logger"] = util.setupLogging(config, "sample")
     config["src"] = os.path.join(
-        config["clean"]["outputDir"],
-        "..",
-        config["sample"]["cleanHash"]
+        config["clean"]["baseDir"],
+        config["sample"]["cleanHash"],
+        "useable.h5"
     )
+    config["labels"]  = util.getLabels(config)
     return config
-
-def getSizes(config):
-    sizes = []
-    for f in os.listdir(config["src"]):
-        if re.match(config["sample"]["dataInputRegex"], f):
-            with open(os.path.join(config["src"], f), "r") as fp:
-                sampleSpace = json.load(fp)
-                sizes.append(len(sampleSpace))
-    return sizes
 
 if __name__ == "__main__":
     config = prepare()
+
     config["logger"].info(
         "Starting sample with config {}".format(config["sample"]["hash"])
     )
+    store = pd.HDFStore(config["src"])
+    df = store["r"]
+    store.close()
+    df["selected"] = [False] * len(df)
+    config["logger"].info("Sample loaded")
+    sizes = [ len(df[df[str(i)]]) for i in range(1, len(config["labels"]))]
     if config["type"] == "max":
-        config["size"] = max(getSizes(config))
+        config["size"] = max(sizes)
     elif config["type"] == "min":
-        config["size"] = min(getSizes(config))
-    elif config["type"] == "med":
-        config["size"] = math.floor(statistics.median(getSizes(config)))
+        config["size"] = min(sizes)
+    elif config["type"] == "median":
+        config["size"] = math.floor(statistics.median(sizes))
+    elif config["type"] == "mean":
+        config["size"] = math.floor(statistics.mean(sizes))
     else:
         config["type"] += str(config["size"])
-
-    if not os.path.isdir(os.path.join(config["sample"]["outputDir"],
-                                 config["type"])):
-        os.makedirs(os.path.join(config["sample"]["outputDir"], config["type"]))
 
     config["logger"].info("\tMode: {}\n\tSize: {}".format(config["type"],
                                                           config["size"]))
 
-    result = {
-        "title": [],
-        "description":  [],
-        "tNd": [],
-        "size" : {}
-    }
+    seed = random.randint(0,999999999)
+    config["logger"].info("Using seed {} to pick".format(seed))
+    result = []
+    for i in range(1, len(config["labels"])):
+        sampleSize = min(sizes[i-1], config["size"])
+        sample = df[df[str(i)]].sample(n=sampleSize, random_state=seed)
+        sample.selected = True
+        label = {
+            "total": sizes[i-1],
+            "sampleSize": sampleSize,
+            "medianLength": int(sample.payload.str.len().median()),
+            "maxLength": int(sample.payload.str.len().max()),
+            "minLength": int(sample.payload.str.len().min()),
+            "meanLength": int(sample.payload.str.len().mean())
+        }
+        config["logger"].info("Picked {} out of {} for {}".format(
+            label["sampleSize"],
+            label["total"],
+            config["labels"][i]
+        ))
+        df.update(sample)
+        result.append(label)
 
-    for f in os.listdir(config["src"]):
-        if re.match(config["sample"]["dataInputRegex"], f):
-            with open(os.path.join(config["src"], f), "r") as fp:
-                sampleSpace = json.load(fp)
-            result["size"][f] = {"total": len(sampleSpace)}
-            sample = {}
-            sampleKeys = random.sample(
-                list(sampleSpace),
-                min(config["size"], len(sampleSpace))
-            )
-            for key in sampleKeys:
-                sample[key] = sampleSpace[key]
-
-            result["size"][f]["sample"] = len(sample)
-
-            for key, value in sample.items():
-                result["title"].append(len(value["title"]))
-                result["description"].append(len(value["description"]))
-                result["tNd"].append(len(value["title"]) + len(value["description"]))
-
-            with open(os.path.join( config["sample"]["outputDir"], config["type"], f), "w") as fp:
-                json.dump(sample, fp)
-
-    result["titleMedian"] = statistics.median(result["title"])
-    result["descriptionMedian"] = statistics.median(result["description"])
-    result["tNdMedian"] = statistics.median(result["tNd"])
-    del result["title"]
-    del result["description"]
-    del result["tNd"]
-    for key in ("titleMedian", "descriptionMedian", "tNdMedian"):
-        config["logger"].info("{}: {}".format(key, result[key]))
-
-    with open(os.path.join(config["sample"]["outputDir"], config["type"], "statistics.json"), "w") as f:
+    if config["type"] == "max":
+        fileNamePrefix = config["type"]
+    else:
+        fileNamePrefix = config["type"] + "_" + str(seed)
+    with open(os.path.join(
+        config["sample"]["outputDir"], fileNamePrefix + "_statistics.json"), "w") as f:
         json.dump(result, f)
+    sampleLoc = os.path.join(config["sample"]["outputDir"], fileNamePrefix + "_sample.h5")
+    store = pd.HDFStore(sampleLoc)
+    sampleDf = df[df.selected].copy()
+
+    store["sample"] = sampleDf
+    store.close()
+    config["logger"].info("Saved sample of type {} with overall size {} to {}".format(
+        config["type"],
+        len(sampleDf),
+        sampleLoc
+    ))

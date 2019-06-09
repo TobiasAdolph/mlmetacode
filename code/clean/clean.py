@@ -8,6 +8,7 @@ import util.util as util
 import hashlib
 import cleanHelpers
 import pandas as pd
+import gc
 from concurrent.futures import ProcessPoolExecutor
 from langdetect.detector_factory import init_factory
 from langdetect import DetectorFactory
@@ -88,24 +89,23 @@ def divide(config):
 
 def conquer(config):
     config["logger"].info("Combining worker output")
-    statisticsFields = set([
+    resultFields = set([
         "notAnnot",
         "multiAnnot",
         "notFit",
         "duplicate",
-        "duplicateId",
         "special",
         "useable",
         "id"
     ])
-    statisticsFields.update(config["clean"]["schemes"])
+    resultFields.update(config["clean"]["schemes"])
 
-    result = {
+    statistics= {
         "subjectScheme": {},
         "schemeURI"    : {}
     }
     useablePayloadHashes = {}
-    statistics    = []
+    result    = []
 
     files = []
     for f in glob.glob(config["clean"]["outputDir"] + "/*"):
@@ -116,63 +116,71 @@ def conquer(config):
         with open(f, "r") as fh:
             rows = json.load(fh)
         for row in rows:
-            row["duplicateId"] = ""
             if row["useable"]:
                 if len(row["labels"]) != 1:
                     raise Error("{} in {} is useable, but has more than 1 label".format(
                         row["id"], f))
                 label = row["labels"][0]
+                # Check for duplicates
                 if row["payloadHash"] in useablePayloadHashes.keys():
                     for alreadyInHash in useablePayloadHashes[row["payloadHash"]]:
-                        if alreadyInHash["payload"]["description"] == row["payload"]["description"]:
-                            row["duplicateId"] = alreadyInHash["id"]
+                        if alreadyInHash["description"] == row["payload"]["description"]:
                             row["duplicate"] = True
                             row["useable"] = False
                             break
-                        else:
-                            config["logger"].info(
-                                "{} and {} have the same hash, but differ in content".format(
-                                    alreadyInHash["id"], row["id"]
-                                )
-                            )
                 useablePayloadHashes[row["payloadHash"]] = useablePayloadHashes.get(row["payloadHash"], [])
+                useablePayloadHashes[row["payloadHash"]].append(row["payload"])
 
-                useablePayloadHashes[row["payloadHash"]].append(row)
-            statistic = {}
+            # fill the result row for the data frame
+            resultRow = {}
             for label in range(1, len(config["labels"])):
-                statistic[str(label)] = False
+                resultRow[str(label)] = False
                 if label in row["labels"]:
-                    statistic[str(label)] = True
+                    resultRow[str(label)] = True
 
-            for field in statisticsFields:
-                statistic[field] = row[field]
-            statistics.append(statistic)
+            for field in resultFields:
+                resultRow[field] = row[field]
+
+            # flatten payload
+            text = ""
+            if row["payload"]:
+                for modeKey in config["clean"]["dmode"].split("_"):
+                    text += row["payload"][modeKey]
+            resultRow["payload"] = text
+
+            result.append(resultRow)
 
             for field in ("subjectScheme", "schemeURI"):
                 for fieldInstance in row[field]:
-                    result[field][fieldInstance] = (
-                        result[field].get(fieldInstance, 0) + 1)
+                    statistics[field][fieldInstance] = (
+                        statistics[field].get(fieldInstance, 0) + 1)
 
-    payload = {}
-    for payloadHash, payloadHashArray in useablePayloadHashes.items():
-        for p in payloadHashArray:
-            label = p["labels"][0]
-            payload[label] = payload.get(label, [])
-            payload[label].append(p["payload"])
+    resultDf = pd.DataFrame(result)
+    del result
+    gc.collect()
 
-    statistics = pd.DataFrame(statistics)
-    store = pd.HDFStore(os.path.join(config["clean"]["outputDir"], "stat.h5"))
-    store['statistics'] = statistics
+    getStat = {
+        "notAnnot": 0,
+        "multiAnnot": 0,
+        "notFit": 0,
+        "duplicate": 0,
+        "useable": 0
+    }
+    for printInfo in getStat.keys():
+        getStat[printInfo] = len(resultDf[printInfo])
 
-    for label in payload.keys():
-        dumpFile = os.path.join(config["clean"]["outputDir"], str(label) + ".data.json")
-        with open(dumpFile, "w") as f:
-            json.dump(payload[label], f)
+    getStat["total"] = len(resultDf)
+    store = pd.HDFStore(os.path.join(config["clean"]["outputDir"], "result.h5"))
+    store["r"] = resultDf
+    resultU= resultDf[resultDf.useable].copy()
+    del resultDf
+    store.close()
+    gc.collect()
 
     for key in ("subjectScheme", "schemeURI"):
         dumpFile = os.path.join(config["clean"]["outputDir"], key + ".json")
         with open(dumpFile, "w") as f:
-            json.dump(result[key], f)
+            json.dump(statistics[key], f)
 
     # Print results to log + on stdout
     config["logger"].info("Discipline match after data cleanup")
@@ -182,19 +190,17 @@ def conquer(config):
         formatString += " {:>7}"
         headers.append(scheme)
     config["logger"].info(formatString.format(*headers))
-    statisticsU = statistics[statistics.useable]
+
     totalMultiSchemes = 0
-    for label in sorted(payload.keys()):
-        if label < 1:
-            continue
-        labelSize = len(statisticsU[statisticsU[str(label)]])
-        labelSpecial = len(statisticsU[(statisticsU.special) & (statisticsU[str(label)])])
+    for label in range(1, len(config["labels"])):
+        labelSize = len(resultU[resultU[str(label)]])
+        labelSpecial = len(resultU[(resultU.special) & (resultU[str(label)])])
         labelSchemes = []
         for scheme in config["clean"]["schemes"]:
             labelSchemes.append(
-                len(statisticsU[
-                        (statisticsU[scheme] != "") &
-                        (statisticsU[str(label)]
+                len(resultU[
+                        (resultU[scheme] != "") &
+                        (resultU[str(label)]
                     )]
                 )
             )
@@ -209,32 +215,26 @@ def conquer(config):
         ))
     totalSchemes = []
     for scheme in config["clean"]["schemes"]:
-        totalSchemes.append(len(statisticsU[statisticsU[scheme] != ""]))
+        totalSchemes.append(len(resultU[resultU[scheme] != ""]))
     config["logger"].info(formatString.format(
             "all",
-            len(statisticsU),
-            len(statisticsU[statisticsU["special"]]),
+            len(resultU),
+            len(resultU[resultU["special"]]),
             totalMultiSchemes,
             *totalSchemes
         ))
 
 
     config["logger"].info("General Statistics:")
-    printInfos = (
-        "notAnnot",
-         "multiAnnot",
-         "notFit",
-         "duplicate",
-         "useable"
-    )
 
-    longestPrintInfo = max(len(v) for v in printInfos)
-    for printInfo in printInfos:
+    longestPrintInfo = max(len(k) for k in getStat.keys())
+    for printInfo in getStat.keys():
         config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-            printInfo, sum(statistics[printInfo]), longestPrintInfo=longestPrintInfo))
+            printInfo, getStat[printInfo], longestPrintInfo=longestPrintInfo))
 
-    config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-            "Documents", len(statistics), longestPrintInfo=longestPrintInfo))
+    store = pd.HDFStore(os.path.join(config["clean"]["outputDir"], "useable.h5"))
+    store["r"] = resultU
+    store.close()
 
 if __name__ == "__main__":
     config = prepare()
