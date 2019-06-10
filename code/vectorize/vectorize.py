@@ -5,7 +5,8 @@ import json
 import re
 import util.util as util
 import vectorizeHelpers
-import scipy.sparse
+import glob
+import pandas as pd
 
 from nltk.stem import PorterStemmer
 from nltk.stem import LancasterStemmer
@@ -20,30 +21,37 @@ def prepare():
     args = parser.parse_args()
     config = util.loadConfig(args.config)
     config["logger"] = util.setupLogging(config, "vectorize")
-
-    config["src"] = os.path.join(
-        config["sample"]["outputDir"],
-        "..",
-        config["vectorize"]["sampleHash"],
-        config["vectorize"]["type"]
+    srcFile = "{}_{}_sample.h5".format(
+        config["vectorize"]["mode"],
+        config["vectorize"]["sampleSeed"]
     )
-    config["dataInputRegexCompiled"] = re.compile(config["vectorize"]["dataInputRegex"])
-
-    config["regex"] = {}
-    for regex, replacement in config["vectorize"]["replace"].items():
-        config["regex"][replacement] = re.compile(regex)
-
-    if config["vectorize"]["stemming"] == "porter":
-        config["stemmer"] = PorterStemmer()
-    if config["vectorize"]["stemming"] == "lancaster":
-        config["stemmer"] = LancasterStemmer()
+    config["src"] = os.path.join(config["sample"]["baseDir"],
+                 config["vectorize"]["sampleHash"],
+                 srcFile
+                                )
     return config
 
 if __name__ == "__main__":
     config = prepare()
-    config["logger"].info(
-        "Starting vectorize with config {}".format(config["vectorize"]["hash"])
-    )
-    corpus = vectorizeHelpers.loadSample(config)
-    data = vectorizeHelpers.ngramVectorize(config, corpus)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"],"data.npz"), data)
+    print("Starting vectorize with config {}".format(config["vectorize"]["hash"]))
+    store = pd.HDFStore(config["src"])
+    corpus = store["sample"]
+    store.close()
+    (vectorizer, selector, x) = vectorizeHelpers.getVectorizerAndSelector(config, corpus)
+    config["logger"].info("Vectorizing {}".format(config["src"]))
+
+    for selectedAs in ("train", "val", "test"):
+        vectorizeHelpers.vectorizeAndSave(config, corpus, selectedAs, vectorizer, selector)
+
+    vectorizeHelpers.dumpBinary(
+        config,
+        config["vectorize"]["mode"],
+        config["vectorize"]["sampleSeed"],
+        "vectorizer.bin",
+        vectorizer)
+    vectorizeHelpers.dumpBinary(
+        config,
+        config["vectorize"]["mode"],
+        config["vectorize"]["sampleSeed"],
+        "selector.bin",
+        selector)

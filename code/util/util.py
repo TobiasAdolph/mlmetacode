@@ -3,7 +3,6 @@ import json
 import logging
 import math
 import os
-import pickle
 import random
 import re
 
@@ -99,207 +98,14 @@ def getFileHash(filePath):
             h.update(mv[:n])
     return h.hexdigest()
 
-def loadJsonFromFile(config, name, subpath=""):
-    """Wrapper around json.load() (probably bad practice)
-
-    Searches for name in processedDataDir, inputDataDir and configDir, as given
-    by config.
-
-    # Arguments
-        config:  a dictionary with the paths to search
-        name:    name of the file to load
-        subpath: optional, allows to specifiy a subpath under the pathes
-                 configured in config
-    # Returns
-        The loaded json as a python data structure
-    """
-    paths = [
-            os.path.join(config["processedDataDir"], subpath, name),
-            os.path.join(config["inputDataDir"], subpath, name),
-            os.path.join(config["configDir"], subpath, name) ]
-    for path in paths:
-        if os.path.isfile(path):
-            with open(path, "r") as f:
-                return json.load(f)
-    raise FileNotFoundError("{} was not found in any search path of config {}".format(
-        name,
-        config["hash"]))
-
-def dumpJsonToFile(config, name, payload, subpath=""):
-    """ Wrapper around json.dump() (probably bad practice) dumps a given datastructure
-
-    # Arguments:
-        config:  a dictionary with the processedDataDir path to dump to
-        name:    name of the file to be dumped
-        payload: python datastructure to be dumped
-        subpath: optional, allows to specifiy a subpath under processedDataDir
-    """
-    path = os.path.join(config["processedDataDir"], subpath, name)
-    with open(path, "w") as f:
-        json.dump(payload, f)
-
-def dumpBinary(config, name, payload):
-    """ Wrapper around pickle.dump() dumps an python object
-
-    # Arguments:
-        config:  a dictionary with the processedDataDir path to dump to
-        name:    name of the file to be dumped
-        payload: python object to be dumped
-    """
-    with open(os.path.join(config["vectorize"]["outputDir"], name), "wb") as f:
-        pickle.dump(payload, f)
-
-def loadBinary(config, name):
-    """Wrapper around pickle.load()
-
-    # Arguments
-        config:  a dictionary with the paths to search
-        name:    name of the file to load
-
-    # Returns
-        The loaded binary as a python data structure
-    """
-    with open(os.path.join(config["vectorize"]["outputDir"], name), "rb") as f:
-        return pickle.load(f)
-
-def loadTextLabelsOrEmpty(config, name):
-    """ Check whether the text and labels are already sampled and load them
-
-    # Arguments
-        config: a dictionary with the path to search for the samples
-        name: name of the sample part (train|val|test).json
-    """
-    try:
-        data = loadJsonFromFile(config, name, "train")
-        return (data[0], data[1])
-    except FileNotFoundError:
-        return ([], [])
-
-def loadSample(config, data=None, save=True):
-    """Loads text and labels and splits it into train/validate/test sets.
-
-    The call uses stored files if they exist.
-
-    # Arguments
-        config: dict, config hash
-
-    # Returns
-        A triple of tuples of text and labels (train, val and test)
-
-    # References
-        Inspired by
-        https://developers.google.com/machine-learning/guides/text-classification/step-2
-    """
-
-    #TODO input validation: config["ratio1"] + ratio2 (< 1, > 0, ratio2 > config["ratio1"])
-    # Split:
-    # 3. split it into train/val/test sets
-    # 4. Save + re-use the specific sets
-
-    # Load already prepared files
-    (train_texts, train_labels) = loadTextLabelsOrEmpty(config, "train.json")
-    (val_texts, val_labels) = loadTextLabelsOrEmpty(config, "val.json")
-    (test_texts, test_labels) = loadTextLabelsOrEmpty(config, "test.json")
-
-    if not (train_texts and val_texts and test_texts):
-        if not data:
-            data = loadTextAndLabels(config)
-        for category in data.keys():
-            random.shuffle(data[category])
-            last_train_item_idx = math.floor(len(data[category]) *
-                                             config["ratio1"]) - 1
-            last_val_item_idx = math.floor(len(data[category]) *
-                                           config["ratio2"]) - 1
-            #print("category: {} size: {} train until: {} val until: {}".format(
-            #    category, len(data[category]), last_train_item_idx, last_val_item_idx))
-
-            for idx, payload in enumerate(data[category]):
-                if idx <= last_train_item_idx:
-                    train_texts.append(payload)
-                    train_labels.append(category)
-                elif idx <= last_val_item_idx:
-                    val_texts.append(payload)
-                    val_labels.append(category)
-                else:
-                    test_texts.append(payload)
-                    test_labels.append(category)
-        random.seed(config["seed"])
-        random.shuffle(train_texts)
-        random.seed(config["seed"])
-        random.shuffle(train_labels)
-
-    if save:
-        dumpJsonToFile(config, "train.json", [train_texts, train_labels], "train")
-        dumpJsonToFile(config, "val.json", [val_texts, val_labels], "train")
-        dumpJsonToFile(config, "test.json", [test_texts, test_labels], "train")
-
-    return ((train_texts, np.array(train_labels)),
-            (val_texts, np.array(val_labels)),
-            (test_texts, np.array(test_labels))
-    )
-
 def getLabels(config):
     with open(os.path.join(config["base"]["configDir"], "labels.json"), "r") as f:
         return json.load(f)
 
-def getAnzsrc(config):
-    """ Get a dictionary mapping a label (number) to the names of the disciplines
-    (physical science)
-
-    # Argument
-        config: a dictionary with the necessary path information
-
-    # Returns
-        a dictionary with keys (01) mapping to names (physical science)
-    """
-    with open(os.path.join(config["base"]["configDir"], "anzsrc.json"), "r") as f:
-        return json.load(f)
-
-def getAnzsrcAsList(config):
-    """ Get a list of disciplines with a label - 1 (number -1) mapping to the
-    name of the disciplines.
-
-    # Argument
-        config: a dictionary with the necessary path information
-
-    # Returns
-        a python list (idx + 1 is the idx of the discipline)
-    """
-    retval = []
-    anzsrc = getAnzsrc(config)
-    for i in range(0, len(anzsrc)):
-        retval.append(anzsrc["{:02}".format(i)])
-    return retval
-
-def getShortAnzsrc(config):
-    """ Get a dictionary mapping a label (number) to the short names of the disciplines
-    (physical science)
-
-    # Argument
-        config: a dictionary with the necessary path information
-
-    # Returns
-        a dictionary with keys (01) mapping to names (physical science)
-    """
-    with open(os.path.join(config["base"]["configDir"], "shortAnzsrc.json"), "r") as f:
-        return json.load(f)
-
-def getShortAnzsrcAsList(config):
-    """ Get a list of disciplines with a label - 1 (number -1) mapping to the
-    short name of the disciplines.
-
-    # Argument
-        config: a dictionary with the necessary path information
-
-    # Returns
-        a python list (idx + 1 is the idx of the discipline) 
-    """
-    retval = []
-    shortAnzsrc = getShortAnzsrc(config)
-    for i in range(0, len(shortAnzsrc)):
-        retval.append(shortAnzsrc["{}".format(i)])
-    return retval
-
+def saveJson(config, step, name, payload):
+    saveLoc = os.path.join(config[step]["outputDir"], name)
+    with open(saveLoc, "r") as f:
+        json.dump(payload, f)
 
 def getConfusionMatrix(config, model, test_texts, test_labels):
     """ Calculates a confusion matrix
