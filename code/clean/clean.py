@@ -52,6 +52,12 @@ def prepare():
             h.update(mv[:n])
     config["labels"]  = util.getLabels(config)
 
+
+    if config["clean"]["stemming"] == "porter":
+        config["stemmer"] = PorterStemmer()
+    if config["clean"]["stemming"] == "lancaster":
+        config["stemmer"] = LancasterStemmer()
+
     config["regex"] = {
         "ddcValue": re.compile(config["clean"]["regex"]["ddcValue"]),
         "ddcSchemeURI": re.compile(config["clean"]["regex"]["ddcSchemeURI"]),
@@ -59,6 +65,10 @@ def prepare():
         "dataInput": re.compile(config["clean"]["regex"]["dataInput"]),
         "dataOutput": re.compile(config["clean"]["regex"]["dataOutput"])
     }
+
+    config["replace"] = {}
+    for regex, replacement in config["clean"]["replace"].items():
+        config["replace"][replacement] = re.compile(regex)
     return config
 
 def divide(config):
@@ -96,7 +106,8 @@ def conquer(config):
         "duplicate",
         "special",
         "useable",
-        "id"
+        "id",
+        "payload"
     ])
     resultFields.update(config["clean"]["schemes"])
 
@@ -124,10 +135,8 @@ def conquer(config):
                 # Check for duplicates
                 if row["payloadHash"] in useablePayloadHashes.keys():
                     for alreadyInHash in useablePayloadHashes[row["payloadHash"]]:
-                        if alreadyInHash["description"] == row["payload"]["description"]:
-                            row["duplicate"] = True
-                            row["useable"] = False
-                            break
+                        row["duplicate"] = True
+                        row["useable"] = False
                 useablePayloadHashes[row["payloadHash"]] = useablePayloadHashes.get(row["payloadHash"], [])
                 useablePayloadHashes[row["payloadHash"]].append(row["payload"])
 
@@ -140,13 +149,6 @@ def conquer(config):
 
             for field in resultFields:
                 resultRow[field] = row[field]
-
-            # flatten payload
-            text = ""
-            if row["payload"]:
-                for modeKey in config["clean"]["dmode"].split("_"):
-                    text += row["payload"][modeKey]
-            resultRow["payload"] = text
 
             result.append(resultRow)
 
@@ -167,7 +169,7 @@ def conquer(config):
         "useable": 0
     }
     for printInfo in getStat.keys():
-        getStat[printInfo] = len(resultDf[printInfo])
+        getStat[printInfo] = sum(resultDf[printInfo])
 
     getStat["total"] = len(resultDf)
     store = pd.HDFStore(os.path.join(config["clean"]["outputDir"], "result.h5"))
@@ -223,7 +225,6 @@ def conquer(config):
             totalMultiSchemes,
             *totalSchemes
         ))
-
 
     config["logger"].info("General Statistics:")
 

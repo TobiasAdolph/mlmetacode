@@ -8,6 +8,15 @@ from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
 from cleanSchemeHelpers import getLabelFromScheme, getSchemeTester
 
+def cleanText(config, text):
+    for replacement, regex in config["replace"].items():
+        text = re.sub(regex, replacement, text)
+    text = re.sub("\s+", " ", text)
+    if "stemmer" in config.keys():
+        stems = [ config["stemmer"].stem(word) for word in text.split(" ") ]
+        text = " ".join(stems)
+    return text.strip().lower()
+
 def getLabel(config, subject, row):
     for scheme in config["clean"]["schemes"]:
         isScheme = getSchemeTester(scheme)
@@ -119,8 +128,14 @@ def processFile(instruction):
                     continue
 
                 row["useable"] = True
-                row["payload"] = payload
                 row["payloadHash"] = util.getDictHash(payload)
+                row["payload"] = payload
+
+                text = ""
+                if row["payload"]:
+                    for modeKey in config["clean"]["dmode"].split("_"):
+                        text += row["payload"][modeKey]
+                row["payload"] = cleanText(config, text)
                 finalizeRow(config, result, row)
 
         config["logger"].info("    Save results for: {} ({} documents)".format(cleanId, len(result)))
