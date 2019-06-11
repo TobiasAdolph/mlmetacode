@@ -23,10 +23,14 @@
         "mappingHash": "2cc9765ec445d0eee3728abe4e20e505ed02f7329010c5cbb82893a4b75019ed",
         "lang": "en",
         "dmode": "title_description",
+        "replace" : {
+            "[_:,;]": " ",
+            "[“”\"\\(\\)\\[\\]]| -": ""
+        },
+        "stemming": "none",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
             "ddcSchemeURI": "https{0,1}://dewey.info/*",
-
             "special": "f[0-9a-f]{1}\\.json",
             "dataInput": ".*([a-f0-9]{2})\\.json",
             "dataOutput": ".*[a-f0-9]{2}\\.chunk\\.json"
@@ -63,28 +67,27 @@
         }
     },
     "sample": {
-        "cleanHash": "a119640bdd45b5669d544f556dadaeec1dbc01a7affd97e2e79b9a020fc1007e" 
+        "cleanHash": "a119640bdd45b5669d544f556dadaeec1dbc01a7affd97e2e79b9a020fc1007e",
+        "seed": 18041985,
+        "type": "max",
+        "ratio1": 0.8,
+        "ratio2": 0.9
     },
     "vectorize": {
-        "type": "min",
-        "replace" : {
-            "[_:,;]": " ",
-            "[“”\"\\(\\)\\[\\]]| -": ""
-        },
-        "stemming": "none",
-        "dataInputRegex": "([0-9]{2})\\.data\\.json$",
-        "dmode": "title_description",
+        "sampleHash": "dd9b3a12e3af71920971536b5303927a82db6356c1f41bfe1873130e64d4dc26",
+        "dtype": "float64",
         "minDocFreq": 2,
         "ngramRange": [1,2],
-        "sampleHash": "34a46ec907735fddf1032086ab4806fc4beaf5318f9ac1806f428cf22e4a30e2",
         "tokenMode": "word",
         "topK": 20000
     },
     "train": {
-        "mlp": {
-            "ratio1": 0.8,
-            "ratio2": 0.9,
-            "dtype": "dmed",
+        "vectorizeHash": "7865f731a35f8579cfe04e82bd72a29787dc94f97d0c13182f930b0ce62d68ce",
+        "inputFile": "max_sample.npz",
+        "sampleSeed": 158707373,
+        "type": "max",
+        "type": "mlp",
+        "mlpConfig": {
             "batchSize": 128,
             "dropoutRate": 0.2,
             "epochs": 1000,
