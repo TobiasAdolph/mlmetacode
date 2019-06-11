@@ -10,7 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
 
-def dumpBinary(config, mode, seed, name, payload):
+def dumpBinary(config, name, payload):
     """ Wrapper around pickle.dump() dumps an python object
 
     # Arguments:
@@ -18,11 +18,10 @@ def dumpBinary(config, mode, seed, name, payload):
         name:    name of the file to be dumped
         payload: python object to be dumped
     """
-    fileName = "{}_{}_{}".format(mode, seed, name)
-    with open(os.path.join(config["vectorize"]["outputDir"], fileName), "wb") as f:
+    with open(os.path.join(config["vectorize"]["outputDir"], name), "wb") as f:
         pickle.dump(payload, f)
 
-def loadBinary(config, mode, seed, name):
+def loadBinary(config, name):
     """Wrapper around pickle.load()
 
     # Arguments
@@ -32,8 +31,7 @@ def loadBinary(config, mode, seed, name):
     # Returns
         The loaded binary as a python data structure
     """
-    fileName = "{}_{}_{}".format(mode, seed, name)
-    with open(os.path.join(config["vectorize"]["outputDir"], fileName), "rb") as f:
+    with open(os.path.join(config["vectorize"]["outputDir"], name), "rb") as f:
         return pickle.load(f)
 
 def getVectorizerAndSelector(config, corpus):
@@ -61,8 +59,7 @@ def vectorizeAndSave(config, corpus, selectedAs, vectorizer, selector):
     x = vectorizer.transform(corpus[corpus["selectedAs"] == selectedAs]["payload"])
     x = selector.transform(x).astype(config["vectorize"]["dtype"])
     y = corpus[corpus["selectedAs"] == selectedAs]["label"]
-    saveFilePrefix = "{}_{}_{}".format(
-        selectedAs, config["vectorize"]["mode"], config["vectorize"]["sampleSeed"])
+    saveFilePrefix = "{}".format(selectedAs)
     dataFile = saveFilePrefix + "_data.npz"
     labelsFile = saveFilePrefix + "_labels.h5"
     store = pd.HDFStore(os.path.join(config["vectorize"]["outputDir"], labelsFile))

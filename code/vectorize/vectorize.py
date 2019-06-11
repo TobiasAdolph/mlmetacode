@@ -21,14 +21,10 @@ def prepare():
     args = parser.parse_args()
     config = util.loadConfig(args.config)
     config["logger"] = util.setupLogging(config, "vectorize")
-    srcFile = "{}_{}_sample.h5".format(
-        config["vectorize"]["mode"],
-        config["vectorize"]["sampleSeed"]
-    )
     config["src"] = os.path.join(config["sample"]["baseDir"],
                  config["vectorize"]["sampleHash"],
-                 srcFile
-                                )
+                "sample.h5"
+    )
     return config
 
 if __name__ == "__main__":
@@ -45,13 +41,9 @@ if __name__ == "__main__":
 
     vectorizeHelpers.dumpBinary(
         config,
-        config["vectorize"]["mode"],
-        config["vectorize"]["sampleSeed"],
         "vectorizer.bin",
         vectorizer)
     vectorizeHelpers.dumpBinary(
         config,
-        config["vectorize"]["mode"],
-        config["vectorize"]["sampleSeed"],
         "selector.bin",
         selector)

@@ -17,18 +17,8 @@ def prepare():
     parser.add_argument('--config',
             required = True,
             help = "File with the configuration, must contain key 'sample'")
-    parser.add_argument('--type',
-            default = "dmax",
-            choices = ["min", "median", "mean", "max", "static"],
-            help = "Mode to sample, if static, you must specify --maxsize")
-    parser.add_argument('--maxsize',
-            default = 1000,
-            help = "Maximum size of the sample for each label, only with type: static")
-
     args = parser.parse_args()
     config = util.loadConfig(args.config)
-    config["type"] = args.type
-    config["size"] = int(args.maxsize)
     config["logger"] = util.setupLogging(config, "sample")
     config["src"] = os.path.join(
         config["clean"]["baseDir"],
@@ -49,25 +39,25 @@ if __name__ == "__main__":
     df["label"] = 0 * len(df)
     config["logger"].info("Sample loaded")
     sizes = [ len(df[df[str(i)]]) for i in range(1, len(config["labels"]))]
-    if config["type"] == "max":
-        config["size"] = max(sizes)
-    elif config["type"] == "min":
-        config["size"] = min(sizes)
-    elif config["type"] == "median":
-        config["size"] = math.floor(statistics.median(sizes))
-    elif config["type"] == "mean":
-        config["size"] = math.floor(statistics.mean(sizes))
+    if config["sample"]["type"] == "max":
+        config["sample"]["size"] = max(sizes)
+    elif config["sample"]["type"] == "min":
+        config["sample"]["size"] = min(sizes)
+    elif config["sample"]["type"] == "median":
+        config["sample"]["size"] = math.floor(statistics.median(sizes))
+    elif config["sample"]["type"] == "mean":
+        config["sample"]["size"] = math.floor(statistics.mean(sizes))
     else:
-        config["type"] += str(config["size"])
+        config["sample"]["type"] += str(config["sample"]["size"])
 
-    config["logger"].info("\tMode: {}\n\tSize: {}".format(config["type"],
-                                                          config["size"]))
+    config["logger"].info("\tMode: {}\n\tSize: {}".format(config["sample"]["type"],
+                                                          config["sample"]["size"]))
 
-    seed = random.randint(0,999999999)
-    config["logger"].info("Using seed {} to pick".format(seed))
+    config["sample"].setdefault("seed", random.randint(0,999999999))
+    config["logger"].info("Using seed {} to pick".format(config["sample"]["seed"]))
     result = []
     for i in range(1, len(config["labels"])):
-        totalSampleSize = min(sizes[i-1], config["size"])
+        totalSampleSize = min(sizes[i-1], config["sample"]["size"])
         trainSampleSize = math.floor(totalSampleSize * config["sample"]["ratio1"])
         valSampleSize = math.floor(totalSampleSize * config["sample"]["ratio2"]) - trainSampleSize
         testSampleSize = valSampleSize
@@ -79,13 +69,15 @@ if __name__ == "__main__":
         config["logger"].info("Test: {}".format(testSampleSize))
         config["logger"].info("Total: {}".format(totalSampleSize))
 
-        sample = df[df[str(i)]].sample(n=totalSampleSize, random_state=seed)
+        sample = df[df[str(i)]].sample(n=totalSampleSize,
+                                       random_state=config["sample"]["seed"])
         sample.selected = True
-        sampleTrain = sample.sample(n=trainSampleSize, random_state=seed)
+        sampleTrain = sample.sample(n=trainSampleSize,
+                                    random_state=config["sample"]["seed"])
         sampleTrain.selectedAs = "train"
         sample.update(sampleTrain)
         sampleVal = sample[sample["selectedAs"] == ""].sample(
-            n=valSampleSize, random_state=seed)
+            n=valSampleSize, random_state=config["sample"]["seed"])
         sampleVal.selectedAs = "val"
         sample.update(sampleVal)
         sampleTest = sample[sample["selectedAs"] == ""]
@@ -111,18 +103,17 @@ if __name__ == "__main__":
         df.update(sample)
         result.append(label)
 
-    fileNamePrefix = config["type"] + "_" + str(seed)
     with open(os.path.join(
-        config["sample"]["outputDir"], fileNamePrefix + "_statistics.json"), "w") as f:
+        config["sample"]["outputDir"],  "statistics.json"), "w") as f:
         json.dump(result, f)
-    sampleLoc = os.path.join(config["sample"]["outputDir"], fileNamePrefix + "_sample.h5")
+    sampleLoc = os.path.join(config["sample"]["outputDir"], "sample.h5")
     store = pd.HDFStore(sampleLoc)
     sampleDf = df[df.selected][["payload", "label", "selectedAs"]].copy()
 
     store["sample"] = sampleDf
     store.close()
     config["logger"].info("Saved sample of type {} with overall size {} to {}".format(
-        config["type"],
+        config["sample"]["type"],
         len(sampleDf),
         sampleLoc
     ))
