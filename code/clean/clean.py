@@ -107,7 +107,8 @@ def conquer(config):
         "special",
         "useable",
         "id",
-        "payload"
+        "payload",
+        "labels"
     ])
     resultFields.update(config["clean"]["schemes"])
 
@@ -128,10 +129,6 @@ def conquer(config):
             rows = json.load(fh)
         for row in rows:
             if row["useable"]:
-                if len(row["labels"]) != 1:
-                    raise Error("{} in {} is useable, but has more than 1 label".format(
-                        row["id"], f))
-                label = row["labels"][0]
                 # Check for duplicates
                 if row["payloadHash"] in useablePayloadHashes.keys():
                     for alreadyInHash in useablePayloadHashes[row["payloadHash"]]:
@@ -142,11 +139,6 @@ def conquer(config):
 
             # fill the result row for the data frame
             resultRow = {}
-            for label in range(1, len(config["labels"])):
-                resultRow[str(label)] = False
-                if label in row["labels"]:
-                    resultRow[str(label)] = True
-
             for field in resultFields:
                 resultRow[field] = row[field]
 
@@ -194,18 +186,12 @@ def conquer(config):
     config["logger"].info(formatString.format(*headers))
 
     totalMultiSchemes = 0
-    for label in range(1, len(config["labels"])):
-        labelSize = len(resultU[resultU[str(label)]])
-        labelSpecial = len(resultU[(resultU.special) & (resultU[str(label)])])
+    for label, group in resultU[resultU.labels > 0].groupby("labels"):
+        labelSize = len(group)
+        labelSpecial = len(group[group.special])
         labelSchemes = []
         for scheme in config["clean"]["schemes"]:
-            labelSchemes.append(
-                len(resultU[
-                        (resultU[scheme] != "") &
-                        (resultU[str(label)]
-                    )]
-                )
-            )
+            labelSchemes.append(len(group[(group[scheme] != "") ]))
         labelMultiSchemes = sum(labelSchemes) + labelSpecial - labelSize
         totalMultiSchemes += labelMultiSchemes
         config["logger"].info(formatString.format(

@@ -26,7 +26,7 @@ def getLabel(config, subject, row):
 
 def getPayload(config, document):
     payload= {}
-    for field in config["clean"]["dmode"].split("_"):
+    for field in config["clean"]["dmode"]:
         fieldPlural = field + "s"
         payloadPart = ""
         if fieldPlural not in document.keys():
@@ -60,7 +60,7 @@ def initResultRow(config):
         "useable": False,
         "schemeURI": set(),
         "subjectScheme": set(),
-        "labels": set(),
+        "labels": 0,
         "payload": {},
         "payloadHash": None
     }
@@ -69,7 +69,7 @@ def initResultRow(config):
     return row
 
 def finalizeRow(config, result, row):
-    for field in ("schemeURI", "subjectScheme", "labels"):
+    for field in ("schemeURI", "subjectScheme"):
         row[field] = list(row[field])
     for scheme in config["clean"]["schemes"]:
         row[scheme] = "|".join(row[scheme])
@@ -99,7 +99,7 @@ def processFile(instruction):
                 row = initResultRow(config)
                 if isSpecialChunk(config, fileName):
                     row["id"] = fileName + "_" + str(docCounter)
-                    row["labels"].add(config["clean"]["special"][fileName])
+                    row["labels"] |= 1 << config["clean"]["special"][fileName]
                     row["special"] = True
                     docCounter += 1
                 else: # metadata should be DataCite compliant
@@ -111,18 +111,16 @@ def processFile(instruction):
                             row["subjectScheme"].add(subject["subjectScheme"])
                         label = getLabel(config, subject, row)
                         if label:
-                            row["labels"].add(label)
+                            row["labels"] |= 1 << label
                 if not row["labels"]:
                     row["notAnnot"] = True
                     finalizeRow(config, result, row)
                     continue
-                if len(row["labels"]) != 1:
+                if util.numberOfSetBits(row["labels"]) > 1:
                     row["multiAnnot"] = True
-                    finalizeRow(config, result, row)
-                    continue
 
                 payload = getPayload(config, document)
-                if not len(payload) == len(config["clean"]["dmode"].split("_")):
+                if not len(payload) == len(config["clean"]["dmode"]):
                     row["notFit"] = True
                     finalizeRow(config, result,row)
                     continue
@@ -133,7 +131,7 @@ def processFile(instruction):
 
                 text = ""
                 if row["payload"]:
-                    for modeKey in config["clean"]["dmode"].split("_"):
+                    for modeKey in config["clean"]["dmode"]:
                         text += row["payload"][modeKey]
                 row["payload"] = cleanText(config, text)
                 finalizeRow(config, result, row)

@@ -1,0 +1,1 @@
+{"vectorizeHash": "7865f731a35f8579cfe04e82bd72a29787dc94f97d0c13182f930b0ce62d68ce", "inputFile": "max_sample.npz", "sampleSeed": 158707373, "type": "mlp", "mlpConfig": {"batchSize": 128, "dropoutRate": 0.2, "epochs": 1000, "layers": 2, "learningRate": 0.001, "units": 64}}

@@ -8,8 +8,6 @@ import vectorizeHelpers
 import glob
 import pandas as pd
 
-from nltk.stem import PorterStemmer
-from nltk.stem import LancasterStemmer
 def prepare():
     parser = argparse.ArgumentParser(
         description='VECTORIZE the sampled data'

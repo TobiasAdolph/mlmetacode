@@ -58,14 +58,15 @@ if __name__ == "__main__":
     result = []
     for i in range(1, len(config["labels"])):
         totalSampleSize = min(sizes[i-1], config["sample"]["size"])
+        config["logger"].info(config["sample"]["ratio1"])
         trainSampleSize = math.floor(totalSampleSize * config["sample"]["ratio1"])
         valSampleSize = math.floor(totalSampleSize * config["sample"]["ratio2"]) - trainSampleSize
-        testSampleSize = valSampleSize
-        while trainSampleSize + 2 * valSampleSize < totalSampleSize:
+        testSampleSize = totalSampleSize - (trainSampleSize + valSampleSize)
+        while trainSampleSize + valSampleSize + testSampleSize < totalSampleSize:
             config["logger"].warning("Sample size is not fully exploited!")
             trainSampleSize += 1
         config["logger"].info("Train: {}".format(trainSampleSize))
-        config["logger"].info("Vald: {}".format(valSampleSize))
+        config["logger"].info("Val: {}".format(valSampleSize))
         config["logger"].info("Test: {}".format(testSampleSize))
         config["logger"].info("Total: {}".format(totalSampleSize))
 

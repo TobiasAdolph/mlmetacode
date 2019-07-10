@@ -1,0 +1,1 @@
+{"vectorizeHash": "6d686330750b1fa9c92ca0693b43dce93e3d19511991d66b59aa128e26f9902e", "inputFile": "max_sample.npz", "mlp": {"dtype": "dmed", "batchSize": 128, "dropoutRate": 0.2, "epochs": 1000, "layers": 2, "learningRate": 0.001, "units": 64}}

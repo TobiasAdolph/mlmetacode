@@ -27,7 +27,7 @@ with open(args.metadata, "r") as f:
     metadata = json.load(f)
 
 
-payload = [] 
+payload = []
 for field in config["dmode"].split("_"):
     payload.append(metadata[field + "s"][0][field])
 
