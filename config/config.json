@@ -22,9 +22,9 @@
         "retrieveHash": "0797f318a1b1d0be80fa2c224d8678b80e76c7f951b4c29a83b25eeca369fce5",
         "mappingHash": "2cc9765ec445d0eee3728abe4e20e505ed02f7329010c5cbb82893a4b75019ed",
         "lang": "en",
-        "dmode": [
-            "title",
-            "description"
+        "payloadFields": [
+            "titles",
+            "descriptions"
         ],
         "replace" : {
             "[_:,;]": " ",

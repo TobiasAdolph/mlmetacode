@@ -37,7 +37,7 @@ def loadBinary(config, name):
 def getVectorizerAndSelector(config, corpus):
     kwargs = {
             'ngram_range': config["vectorize"]["ngramRange"],
-            'dtype': config["vectorize"]["dtype"],
+            'dtype': np.float64,
             'strip_accents': 'unicode',
             'decode_error': 'replace',
             'analyzer': config["vectorize"]["tokenMode"],

@@ -7,17 +7,45 @@ import util.util as util
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
 from cleanSchemeHelpers import getLabelFromScheme, getSchemeTester
+from nltk.tokenize import word_tokenize
 
 def cleanText(config, text):
+    """
+        Applies cleaning logic to a textual payload (stemmer, whitespace)
+
+        Arguments
+            config: dictionary with the configuration
+            text: Payload to be cleaned (string)
+
+        Returns cleaned payload
+    """
+    # Is this necessary?
     for replacement, regex in config["replace"].items():
         text = re.sub(regex, replacement, text)
     text = re.sub("\s+", " ", text)
+
+    # we actually have to tokenize and iterate, see
+    # https://www.datacamp.com/community/tutorials/stemming-lemmatization-python
     if "stemmer" in config.keys():
-        stems = [ config["stemmer"].stem(word) for word in text.split(" ") ]
-        text = " ".join(stems)
+
+        text_stemmed = []
+        tokenWords = word_tokenize(text.strip().lower())
+        for word in tokenWords:
+            text_stemmed.append(config["stemmer"].stem(word))
+        return " ".join(text_stemmed)
     return text.strip().lower()
 
 def getLabel(config, subject, row):
+    """
+        Returns a label to a given subject and updates the result row
+
+        Arguments
+            config: dictionary with the configuration
+            subject: text payload as between the subject-tags in DataCite
+            row: Current row of the resulting cleaned data table
+
+        Returns label (id as defined in cleanDataHelpers)
+    """
     for scheme in config["clean"]["schemes"]:
         isScheme = getSchemeTester(scheme)
         if isScheme and isScheme(config, subject):
@@ -25,13 +53,23 @@ def getLabel(config, subject, row):
     return None
 
 def getPayload(config, document):
+    """
+        Returns the payload if it has the right language and is long enough
+
+        Arguments
+            config: dictionary with the configuration
+            document: dictionary encoding DataCite-compliant metadata
+
+        Returns dictionary including only valid text payloads
+        (keys are as configured in config["clean"]["payload"])
+    """
     payload= {}
-    for field in config["clean"]["dmode"]:
-        fieldPlural = field + "s"
+    for field in config["clean"]["payloadFields"]:
         payloadPart = ""
-        if fieldPlural not in document.keys():
+        if field not in document.keys():
             continue
-        for instance in document[fieldPlural]:
+        #  each field (e.g. titles) might have several instances (title)
+        for instance in document[field]:
             if not instance["value"]:
                 continue
             try:
@@ -46,11 +84,29 @@ def getPayload(config, document):
     return payload
 
 def isSpecialChunk(config, fileName):
+    """
+        Indicates whether the file is configured as "special", meaning that
+        it has not been retrieved from DataCite, but from a different source
+
+        Arguments
+            config: dictionary with the configuration
+            fileName: string
+
+        Returns boolean
+    """
     if config["regex"]["special"].match(os.path.basename(fileName)):
         return True
     return False
 
 def initResultRow(config):
+    """
+        Initializes a result row with default values
+
+        Arguments
+            config: dictionary with the configuration
+
+        Returns dictionary with default values for a row in the result table
+    """
     row = {
         "notAnnot": False,
         "multiAnnot": False,
@@ -60,37 +116,50 @@ def initResultRow(config):
         "useable": False,
         "schemeURI": set(),
         "subjectScheme": set(),
-        "labels": 0,
         "payload": {},
-        "payloadHash": None
+        "payloadHash": None,
+        "labels": 0
     }
     for scheme in config["clean"]["schemes"]:
         row[scheme] = []
     return row
 
-def finalizeRow(config, result, row):
+def finalizeRow(config, row):
+    """
+        Transforms the row of the result table into something serializable and
+
+        Arguments
+            config: dictionary with the configuration
+            row: dictionary with the values to be serialized
+
+        Returns dictionary with finalized values
+    """
     for field in ("schemeURI", "subjectScheme"):
         row[field] = list(row[field])
     for scheme in config["clean"]["schemes"]:
         row[scheme] = "|".join(row[scheme])
-    result.append(row)
+    return row
 
 def processFile(instruction):
-    config = instruction[0]
-    filePath = instruction[1]
+    """
+        Processes a file of metadata and saves the result in a json file
+
+        Arguments:
+            instruction: iterable, config dictionary first, filePath second
+
+        Returns boolean indicating success or failure
+    """
+    (config, filePath) = instruction
     fileName = os.path.basename(filePath)
-    config["logger"].info("  Processing: {}".format(fileName))
-    cleanId = config["regex"]["dataInput"].match(fileName).group(1)
-    resultFile = os.path.join(
-        config["clean"]["outputDir"],
-        cleanId + ".chunk.json"
-    )
+    fileId = config["regex"]["dataInput"].match(fileName).group(1)
+    resultFile = os.path.join(config["clean"]["outputDir"], fileId + ".chunk.json")
     if os.path.isfile(resultFile):
-        config["logger"].info("    {} already processed: {}".format(
+        config["logger"].info("\t{} already processed: {}".format(
             os.path.basename(fileName),
             resultFile
         ))
         return True
+    config["logger"].info("\tProcessing: {}".format(fileName))
     try:
         with open(filePath) as f:
             result = []
@@ -102,7 +171,7 @@ def processFile(instruction):
                     row["labels"] |= 1 << config["clean"]["special"][fileName]
                     row["special"] = True
                     docCounter += 1
-                else: # metadata should be DataCite compliant
+                else:
                     row["id"] = document["identifier"]["value"]
                     for subject in document["subjects"]:
                         if "schemeURI" in subject.keys():
@@ -114,31 +183,30 @@ def processFile(instruction):
                             row["labels"] |= 1 << label
                 if not row["labels"]:
                     row["notAnnot"] = True
-                    finalizeRow(config, result, row)
+                    result.append(finalizeRow(config, row))
                     continue
-                if util.numberOfSetBits(row["labels"]) > 1:
+                elif not util.power_of_two(row["labels"]):
                     row["multiAnnot"] = True
 
-                payload = getPayload(config, document)
-                if not len(payload) == len(config["clean"]["dmode"]):
+                payloadDict = getPayload(config, document)
+                # getPayload drops uncompliant fields -> payload is not fit!
+                if not len(payloadDict.keys()) == len(config["clean"]["payloadFields"]):
                     row["notFit"] = True
-                    finalizeRow(config, result,row)
+                    result.append(finalizeRow(config, row))
                     continue
-
                 row["useable"] = True
-                row["payloadHash"] = util.getDictHash(payload)
-                row["payload"] = payload
+                row["payloadHash"] = util.getDictHash(payloadDict)
+                row["payload"] = cleanText(config, " ".join(payloadDict.values()))
+                result.append(finalizeRow(config, row))
 
-                text = ""
-                if row["payload"]:
-                    for modeKey in config["clean"]["dmode"]:
-                        text += row["payload"][modeKey]
-                row["payload"] = cleanText(config, text)
-                finalizeRow(config, result, row)
-
-        config["logger"].info("    Save results for: {} ({} documents)".format(cleanId, len(result)))
         with open(resultFile, "w") as f:
             json.dump(result, f)
+        config["logger"].info(
+            "\tSave results for: {} ({} documents)".format(
+                fileId,
+                len(result)
+            )
+        )
         return True
     except Exception as e:
         config["logger"].error(

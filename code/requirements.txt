@@ -9,6 +9,4 @@ pyyaml
 requests
 seaborn
 sklearn
-tensorflow
 nltk
-BitVector

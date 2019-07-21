@@ -8,10 +8,25 @@ import util.util as util
 import hashlib
 import cleanHelpers
 import pandas as pd
+import numpy as np
 import gc
 from concurrent.futures import ProcessPoolExecutor
 from langdetect.detector_factory import init_factory
 from langdetect import DetectorFactory
+from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem.porter import PorterStemmer
+import nltk
+
+"""
+    The script is divided in three parts:
+        1. prepare:
+           sets up the cleaning process according to config and cli-params
+        2. divide:
+           starts cleaning the retrieved chunks in worker processes
+        3. conquer:
+           combines the worker output
+    Each of the parts corresponds to a function in this file
+"""
 
 def prepare():
     """ Prepares a cleaning run
@@ -33,7 +48,7 @@ def prepare():
     args = parser.parse_args()
 
     config = util.loadConfig(args.config)
-    print("Starting with config {}".format(config["clean"]["hash"]))
+    # This should be the only output, allowing to tail the log
     config["logger"] = util.setupLogging(config, "clean")
     config["worker"] = int(args.worker)
 
@@ -48,15 +63,14 @@ def prepare():
                                )
         )
         os.sys.exit(1)
-        for n in iter(lambda : f.readinto(mv), 0):
-            h.update(mv[:n])
     config["labels"]  = util.getLabels(config)
-
 
     if config["clean"]["stemming"] == "porter":
         config["stemmer"] = PorterStemmer()
+        nltk.download('punkt')
     if config["clean"]["stemming"] == "lancaster":
         config["stemmer"] = LancasterStemmer()
+        nltk.download('punkt')
 
     config["regex"] = {
         "ddcValue": re.compile(config["clean"]["regex"]["ddcValue"]),
@@ -73,26 +87,27 @@ def prepare():
 
 def divide(config):
     config["logger"].info("Starting {} workers".format(config["worker"]))
+    DetectorFactory.seed = config["clean"]["seed"]
 
     files = []
     for f in glob.glob(
         os.path.join(config["retrieve"]["baseDir"], config["clean"]["retrieveHash"]) + "/*"):
         if config["regex"]["dataInput"].match(f):
             files.append(f)
+    # Sort the files in decreasing order of size will result in a better
+    # distribution of work.
     files.sort(key=lambda x: os.path.getsize(x), reverse=True)
+    # Add the config to each file, so workers know about the config
     workpackage = [(config, f) for f in files]
-
+    # Debug:
+    # workpackage = [workpackage[-10], workpackage[-12], workpackage[-34], workpackage[-100]]
     config["logger"].info("  Will process {} files".format(len(files)))
 
-    #workpackage = [workpackage[-55], workpackage[-75], workpackage[-86]]
-
-    DetectorFactory.seed = config["clean"]["seed"]
     with ProcessPoolExecutor(
         max_workers = config["worker"],
         initializer = init_factory
     ) as ex:
         res = zip(workpackage, ex.map(cleanHelpers.processFile, workpackage))
-
     for r in res:
         if not r[1]:
             config["logger"].warning("Unsuccesful run for {}".format(r[0][1]))
@@ -100,14 +115,14 @@ def divide(config):
 def conquer(config):
     config["logger"].info("Combining worker output")
     resultFields = set([
-        "notAnnot",
-        "multiAnnot",
-        "notFit",
         "duplicate",
+        "id",
+        "multiAnnot",
+        "notAnnot",
+        "notFit",
+        "payload",
         "special",
         "useable",
-        "id",
-        "payload",
         "labels"
     ])
     resultFields.update(config["clean"]["schemes"])
@@ -134,7 +149,8 @@ def conquer(config):
                     for alreadyInHash in useablePayloadHashes[row["payloadHash"]]:
                         row["duplicate"] = True
                         row["useable"] = False
-                useablePayloadHashes[row["payloadHash"]] = useablePayloadHashes.get(row["payloadHash"], [])
+                useablePayloadHashes[row["payloadHash"]] = (
+                    useablePayloadHashes.get(row["payloadHash"], []))
                 useablePayloadHashes[row["payloadHash"]].append(row["payload"])
 
             # fill the result row for the data frame
@@ -148,83 +164,31 @@ def conquer(config):
                 for fieldInstance in row[field]:
                     statistics[field][fieldInstance] = (
                         statistics[field].get(fieldInstance, 0) + 1)
-
-    resultDf = pd.DataFrame(result)
+    df = pd.DataFrame(result)
     del result
     gc.collect()
-
-    getStat = {
-        "notAnnot": 0,
-        "multiAnnot": 0,
-        "notFit": 0,
-        "duplicate": 0,
-        "useable": 0
-    }
-    for printInfo in getStat.keys():
-        getStat[printInfo] = sum(resultDf[printInfo])
-
-    getStat["total"] = len(resultDf)
-    store = pd.HDFStore(os.path.join(config["clean"]["outputDir"], "result.h5"))
-    store["r"] = resultDf
-    resultU= resultDf[resultDf.useable].copy()
-    del resultDf
-    store.close()
+    udf = df[df.useable].copy()
+    df.to_csv(
+        os.path.join(config["clean"]["outputDir"], "result.csv")
+    )
+    del df
     gc.collect()
+    udf.to_csv(
+        os.path.join(config["clean"]["outputDir"], "useable.csv")
+    )
 
     for key in ("subjectScheme", "schemeURI"):
         dumpFile = os.path.join(config["clean"]["outputDir"], key + ".json")
         with open(dumpFile, "w") as f:
             json.dump(statistics[key], f)
 
-    # Print results to log + on stdout
-    config["logger"].info("Discipline match after data cleanup")
-    formatString = "{:>5}: {:>8} {:>7} {:>7}"
-    headers = ["Label", "Total", "Special", "MultiS"]
-    for scheme in config["clean"]["schemes"]:
-        formatString += " {:>7}"
-        headers.append(scheme)
-    config["logger"].info(formatString.format(*headers))
-
-    totalMultiSchemes = 0
-    for label, group in resultU[resultU.labels > 0].groupby("labels"):
-        labelSize = len(group)
-        labelSpecial = len(group[group.special])
-        labelSchemes = []
-        for scheme in config["clean"]["schemes"]:
-            labelSchemes.append(len(group[(group[scheme] != "") ]))
-        labelMultiSchemes = sum(labelSchemes) + labelSpecial - labelSize
-        totalMultiSchemes += labelMultiSchemes
-        config["logger"].info(formatString.format(
-            label,
-            labelSize,
-            labelSpecial,
-            labelMultiSchemes,
-            *labelSchemes
-        ))
-    totalSchemes = []
-    for scheme in config["clean"]["schemes"]:
-        totalSchemes.append(len(resultU[resultU[scheme] != ""]))
-    config["logger"].info(formatString.format(
-            "all",
-            len(resultU),
-            len(resultU[resultU["special"]]),
-            totalMultiSchemes,
-            *totalSchemes
-        ))
-
-    config["logger"].info("General Statistics:")
-
-    longestPrintInfo = max(len(k) for k in getStat.keys())
-    for printInfo in getStat.keys():
-        config["logger"].info("  {:<{longestPrintInfo}}: {:>9}".format(
-            printInfo, getStat[printInfo], longestPrintInfo=longestPrintInfo))
-
-    store = pd.HDFStore(os.path.join(config["clean"]["outputDir"], "useable.h5"))
-    store["r"] = resultU
-    store.close()
 
 if __name__ == "__main__":
     config = prepare()
+    print("Starting with config {}\n\ttail -f {}".format(
+        config["clean"]["hash"],
+        config["clean"]["logFile"]
+    ))
     config["logger"].info("Starting clean with config {}".format(
         config["clean"]["hash"])
     )

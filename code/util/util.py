@@ -147,10 +147,28 @@ def cfm2df(cfm, labels):
         df = df.append(pd.DataFrame.from_dict({row_label:rowdata}, orient='index'))
     return df[labels]
 
-def numberOfSetBits(i):
-    """ Taken from
-    https://stackoverflow.com/questions/9829578/fast-way-of-counting-non-zero-bits-in-positive-integer
+def power_of_two(i):
+    return i != 0 and ((i & (i - 1)) == 0)
+
+def int2bv(i, length):
+    bv = np.array([int(x) for x in list(bin(i))[2:]])
+    return np.pad(np.flip(bv), (0,length-len(bv)), mode="constant")
+
+def getBestLabel(ssf, labels):
     """
-    i = i - ((i >> 1) & 0x55555555)
-    i = (i & 0x33333333) + ((i >> 2) & 0x33333333)
-    return (((i + (i >> 4) & 0xF0F0F0F) * 0x1010101) & 0xffffffff) >> 24
+        Arguments
+            ssf: pd.Series keeping track which label has been selected how often so far
+                 (ssf = selected so far). This Series is zero-based!
+            labels: Bit-Vector indicating the labels set.
+                 This vectors index logically starts at 1!
+    """
+    # if only one label bit is set in index vector, return it
+    if np.count_nonzero(labels) == 1:
+        return np.nonzero(labels)[0][0] + 1
+    # if more than one label bit is set:
+    # 1. select the label with the least amount of occurences so far
+    # 2. increase the selected counter by one
+    # 3. return +1 (ssf is zero based)
+    bl = ssf[np.where(labels)[0]].idxmin()
+    ssf[bl] += 1
+    return bl + 1

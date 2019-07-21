@@ -22,15 +22,15 @@
         "retrieveHash": "be01d849f05b43d89258952ef12fc972f390d0dd650472e223cae541b3a464f8",
         "mappingHash": "2cc9765ec445d0eee3728abe4e20e505ed02f7329010c5cbb82893a4b75019ed",
         "lang": "en",
-        "dmode": [
-            "title",
-            "description"
+        "payloadFields": [
+            "titles",
+            "descriptions"
         ],
         "replace" : {
             "[_:,;]": " ",
             "[“”\"\\(\\)\\[\\]]| -": ""
         },
-        "stemming": "none",
+        "stemming": "lancaster",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
             "ddcSchemeURI": "https{0,1}://dewey.info/*",
