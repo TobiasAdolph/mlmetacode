@@ -19,21 +19,7 @@ def cleanText(config, text):
 
         Returns cleaned payload
     """
-    # Is this necessary?
-    for replacement, regex in config["replace"].items():
-        text = re.sub(regex, replacement, text)
-    text = re.sub("\s+", " ", text)
-
-    # we actually have to tokenize and iterate, see
-    # https://www.datacamp.com/community/tutorials/stemming-lemmatization-python
-    if "stemmer" in config.keys():
-
-        text_stemmed = []
-        tokenWords = word_tokenize(text.strip().lower())
-        for word in tokenWords:
-            text_stemmed.append(config["stemmer"].stem(word))
-        return " ".join(text_stemmed)
-    return text.strip().lower()
+    return re.sub("\s+", " ", text).strip().lower()
 
 def getLabel(config, subject, row):
     """
