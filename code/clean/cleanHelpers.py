@@ -51,19 +51,25 @@ def getPayload(config, document):
     """
     payload= {}
     for field in config["clean"]["payloadFields"]:
-        payloadPart = ""
+        payloadParts = []
+        # If field does not exist return immediately
         if field not in document.keys():
-            continue
+            return {}
         #  each field (e.g. titles) might have several instances (title)
         for instance in document[field]:
+            # Exclusion criterion 1: no value for instance
             if not instance["value"]:
                 continue
+            # Exclusion criterion 2: not the language configured
             try:
                 if not detect(instance["value"]) == config["clean"]["lang"]:
                     continue
             except LangDetectException as e:
                 continue
-            payloadPart += " " + instance["value"]
+            # Exclusion criterion 3: already extracted the information
+            if not instance["value"] in payloadParts:
+                payloadParts.append(instance["value"])
+        payloadPart = " ".join(payloadParts)
         if len(payloadPart.split()) < config["clean"]["minLength"].get(field, 1):
             continue
         payload[field] = payloadPart
