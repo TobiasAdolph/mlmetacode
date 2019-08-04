@@ -26,11 +26,6 @@
             "titles",
             "descriptions"
         ],
-        "replace" : {
-            "[_:,;]": " ",
-            "[“”\"\\(\\)\\[\\]]| -": ""
-        },
-        "stemming": "none",
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
             "ddcSchemeURI": "https{0,1}://dewey.info/*",
