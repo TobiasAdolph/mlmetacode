@@ -172,3 +172,21 @@ def getBestLabel(ssf, labels):
     bl = ssf[np.where(labels)[0]].idxmin()
     ssf[bl] += 1
     return bl + 1
+
+def getDisciplineCounts(config, df):
+    t = np.zeros((20,20),np.int32)
+    for i in range(0,20):
+        label = i + 1
+        for j in range(0,20):
+            if j < i:
+                continue
+            clabel = j + 1
+            mask = 0
+            mask |= 1 << label
+            mask |= 1 << clabel
+            t[i][j] = df[df.labels & mask == mask].labels.count()
+    counts = pd.DataFrame(t)
+    counts.columns = range(1,21)
+    rows = {i: config["labels"][i] for i in range(0, len(config["labels"]))}
+    counts.rename(index=rows, inplace=True)
+    return counts

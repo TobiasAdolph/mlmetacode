@@ -13,9 +13,6 @@ import gc
 from concurrent.futures import ProcessPoolExecutor
 from langdetect.detector_factory import init_factory
 from langdetect import DetectorFactory
-from nltk.stem.lancaster import LancasterStemmer
-from nltk.stem.porter import PorterStemmer
-import nltk
 
 """
     The script is divided in three parts:
@@ -65,13 +62,6 @@ def prepare():
         os.sys.exit(1)
     config["labels"]  = util.getLabels(config)
 
-    if config["clean"]["stemming"] == "porter":
-        config["stemmer"] = PorterStemmer()
-        nltk.download('punkt')
-    if config["clean"]["stemming"] == "lancaster":
-        config["stemmer"] = LancasterStemmer()
-        nltk.download('punkt')
-
     config["regex"] = {
         "ddcValue": re.compile(config["clean"]["regex"]["ddcValue"]),
         "ddcSchemeURI": re.compile(config["clean"]["regex"]["ddcSchemeURI"]),
@@ -80,9 +70,6 @@ def prepare():
         "dataOutput": re.compile(config["clean"]["regex"]["dataOutput"])
     }
 
-    config["replace"] = {}
-    for regex, replacement in config["clean"]["replace"].items():
-        config["replace"][replacement] = re.compile(regex)
     return config
 
 def divide(config):

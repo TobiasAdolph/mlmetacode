@@ -47,12 +47,12 @@ def getVectorizerAndSelector(config, df):
     }
     vectorizer =  TfidfVectorizer(**kwargs)
     x = vectorizer.fit_transform(df["payload"])
-    if config["vectorizer"]["feature_selection"]["mode"] == "multipleOfLabels":
-        topK = len(config["labels"] * config["vectorizer"]["feature_selection"]["value"])
-    elif config["vectorizer"]["feature_selection"]["mode"] == "PartOfFeatures":
-        topK = math.floor(x.shape[1]/config["vectorizer"]["feature_selection"]["value"])
-    elif config["vectorizer"]["feature_selection"]["mode"] == "static":
-        topK = config["vectorizer"]["feature_selection"]["value"]
+    if config["vectorize"]["feature_selection"]["mode"] == "multipleOfLabels":
+        topK = len(config["labels"] * config["vectorize"]["feature_selection"]["value"])
+    elif config["vectorize"]["feature_selection"]["mode"] == "PartOfFeatures":
+        topK = math.floor(x.shape[1]/config["vectorize"]["feature_selection"]["value"])
+    elif config["vectorize"]["feature_selection"]["mode"] == "static":
+        topK = config["vectorize"]["feature_selection"]["value"]
 
     selector = SelectKBest(f_classif, k=min(topK, x.shape[1]))
     # we need the labels, otherwise we cannot guarantee that the selector selects
@@ -60,7 +60,8 @@ def getVectorizerAndSelector(config, df):
     selector.fit(x, df.bl)
     return (
         vectorizer,
-        selector
+        selector,
+        x
     )
 
 def getDisciplineCounts(config, df):
