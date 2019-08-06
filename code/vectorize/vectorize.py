@@ -9,6 +9,7 @@ import glob
 import pandas as pd
 import numpy as np
 import scipy.sparse
+from sklearn.model_selection import train_test_split
 from random import randint
 from nltk.stem.lancaster import LancasterStemmer
 from nltk.stem.porter import PorterStemmer
@@ -55,9 +56,9 @@ if __name__ == "__main__":
     (vectorizer, selector, x) = vectorizeHelpers.getVectorizerAndSelector(config, df)
     xSelected =  selector.transform(x).astype(np.float64)
     with open(os.path.join(config["vectorize"]["outputDir"], "vocab_scores.json"), "w") as f:
-        json.dump(util.get_selected_vocabulary_and_scores(vectorizer.vocabulary_, selector),f)
+        json.dump(vectorizeHelpers.getSelectedVocabularyAndScores(vectorizer.vocabulary_, selector),f)
 
-    seed = randint(0,sys.maxsize)
+    seed = randint(0,2**32-1)
 
     x_train, x_test, y_train, y_test = (
         train_test_split(
@@ -69,8 +70,8 @@ if __name__ == "__main__":
             stratify=df.bl,
         ))
     config["logger"].info("Split with seed {}".format(seed))
-    y_train = np.array(y_train)
-    y_test = np.array(y_test)
+    y_train = scipy.sparse.csc_matrix(y_train)
+    y_test = scipy.sparse.csc_matrix(y_test)
 
     scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train"), x_train)
     scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_train"), y_train)
