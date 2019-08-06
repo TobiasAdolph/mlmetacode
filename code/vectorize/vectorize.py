@@ -7,6 +7,11 @@ import util.util as util
 import vectorizeHelpers
 import glob
 import pandas as pd
+import scipy.sparse
+from random import randint
+from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem.porter import PorterStemmer
+import nltk
 
 def prepare():
     parser = argparse.ArgumentParser(
@@ -20,23 +25,56 @@ def prepare():
     config = util.loadConfig(args.config)
     config["logger"] = util.setupLogging(config, "vectorize")
     config["src"] = os.path.join(config["sample"]["baseDir"],
-                 config["vectorize"]["sampleHash"],
-                "sample.h5"
+                 config["vectorize"]["cleanHash"],
+                "useable.csv"
     )
+    config["labels"] = getLabels(config)[1:]
     return config
 
 if __name__ == "__main__":
     config = prepare()
     print("Starting vectorize with config {}".format(config["vectorize"]["hash"]))
-    store = pd.HDFStore(config["src"])
-    corpus = store["sample"]
-    store.close()
-    (vectorizer, selector, x) = vectorizeHelpers.getVectorizerAndSelector(config, corpus)
+    df = pd.read_csv(config["src"])
+    if config["vectorize"]["stemming"] != "none":
+        nltk.download('punkt')
+        if config["vectorize"]["stemming"] == "lancaster":
+            stemmer = LancasterStemmer()
+        if config["vectorize"]["stemming"] == "porter":
+            stemmer = PorterStemmer()
+        df['payload'] = df.payload.apply(lambda x: stem(x, stemmer))
+    # for convenience: convert labels in in bitvector to one hot encoding
+    df['labelsI'] = df.labels.apply(lambda x: int2bv(x, 21)[1:]).tolist()
+    disciplineCounts = getDisciplineCounts(df)
+    disciplineCounts.to_csv(os.path.join(config["vectorize"]["outputDir"], "disciplineCounts.csv"))
+    # determine best label (bl) for each record
+    ssf = pd.Series(np.diag(counts))
+    df['bl'] = df.labelsI.apply(lambda x: util.getBestLabel(ssf, x))
+    df.to_csv(os.path.join(config["vectorize"]["outputDir"], 'useable.csv'))
     config["logger"].info("Vectorizing {}".format(config["src"]))
+    (vectorizer, selector) = vectorizeHelpers.getVectorizerAndSelector(config, df)
+    xSelected =  selector.transform(x).astype(np.float64)
+    with open(os.path.join(config["vectorize"]["outputDir"], "vocab_scores.json"), "w") as f:
+        json.dump(get_selected_vocabulary_and_scores(vectorizer.vocabulary_, selector),f)
 
-    for selectedAs in ("train", "val", "test"):
-        vectorizeHelpers.vectorizeAndSave(config, corpus, selectedAs, vectorizer, selector)
+    seed = randint(0,sys.maxsize)
 
+    x_train, x_test, y_train, y_test = (
+        train_test_split(
+            xSelected,
+            df.labelsI.values.tolist(),
+            random_state=seed,
+            test_size=config["vectorize"]["test_size"],
+            shuffle = True,
+            stratify=df.bl,
+        ))
+    config["logger"].info("Split with seed {}".format(seed))
+    y_train = np.array(y_train)
+    y_test = np.array(y_test)
+
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train"), x_train)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_train"), y_train)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_test"), x_test)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_test"), y_test)
     vectorizeHelpers.dumpBinary(
         config,
         "vectorizer.bin",

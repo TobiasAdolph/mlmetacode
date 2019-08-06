@@ -4,11 +4,12 @@ import json
 import os
 import re
 import pickle
-import scipy.sparse
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
+
+from nltk.tokenize import word_tokenize
 
 def dumpBinary(config, name, payload):
     """ Wrapper around pickle.dump() dumps an python object
@@ -34,37 +35,74 @@ def loadBinary(config, name):
     with open(os.path.join(config["vectorize"]["outputDir"], name), "rb") as f:
         return pickle.load(f)
 
-def getVectorizerAndSelector(config, corpus):
+def getVectorizerAndSelector(config, df):
     kwargs = {
             'ngram_range': config["vectorize"]["ngramRange"],
             'dtype': np.float64,
             'strip_accents': 'unicode',
             'decode_error': 'replace',
             'analyzer': config["vectorize"]["tokenMode"],
-            'min_df': config["vectorize"]["minDocFreq"]
+            'min_df': config["vectorize"]["minDocFreq"],
+            'stop_words': config["vectorize"]["stop_words"]
     }
     vectorizer =  TfidfVectorizer(**kwargs)
-    x = vectorizer.fit_transform(corpus["payload"])
-    selector = SelectKBest(f_classif, k=min(config["vectorize"]["topK"], x.shape[1]))
+    x = vectorizer.fit_transform(df["payload"])
+    if config["vectorizer"]["feature_selection"]["mode"] == "multipleOfLabels":
+        topK = len(config["labels"] * config["vectorizer"]["feature_selection"]["value"])
+    elif config["vectorizer"]["feature_selection"]["mode"] == "PartOfFeatures":
+        topK = math.floor(x.shape[1]/config["vectorizer"]["feature_selection"]["value"])
+    elif config["vectorizer"]["feature_selection"]["mode"] == "static":
+        topK = config["vectorizer"]["feature_selection"]["value"]
+
+    selector = SelectKBest(f_classif, k=min(topK, x.shape[1]))
     # we need the labels, otherwise we cannot guarantee that the selector selects
     # something for every label ?
-    selector.fit(x, corpus["label"])
+    selector.fit(x, df.bl)
     return (
         vectorizer,
-        selector,
-        selector.transform(x).astype(config["vectorize"]["dtype"])
+        selector
     )
 
-def vectorizeAndSave(config, corpus, selectedAs, vectorizer, selector):
-    x = vectorizer.transform(corpus[corpus["selectedAs"] == selectedAs]["payload"])
-    x = selector.transform(x).astype(config["vectorize"]["dtype"])
-    y = corpus[corpus["selectedAs"] == selectedAs]["label"]
-    saveFilePrefix = "{}".format(selectedAs)
-    dataFile = saveFilePrefix + "_data.npz"
-    labelsFile = saveFilePrefix + "_labels.h5"
-    store = pd.HDFStore(os.path.join(config["vectorize"]["outputDir"], labelsFile))
-    store["labels"] = y
-    store.close()
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], dataFile), x)
-    config["logger"].info("Saved labels and payload at \n\t{} and \n\t{}".format(
-        labelsFile, dataFile))
+def getDisciplineCounts(config, df):
+    t = np.zeros((20,20), np.int32)
+    for i in range(0,20):
+        label = i + 1
+        for j in range(0,20):
+            if j < i:
+                continue
+            clabel = j + 1
+            mask = 0
+            mask |= 1 << label
+            mask |= 1 << clabel
+            t[i][j] = df[df.labels & mask == mask].labels.count()
+    counts = pd.DataFrame(t)
+    counts.columns = range(1,21)
+    rows = { i: config["labels"][i] for i in range(0,len(config["labels"])) }
+    counts.rename(index = rows, inplace=True)
+    return counts
+
+def get_selected_vocabulary_and_scores(vocab, selector):
+     retval = []
+     keys = list(vocab.keys())
+     values = list(vocab.values())
+     for idx in selector.get_support(indices=True):
+         ngram = keys[values.index(idx)]
+         score = selector.scores_[idx]
+         if len(retval) == 0:
+             retval.append([ngram, score])
+             continue
+         for i in range(0,len(retval)+1):
+             if i >= len(retval):
+                 retval.append([ngram, score])
+                 break
+             if retval[i][1] < score:
+                 retval.insert(i, [ngram, score])
+                 break
+     return retval
+
+def stem(payload, stemmer):
+    return_value = []
+    tokenWords = word_tokenize(payload)
+    for word in tokenWords:
+        return_value.append(stemmer.stem(word))
+    return " ".join(return_value)

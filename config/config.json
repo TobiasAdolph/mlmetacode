@@ -69,14 +69,6 @@
             "ff.json": 16
         }
     },
-    "sample": {
-        "cleanHash": "a119640bdd45b5669d544f556dadaeec1dbc01a7affd97e2e79b9a020fc1007e",
-        "size": 10,
-        "seed": 18041985,
-        "type": "static",
-        "ratio1": 0.8,
-        "ratio2": 0.9
-    },
     "vectorize": {
         "sampleHash": "a66b224d2f23991a926362b71e5fa4bee4ae8c8ac328748bca9e166386a2a4ac",
         "dtype": "float64",
