@@ -42,6 +42,8 @@ if __name__ == "__main__":
         if config["vectorize"]["stemming"] == "porter":
             stemmer = PorterStemmer()
         df['payload'] = df.payload.apply(lambda x: stem(x, stemmer))
+        config["vectorize"]["stop_words"] = (
+            [stem(stop_word, stemmer) for stop_word in config["vectorize"]["stop_words"]])
     # for convenience: convert labels in in bitvector to one hot encoding
     df['labelsI'] = df.labels.apply(lambda x: int2bv(x, 21)[1:]).tolist()
     disciplineCounts = getDisciplineCounts(df)
