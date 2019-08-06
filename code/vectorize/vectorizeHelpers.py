@@ -82,7 +82,7 @@ def getDisciplineCounts(config, df):
     counts.rename(index = rows, inplace=True)
     return counts
 
-def get_selected_vocabulary_and_scores(vocab, selector):
+def getSelectedVocabularyAndScores(vocab, selector):
      retval = []
      keys = list(vocab.keys())
      values = list(vocab.values())
