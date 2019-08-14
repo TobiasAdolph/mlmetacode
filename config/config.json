@@ -65,7 +65,7 @@
         }
     },
     "vectorize": {
-        "cleanHash": "a66b224d2f23991a926362b71e5fa4bee4ae8c8ac328748bca9e166386a2a4ac",
+        "cleanHash": "3cb73318841c4975546c5d4a0b93cd1a56cd6f481fb2d7c5904c354b91d97e36",
         "stemming": "lancaster",
         "test_size": 0.2,
         "minDocFreq": 2,
