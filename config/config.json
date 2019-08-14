@@ -33,10 +33,6 @@
             "dataInput": ".*([a-f0-9]{2})\\.json",
             "dataOutput": ".*[a-f0-9]{2}\\.chunk\\.json"
         },
-        "minLength": {
-            "descriptions": 15,
-            "titles": 1
-        },
         "schemes": [
             "anzsrc",
             "ddc",

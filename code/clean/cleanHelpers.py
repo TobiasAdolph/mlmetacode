@@ -9,18 +9,6 @@ from langdetect.lang_detect_exception import LangDetectException
 from cleanSchemeHelpers import getLabelFromScheme, getSchemeTester
 from nltk.tokenize import word_tokenize
 
-def cleanText(config, text):
-    """
-        Applies cleaning logic to a textual payload (stemmer, whitespace)
-
-        Arguments
-            config: dictionary with the configuration
-            text: Payload to be cleaned (string)
-
-        Returns cleaned payload
-    """
-    return re.sub("\s+", " ", text).strip().lower()
-
 def getLabel(config, subject, row):
     """
         Returns a label to a given subject and updates the result row
@@ -70,8 +58,6 @@ def getPayload(config, document):
             if not instance["value"] in payloadParts:
                 payloadParts.append(instance["value"])
         payloadPart = " ".join(payloadParts)
-        if len(payloadPart.split()) < config["clean"]["minLength"].get(field, 1):
-            continue
         payload[field] = payloadPart
     return payload
 
@@ -180,15 +166,15 @@ def processFile(instruction):
                 elif not util.power_of_two(row["labels"]):
                     row["multiAnnot"] = True
 
-                payloadDict = getPayload(config, document)
+                payload = getPayload(config, document)
                 # getPayload drops uncompliant fields -> payload is not fit!
-                if not len(payloadDict.keys()) == len(config["clean"]["payloadFields"]):
+                if not len(payload.keys()) == len(config["clean"]["payloadFields"]):
                     row["notFit"] = True
                     result.append(finalizeRow(config, row))
                     continue
                 row["useable"] = True
-                row["payloadHash"] = util.getDictHash(payloadDict)
-                row["payload"] = cleanText(config, " ".join(payloadDict.values()))
+                row["payloadHash"] = util.getDictHash(payload)
+                row["payload"] = payload
                 result.append(finalizeRow(config, row))
 
         with open(resultFile, "w") as f:

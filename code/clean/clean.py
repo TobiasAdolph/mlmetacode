@@ -107,7 +107,6 @@ def conquer(config):
         "multiAnnot",
         "notAnnot",
         "notFit",
-        "payload",
         "special",
         "useable",
         "labels"
@@ -144,6 +143,9 @@ def conquer(config):
             resultRow = {}
             for field in resultFields:
                 resultRow[field] = row[field]
+            # put each payload field in a separate row
+            for key in config["clean"]["payloadFields"]:
+                resultRow[key] = row["payload"][key]
 
             result.append(resultRow)
 
