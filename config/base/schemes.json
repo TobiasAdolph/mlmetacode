@@ -1,0 +1,20 @@
+{
+    "anzsrc": {
+        "long": "Australian and New Zealand Standard Research Classification (ANZSRC)"
+    },
+    "ddc": {
+        "long": "Dewey Decimal Classification"
+    },
+    "bk": {
+        "long": "Basisklassifikation"
+    },
+    "narcis": {
+        "long": "Narcis Classification Scheme"
+    },
+    "bepress": {
+        "long": "Digital Commons Three-Tiered Taxonomy of Academic Disciplines"
+    },
+    "linsearch": {
+        "long": "Linsearch"
+    }
+}
