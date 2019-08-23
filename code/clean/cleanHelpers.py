@@ -4,10 +4,15 @@ import ijson
 import json
 import re
 import util.util as util
-from langdetect import detect
+from langdetect import detect_langs
 from langdetect.lang_detect_exception import LangDetectException
 from cleanSchemeHelpers import getLabelFromScheme, getSchemeTester
 from nltk.tokenize import word_tokenize
+import string
+
+def cleanUseables(config, df):
+    df.payload = df.payload.apply(lambda x: "".join(list(filter(lambda y: y in set(string.printable), x.lower()))))
+    return df
 
 def getLabel(config, subject, row):
     """
@@ -26,6 +31,13 @@ def getLabel(config, subject, row):
             return getLabelFromScheme(scheme, config, subject, row)
     return None
 
+def getLangProbability(string, lang):
+    probabilities = detect_langs(string)
+    for p in probabilities:
+        if p.lang == lang:
+            return p.prob
+    return 0
+
 def getPayload(config, document):
     """
         Returns the payload if it has the right language and is long enough
@@ -39,10 +51,9 @@ def getPayload(config, document):
     """
     payload= {}
     for field in config["clean"]["payloadFields"]:
-        payloadParts = []
-        # If field does not exist return immediately
         if field not in document.keys():
-            return {}
+            continue
+        fieldInstances = []
         #  each field (e.g. titles) might have several instances (title)
         for instance in document[field]:
             # Exclusion criterion 1: no value for instance
@@ -50,15 +61,15 @@ def getPayload(config, document):
                 continue
             # Exclusion criterion 2: not the language configured
             try:
-                if not detect(instance["value"]) == config["clean"]["lang"]:
+                if not getLangProbability(instance["value"], config["clean"]["lang"]) > 0.5:
                     continue
             except LangDetectException as e:
                 continue
             # Exclusion criterion 3: already extracted the information
-            if not instance["value"] in payloadParts:
-                payloadParts.append(instance["value"])
-        payloadPart = " ".join(payloadParts)
-        payload[field] = payloadPart
+            if not instance["value"] in fieldInstances and len(instance["value"].split()) > 0:
+                fieldInstances.append(' '.join(instance["value"].split()))
+        if len(fieldInstances) > 0:
+            payload[field] = " ".join(fieldInstances)
     return payload
 
 def isSpecialChunk(config, fileName):
@@ -167,9 +178,8 @@ def processFile(instruction):
                     row["multiAnnot"] = True
 
                 payload = getPayload(config, document)
-                # getPayload drops uncompliant fields -> payload is not fit!
-                if not len(payload.keys()) == len(config["clean"]["payloadFields"]):
-                    row["notFit"] = True
+                if len(payload.keys()) < 1:
+                    row["notFit"] == True
                     result.append(finalizeRow(config, row))
                     continue
                 row["useable"] = True

@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.metrics import confusion_matrix
+from nltk.tokenize import word_tokenize
 
 def loadConfig(path="config.json"):
     """Loads the file with all configuration
@@ -100,6 +101,14 @@ def getFileHash(filePath):
 
 def getLabels(config):
     with open(os.path.join(config["base"]["configDir"], "labels.json"), "r") as f:
+        return json.load(f) 
+
+def getSchemes(config):
+    with open(os.path.join(config["base"]["configDir"], "schemes.json"), "r") as f:
+        return json.load(f) 
+
+def getStopWords(config):
+    with open(os.path.join(config["base"]["configDir"], "stop_words.json"), "r") as f:
         return json.load(f)
 
 def saveJson(config, step, name, payload):
@@ -166,7 +175,7 @@ def getBestLabel(ssf, labels):
     if np.count_nonzero(labels) == 1:
         return np.nonzero(labels)[0][0] + 1
     # if more than one label bit is set:
-    # 1. select the label with the least amount of occurences so far
+    # 1. select the label with the least amount of occurrences so far
     # 2. increase the selected counter by one
     # 3. return +1 (ssf is zero based)
     bl = ssf[np.where(labels)[0]].idxmin()
@@ -190,3 +199,10 @@ def getDisciplineCounts(config, df):
     rows = {i: config["labels"][i] for i in range(0, len(config["labels"]))}
     counts.rename(index=rows, inplace=True)
     return counts
+
+def stem(payload, stemmer):
+    return_value = []
+    tokenWords = word_tokenize(payload)
+    for word in tokenWords:
+        return_value.append(stemmer.stem(word))
+    return " ".join(return_value)

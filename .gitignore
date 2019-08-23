@@ -176,4 +176,6 @@ pip-selfcheck.json
 # End of https://www.gitignore.io/api/linux,python,virtualenv,vim,tensorflow
 code/tests/config/*
 !code/test/config/config.json
+config/*
 code/tests/a6f0291e75c2435c5e566fa55aa9296dd38b51065d141a7b82a986c5efe41a6f
+data/*

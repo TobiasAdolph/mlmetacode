@@ -13,6 +13,10 @@ import gc
 from concurrent.futures import ProcessPoolExecutor
 from langdetect.detector_factory import init_factory
 from langdetect import DetectorFactory
+from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem.porter import PorterStemmer
+import nltk
+from random import randint
 
 """
     The script is divided in three parts:
@@ -74,7 +78,8 @@ def prepare():
 
 def divide(config):
     config["logger"].info("Starting {} workers".format(config["worker"]))
-    DetectorFactory.seed = config["clean"]["seed"]
+    DetectorFactory.seed = config["clean"].get("seed", randint(0,2**32-1))
+    config["logger"].info("Initializing DetectorFactory with seed {}".format(DetectorFactory.seed))
 
     files = []
     for f in glob.glob(
@@ -145,7 +150,8 @@ def conquer(config):
                 resultRow[field] = row[field]
             # put each payload field in a separate row
             for key in config["clean"]["payloadFields"]:
-                resultRow[key] = row["payload"][key]
+                resultRow[key] = row["payload"].get(key, " ")
+            resultRow["payload"] = " ".join([resultRow[x] for x in config["clean"]["payloadFields"]])
 
             result.append(resultRow)
 
@@ -156,12 +162,29 @@ def conquer(config):
     df = pd.DataFrame(result)
     del result
     gc.collect()
+    df.loc[df.payload.str.len() < config["clean"]["payloadMinLength"], 'useable'] = False
     udf = df[df.useable].copy()
     df.to_csv(
         os.path.join(config["clean"]["outputDir"], "result.csv")
     )
     del df
     gc.collect()
+
+    udf['labelsI'] = udf.labels.apply(lambda x: util.int2bv(x, 21)[1:]).tolist()
+    disciplineCounts = util.getDisciplineCounts(config, udf)
+    disciplineCounts.to_csv(os.path.join(config["clean"]["outputDir"], "disciplineCounts.csv"))
+    # determine best label (bl) for each record
+    # TODO if there is time, we could parallelize these tasks.
+    ssf = pd.Series(np.diag(disciplineCounts))
+    udf['bl'] = udf.labelsI.apply(lambda x: util.getBestLabel(ssf, x))
+    udf['nol'] = udf.labelsI.apply(lambda x: sum(x))
+    udf.drop(['labelsI'], axis=1)
+    udf = cleanHelpers.cleanUseables(config, udf)
+    nltk.download('punkt')
+    lStemmer = LancasterStemmer()
+    udf['lancaster'] = udf.payload.apply(lambda x: util.stem(x, lStemmer))
+    pStemmer = PorterStemmer()
+    udf['porter'] = udf.payload.apply(lambda x: util.stem(x, pStemmer))
     udf.to_csv(
         os.path.join(config["clean"]["outputDir"], "useable.csv")
     )

@@ -4,12 +4,13 @@ import json
 import os
 import re
 import pickle
+import math
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
 
-from nltk.tokenize import word_tokenize
+
 
 def dumpBinary(config, name, payload):
     """ Wrapper around pickle.dump() dumps an python object
@@ -43,13 +44,13 @@ def getVectorizerAndSelector(config, df):
             'decode_error': 'replace',
             'analyzer': config["vectorize"]["tokenMode"],
             'min_df': config["vectorize"]["minDocFreq"],
-            'stop_words': config["vectorize"]["stop_words"]
+            'stop_words': config["stop_words"]
     }
     vectorizer =  TfidfVectorizer(**kwargs)
-    x = vectorizer.fit_transform(df["payload"])
+    x = vectorizer.fit_transform(df["payloadFinal"])
     if config["vectorize"]["feature_selection"]["mode"] == "multipleOfLabels":
         topK = len(config["labels"] * config["vectorize"]["feature_selection"]["value"])
-    elif config["vectorize"]["feature_selection"]["mode"] == "PartOfFeatures":
+    elif config["vectorize"]["feature_selection"]["mode"] == "fractionOfFeatures":
         topK = math.floor(x.shape[1]/config["vectorize"]["feature_selection"]["value"])
     elif config["vectorize"]["feature_selection"]["mode"] == "static":
         topK = config["vectorize"]["feature_selection"]["value"]
@@ -100,10 +101,3 @@ def getSelectedVocabularyAndScores(vocab, selector):
                  retval.insert(i, [ngram, score])
                  break
      return retval
-
-def stem(payload, stemmer):
-    return_value = []
-    tokenWords = word_tokenize(payload)
-    for word in tokenWords:
-        return_value.append(stemmer.stem(word))
-    return " ".join(return_value)
