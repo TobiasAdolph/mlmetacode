@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
         for idx,p in enumerate(gscv.cv_results_["params"]):
             row = {
-                    "model": type(model).__name__,
+                    "model": m["name"],
                     "hash": getDictHash(p)[0:30],
                     "params": p,
                     "vHash": config["vectorize"]["hash"]

@@ -3,23 +3,57 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import util.util as util
 import json
 
-mode = "test"
+mode = ""
 
 config = util.loadConfig("../config/config{}.json".format(mode))
 
 selections = [
-        {"mode": "multipleOfLabels", "value": 1000},
-        {"mode": "multipleOfLabels", "value": 10000},
-        {"mode": "fractionOfFeatures", "value": 100},
-        {"mode": "fractionOfFeatures", "value": 10},
-        {"mode": "fractionOfFeatures", "value": 1}
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 1000},
+            "stemming": "none"
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 2500},
+            "stemming": "none"
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 5000},
+            "stemming": "none",
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 1000},
+            "stemming": "lancaster"
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 2500},
+            "stemming": "lancaster"
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 5000},
+            "stemming": "lancaster"
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 1000},
+            "stemming": "porter"
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 2500},
+            "stemming": "porter"
+        },
+        { 
+            "feature_selection": {"mode": "multipleOfLabels", "value": 5000},
+            "stemming": "porter"
+        }
 ]
 
-i = 0
-for stemming in ("none", "lancaster", "porter"):
-    config["vectorize"]["stemming"] = stemming
-    for selection in selections:
-        config["vectorize"]["feature_selection"] = selection
-        with open("../config/config_{}_{}.json".format(mode, i), "w") as f:
-            json.dump(config, f)
-        i += 1
+for selection in selections:
+    name_parts = []
+    for key, value in selection.items():
+        config["vectorize"][key] = value
+        if type(value) is dict:
+            name_parts.append(str(value["value"]))
+        else:
+            name_parts.append(str(value))
+    print("../config/config{}_{}.json".format(mode, "_".join(name_parts)))
+    with open("../config/config{}_{}.json".format(mode, "_".join(name_parts)), "w") as f:
+        json.dump(config, f)

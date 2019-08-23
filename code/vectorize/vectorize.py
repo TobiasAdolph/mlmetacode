@@ -60,9 +60,10 @@ if __name__ == "__main__":
         if config["vectorize"]["stemming"] == "porter":
             stemmer = PorterStemmer() 
             df['payloadFinal'] =  df['porter']
-        config["vectorize"]["stop_words"] = (
+        new_stop_words = (
             [util.stem(stop_word, stemmer) for stop_word in ( 
                 config["stop_words"])])
+        config["stop_words"] = new_stop_words
     else:
         df['payloadFinal'] =  df['payload']
     config["logger"].info("Vectorizing {}".format(config["src"]))

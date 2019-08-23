@@ -102,6 +102,21 @@
 		    ]
 		},
 		{
+		    "name": "XGBClassifier",
+		    "package": "xgboost",
+		    "multilabel": "false",
+		    "params": { 
+		    	"objective": "binary:logistic",
+			"verbosity": 3,
+			"booster": "gbtree"
+		    },
+		    "param_grid": [
+			{
+			    "max_depth": [300, 600, 1200]
+			}
+		    ]
+		},
+		{
 		    "name": "RandomForestClassifier",
 		    "package": "sklearn.ensemble",
 		    "multilabel": true,
