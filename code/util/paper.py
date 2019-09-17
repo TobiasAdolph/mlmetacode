@@ -1,7 +1,7 @@
 import os
 import json
 import pandas as pd
-import util.util as util
+import util
 import argparse
 import json
 
@@ -21,6 +21,8 @@ def get_base_data(config):
             "useable": udf[udf.useable].id.count(),
             "labelsets": udf.labels.nunique(),
             "labelsetsOnce": udf.groupby(df.labels).labels.count().value_counts().get(1),
+            "labelCardinality": sum(udf.nol)/len(udf),
+            "labelDensity": sum(udf.nol)/(len(udf)*len(util.getLabels(config)[1:])),
             "special": udf[udf.special].id.count(),
             "allFeatures": info["allFeatures"],
             "noTrain": info["noTrain"],
