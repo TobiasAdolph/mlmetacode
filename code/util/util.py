@@ -9,7 +9,7 @@ import re
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 from nltk.tokenize import word_tokenize
 
 def loadConfig(path="config.json"):
@@ -206,3 +206,18 @@ def stem(payload, stemmer):
     for word in tokenWords:
         return_value.append(stemmer.stem(word))
     return " ".join(return_value)
+
+def label_score(y, y_pred, **kwargs):
+    label = kwargs["label"] - 1
+    beta = kwargs.get("beta", 1)
+    score = kwargs["score"]
+    prfs = precision_recall_fscore_support(y, y_pred, beta=beta)
+    if score == "precision":
+        return prfs[0][label]
+    if score == "recall":
+        return prfs[1][label]
+    if score == "f":
+        return prfs[2][label]
+    return 0
+
+
