@@ -9,11 +9,6 @@ from langdetect.lang_detect_exception import LangDetectException
 from cleanSchemeHelpers import getLabelFromScheme, getSchemeTester
 from nltk.tokenize import word_tokenize
 import string
-
-def cleanUseables(config, df):
-    df.payload = df.payload.apply(lambda x: "".join(list(filter(lambda y: y in set(string.printable), x.lower()))))
-    return df
-
 def getLabel(config, subject, row):
     """
         Returns a label to a given subject and updates the result row
@@ -61,7 +56,7 @@ def getPayload(config, document):
                 continue
             # Exclusion criterion 2: not the language configured
             try:
-                if not getLangProbability(instance["value"], config["clean"]["lang"]) > 0.5:
+                if not getLangProbability(instance["value"], config["clean"]["lang"]) > config["clean"]["langCert"]:
                     continue
             except LangDetectException as e:
                 continue

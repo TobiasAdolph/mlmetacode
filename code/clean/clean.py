@@ -17,6 +17,7 @@ from nltk.stem.lancaster import LancasterStemmer
 from nltk.stem.porter import PorterStemmer
 import nltk
 from random import randint
+import string
 
 """
     The script is divided in three parts:
@@ -162,30 +163,31 @@ def conquer(config):
     df = pd.DataFrame(result)
     del result
     gc.collect()
-    df.loc[df.payload.str.len() < config["clean"]["payloadMinLength"], 'useable'] = False
-    udf = df[df.useable].copy()
+
     df.to_csv(
         os.path.join(config["clean"]["outputDir"], "result.csv")
     )
-    del df
-    gc.collect()
 
-    udf['labelsI'] = udf.labels.apply(lambda x: util.int2bv(x, 21)[1:]).tolist()
-    disciplineCounts = util.getDisciplineCounts(config, udf)
-    disciplineCounts.to_csv(os.path.join(config["clean"]["outputDir"], "disciplineCounts.csv"))
+    df = df[~df.duplicate][df.payload.str.len() > 1][df.labels > 0].copy()
+    df["wc"] = df.payload.apply(lambda x: len(x.split()))
+    df.loc[df.wc < config["clean"]["payloadMinLength"], 'useable'] = False
+    df = df[df.useable].copy()
+    df['labelsI'] = df.labels.apply(lambda x: util.int2bv(x, 21)[1:]).tolist()
     # determine best label (bl) for each record
     # TODO if there is time, we could parallelize these tasks.
-    ssf = pd.Series(np.diag(disciplineCounts))
-    udf['bl'] = udf.labelsI.apply(lambda x: util.getBestLabel(ssf, x))
-    udf['nol'] = udf.labelsI.apply(lambda x: sum(x))
-    udf.drop(['labelsI'], axis=1)
-    udf = cleanHelpers.cleanUseables(config, udf)
+    ssf = []
+    for i in range(1,21):
+        ssf.append(len(df[df.labels == 2**i]))
+    ssf = pd.Series(ssf)
+    df['bl'] = df.labelsI.apply(lambda x: util.getBestLabel(ssf, x))
+    df['nol'] = df.labelsI.apply(lambda x: sum(x))
+    df.payload = df.payload.apply(lambda x: "".join(list(filter(lambda y: y in set(string.printable), x.lower()))))
     nltk.download('punkt')
     lStemmer = LancasterStemmer()
-    udf['lancaster'] = udf.payload.apply(lambda x: util.stem(x, lStemmer))
+    df['lancaster'] = df.payload.apply(lambda x: util.stem(x, lStemmer))
     pStemmer = PorterStemmer()
-    udf['porter'] = udf.payload.apply(lambda x: util.stem(x, pStemmer))
-    udf.to_csv(
+    df['porter'] = df.payload.apply(lambda x: util.stem(x, pStemmer))
+    df.to_csv(
         os.path.join(config["clean"]["outputDir"], "useable.csv")
     )
 
