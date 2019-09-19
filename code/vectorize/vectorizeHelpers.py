@@ -6,11 +6,42 @@ import re
 import pickle
 import math
 
+from scipy.sparse import csc_matrix
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
 
+def vectorizeEmbeddings(config, df):
+    """ Vectorize the payload in df as embeddings
 
+    # Arguments:
+        config:  a dictionary with the configuration 
+        df: a pandas dataFrame with the data (key: payloadFinal)
+
+    # Returns
+        The embeddings as a sparse matrix
+
+    # See
+        vectorizeBagOfWords
+    """
+    # TODO @Michael
+    return scipy.sparse.csc_matrix([0])
+
+def vectorizeBagOfWords(config, df):
+    """ Vectorize the payload in df as bag of words 
+
+    # Arguments:
+        config:  a dictionary with the configuration 
+        df: a pandas dataFrame with the data (key: payloadFinal)
+
+    # Returns
+        The bag of words as a sparse matrix
+    # See
+        vectorizeEmbeddings
+    """
+    vectorizer, selector, x = getVectorizerAndSelector(config, df)
+    return selector.transform(x).astype(np.float64)
 
 def dumpBinary(config, name, payload):
     """ Wrapper around pickle.dump() dumps an python object
