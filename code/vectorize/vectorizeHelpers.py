@@ -5,19 +5,21 @@ import os
 import re
 import pickle
 import math
-
+import nltk
 import scipy.sparse
-
+from nltk import util, stem
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
 from gensim.models import KeyedVectors
-from keras import Tokenizer
+from keras.preprocessing.text import Tokenizer
 
 from nltk.stem.lancaster import LancasterStemmer
 from nltk.stem.porter import PorterStemmer
 
-def vectorizeEmbeddings(config, df):
+from operator import itemgetter
+
+def getTokenizerAndEmbeddingMatrix(config, payload):
     """ Vectorize the payload in df as embeddings
 
     # Arguments:
@@ -30,37 +32,23 @@ def vectorizeEmbeddings(config, df):
     # See
         vectorizeBagOfWords
     """
-    #sequences = df["payloadFinal"]
-    #tokenizer = Tokenizer(lower=True)
-    #tokenizer.fit_on_texts(sequences)
-    #word_index = tokenizer.word_index
-    #print('Found %s unique tokens.' % len(word_index))
-    #word2vec_path = "/home/debian/ml/data/embedding/GoogleNews-vectors-negative300.bin"
-    #model = KeyedVectors.load_word2vec_format(word2vec_path, binary=True)
-    #embedding_matrix = np.zeros((len(word_index + 1), 300))
-    #word_vectors = model.wv
-    #for word, i in word_index.items():
-    #    try:
-    #        embedding_vector=word_vectors[word]
-    #        embedding_matrix[i] = embedding_vector
-    #    except:
-    #        pass
-    #return embedding_matrix
 
-def vectorizeBagOfWords(config, df):
-    """ Vectorize the payload in df as bag of words 
+    # is googleNews case-sensitive?
+    tokenizer = Tokenizer(lower=True)
+    tokenizer.fit_on_texts(payload)
 
-    # Arguments:
-        config:  a dictionary with the configuration 
-        df: a pandas dataFrame with the data (key: payload)
+    model = KeyedVectors.load_word2vec_format(
+        os.path.join(config["vectorize"]["baseDir"], config["vectorize"]["word2vec"]),
+        binary=True
+    )
 
-    # Returns
-        The bag of words as a sparse matrix
-    # See
-        vectorizeEmbeddings
-    """
-    vectorizer, selector, x = getVectorizerAndSelector(config, df)
-    return selector.transform(x).astype(np.float64)
+    embedding_matrix = np.zeros((len(tokenizer.word_index)+1, 300))
+    for word, i in tokenizer.word_index.items():
+        try:
+            embedding_matrix[i] = model.wv[word]
+        except KeyError:
+            pass
+    return tokenizer, scipy.sparse.csc_matrix(embedding_matrix)
 
 def dumpBinary(config, name, payload):
     """ Wrapper around pickle.dump() dumps an python object
@@ -102,6 +90,7 @@ def getVectorizerAndSelector(config, df):
             stemmer = LancasterStemmer()
         if config["vectorize"]["stemming"] == "porter":
             stemmer = PorterStemmer()
+        # TODO does not work?
         config["stop_words"] = (
             [util.stem(stop_word, stemmer) for stop_word in ( 
                 config["stop_words"])])
@@ -118,11 +107,7 @@ def getVectorizerAndSelector(config, df):
     # we need the labels, otherwise we cannot guarantee that the selector selects
     # something for every label ?
     selector.fit(x, df.bl)
-    return (
-        vectorizer,
-        selector,
-        x
-    )
+    return vectorizer, selector, x
 
 def getDisciplineCounts(config, df):
     t = np.zeros((20,20), np.int32)
@@ -149,14 +134,5 @@ def getSelectedVocabularyAndScores(vocab, selector):
      for idx in selector.get_support(indices=True):
          ngram = keys[values.index(idx)]
          score = selector.scores_[idx]
-         if len(retval) == 0:
-             retval.append([ngram, score])
-             continue
-         for i in range(0,len(retval)+1):
-             if i >= len(retval):
-                 retval.append([ngram, score])
-                 break
-             if retval[i][1] < score:
-                 retval.insert(i, [ngram, score])
-                 break
-     return retval
+         retval.append([ngram, score])
+     return sorted(retval, key=itemgetter(1))

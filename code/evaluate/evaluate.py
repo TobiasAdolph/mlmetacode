@@ -2,16 +2,17 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from scipy.sparse import load_npz
 from util.util import loadConfig, getDictHash, setupLogging
-from os.path import join, exists
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import fbeta_score, precision_score, recall_score, make_scorer
+from sklearn.metrics import precision_score, recall_score, fbeta_score, precision_recall_fscore_support
 import pandas as pd
+import numpy as np
 from importlib import import_module
 import argparse
-import itertools as it
-from pprint import pformat
 import datetime
 import re
+import evaluateHelpers
+from random import randint
+from pprint import pformat
+from evaluateWrappers import TFMLPClassifier
 
 def prepare():
     parser = argparse.ArgumentParser(
@@ -28,132 +29,175 @@ def prepare():
         config["evaluate"]["logFile"]
     ))
     config["logger"] = setupLogging(config, "evaluate")
+    config["target"] = os.path.join(config["base"]["outputDir"], "evaluation.csv")
 
-    config["scoring"] = {
-        "fhalf": make_scorer(fbeta_score, beta=0.5, average="micro"),
-        "fone": make_scorer(fbeta_score, beta=1, average="micro"),
-        "ftwo": make_scorer(fbeta_score, beta=2, average="micro"),
-        "prec": make_scorer(precision_score, average="micro"),
-        "rec": make_scorer(recall_score, average="micro")
-    }
-    config["target"] = join(config["base"]["outputDir"], "evaluation.csv")
     return config
-
-def getUndoneParamCombinations(config, df, param_grid, vHash, params):
-    if not "hash" in df.columns:
-        return param_grid
-    keys = param_grid[0].keys()
-    values = (param_grid[0][key] for key in keys)
-    pcs = [dict(zip(keys, c)) for c in it.product(*values)]
-    undone_pcs = []
-    for pc in pcs:
-        pcHash = getDictHash({**params, **pc})
-        # check if pc exists in df, if not append
-        if len(df[(df.hash == pcHash) & (df.vHash == vHash)]) > 0:
-            config["logger"].info(
-                "{} ({}) has already been evaluated with {}, delete the row to force re-evaluation".format(
-                    pcHash,
-                    pformat({**params, **pc}, indent=4),
-                    vHash
-                )
-            )
-            continue
-        undone_pcs.append(pc)
-    undone_param_grid = {}
-    for key in keys:
-        undone_param_grid[key] = set()
-    for upc in undone_pcs:
-        for key, value in upc.items():
-            undone_param_grid[key].add(value)
-    for key in keys:
-        if not undone_param_grid[key]:
-            del undone_param_grid[key]
-        else:
-            undone_param_grid[key] = list(undone_param_grid[key])
-    return [undone_param_grid]
-
 
 if __name__ == "__main__":
     config = prepare()
-    x_train = load_npz(join(config["vectorize"]["outputDir"], "x_train.npz"))
-    y_train = load_npz(join(config["vectorize"]["outputDir"], "y_train.npz"))
     results = []
     df = pd.DataFrame()
-    if exists(config["target"]):
+    if os.path.exists(config["target"]):
         df = pd.read_csv(config["target"], index_col=0)
+        
+    ########################################
+    # LOAD DATA
+    ########################################
+    # Bag of Words
+    x_train_bow = load_npz(
+        os.path.join(config["vectorize"]["outputDir"],"x_train_bow.npz")
+    )
+    x_test_bow = load_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_test_bow.npz")
+    )
+    x_train_train_bow = load_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_train_bow.npz")
+    )
+    x_train_val_bow = load_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_val_bow.npz")
+    )
+
+    # Embeddings
+    x_test_emb = load_npz(
+        os.path.join(config["vectorize"]["outputDir"], "test_emb.npz"),
+    )
+    x_train_train_emb = load_npz(
+        os.path.join(config["vectorize"]["outputDir"], "train_train_emb.npz"),
+    )
+    x_train_val_emb = load_npz(
+        os.path.join(config["vectorize"]["outputDir"], "train_val_emb.npz"),
+    )
+    tokenizer = vectorizeHelpers.loadBinary(config, "tokenizer.bin")
+    embedding_matrix = load_npz(
+        os.path.join(config["vectorize"]["outputDir"], "embedding_matrix")
+    )
+
+    # Labels + class weights
+    y_train = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_train.npz"))
+    y_test = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_test.npz"))
+    y_train_train = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_train_train.npz"))
+    y_train_val = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_train_val.npz"))
+
+    label_frequency = np.sum(y_train.toarray(), axis = 0)
+    config["class_weight"] = np.apply_along_axis(
+            lambda x: 1/(x/max(label_frequency)), 0, label_frequency
+    )
+    config["logger"].info("Using these class weights {}".format(
+        pformat(config["class_weight"], indent=2))
+    )
+
     for m in config["evaluate"]["models"]:
-        module = import_module(m["package"])
-        class_ = getattr(module, m["name"])
-        model = class_()
+        ########################################
+        # PREPARE AND FIT THE MODEL 
+        ########################################
+        if m["type"] == "classic":
+            module = import_module(m["package"])
+            class_ = getattr(module, m["name"])
+            model = class_()
+        elif m["type"] == "tf_mlp":
+            model = MLPClassifier()
+        elif m["type"] == "tf_nlp":
+            model = LSTMClassifier(tokenizer, embedding_matrix)
         for key, value in m["params"].items(): 
             setattr(model, key, value)
-        param_grid = getUndoneParamCombinations(config, df, m["param_grid"], config["vectorize"]["hash"], m["params"])
-        if not m["multilabel"]:
-            from sklearn.multiclass import OneVsRestClassifier
-            model = OneVsRestClassifier(model)
-            new_param_grid = {}
-            for key in m["param_grid"][0].keys():
-                new_param_grid["estimator__"+key] = m["param_grid"][0][key]
-            param_grid = [new_param_grid]
-
-        if len(param_grid[0].keys()) == 0:
-            config["logger"].info(
-                    "All param_grid combinations have been testet for model {}".format(
-                        m["name"]
-                    )
-            )
-            continue
-
-
         config["logger"].info("Starting evaluate model {}".format(m["name"]))
-        config["logger"].info("with this param_grid:\n{}".format(pformat(param_grid, indent=4)))
-        gscv = GridSearchCV(
-                    model,
-                    param_grid,
-                    cv=config["evaluate"]["cv"],
-                    scoring=config["scoring"],
-                    n_jobs=-1,
-                    verbose=10,
-                    refit=False
+        if m["params"].get("class_weight", False):
+            class_weight = config["class_weight"]
+            if m["name"] in ("RandomForestClassifier", "DecisionTreeClassifier", "ExtraTreeClassifier"):
+                class_weight = [{0: 1, 1: x} for x in config["class_weight"]]
+            setattr(model, "class_weight", class_weight)
+        pHash = getDictHash(m["params"])
+        if not getattr(model, "random_state", False):
+            if len(df[df.pHash == pHash][df.model == m["name"]]) > 0:           
+                config["logger"].info(
+                    "Model {} with pHash {} has already been evaluated!".format(
+                        m["name"],
+                        pHash
+                    )
+                )
+                continue
+        else:
+            m["params"]["random_state"] = randint(0,2**32-1)
+            pHash = getDictHash(m["params"])
+            config["logger"].info(
+                "Evaluate Model {} with pHash {} and random state {}".format(
+                    m["name"],
+                    pHash,
+                    m["params"]["random_state"]
+                )
+            )
+
+        x_test = x_test_bow
+        if m["type"] == "classic":
+            if not m["multilabel"]:
+                from sklearn.multiclass import OneVsRestClassifier
+                model = OneVsRestClassifier(model)
+            model.fit(x_train_bow, y_train.toarray())
+        elif m["type"] == "tf_mlp":
+            model.fit(x_train_train_bow, y_train_train, x_train_val_bow, y_train_val)
+        elif m["type"] == "tf_lstm": 
+            model.fit(
+                x_train_train_emb.toarray(),
+                y_train_train,
+                x_train_val_emb.toarray(),
+                y_train_val
+            )
+            x_test = x_test_emb.toarray()
+
+        ########################################
+        # CREATE PERFORMANCE REPORT
+        ########################################
+        config["logger"].info(
+                "Successfully fitted the model, starting to create performance report"
         )
-        if m["name"] == "XGBClassifier":
-            gscv.n_jobs=10
-        config["logger"].info("Starting grid with {} jobs".format(gscv.n_jobs))
+        row = {
+                "model": m["name"],
+                "pHash": pHash,
+                "params": m["params"],
+                "vHash": config["vectorize"]["hash"],
+                "date": datetime.datetime.utcnow().isoformat()
+        }
 
-        gscv.fit(x_train, y_train.toarray())
+        y_pred = model.predict(x_test)
+        
+        ####################
+        # AVERAGE SCORES
+        ####################
+        row["precision_all_macro"] = precision_score(y_test, y_pred, average="macro")  
+        row["precision_all_micro"] = precision_score(y_test, y_pred, average="micro")  
+        row["recall_all_macro"] = recall_score(y_test, y_pred, average="macro")  
+        row["recall_all_micro"] = recall_score(y_test, y_pred, average="micro")  
+        row["fhalf_all_macro"] = fbeta_score(y_test, y_pred, beta=0.5, average="macro")  
+        row["fhalf_all_micro"] = fbeta_score(y_test, y_pred, beta=0.5, average="micro")  
+        row["fone_all_macro"] = fbeta_score(y_test, y_pred, beta=1, average="macro")  
+        row["fone_all_micro"] = fbeta_score(y_test, y_pred, beta=1, average="micro")  
+        row["ftwo_all_macro"] = fbeta_score(y_test, y_pred, beta=2, average="macro")  
+        row["ftwo_all_micro"] = fbeta_score(y_test, y_pred, beta=2, average="micro")  
 
-        for idx,p in enumerate(gscv.cv_results_["params"]):
-            used_params = {**m["params"], **p}
-            reported_params = {}
-            for key in used_params.keys():
-                mo = re.match(r'^estimator__(.*)', key)
-                if mo:
-                    reported_params[mo.group(1)] = used_params[key]
-                else:
-                    reported_params[key] = used_params[key]
-            row = {
-                    "model": m["name"],
-                    "hash": getDictHash(used_params),
-                    "params": used_params,
-                    "vHash": config["vectorize"]["hash"],
-                    "date": datetime.datetime.utcnow().isoformat()
-            }
-            for score in config["scoring"].keys():
-                for key in (
-                        'mean_fit_time',
-                        'std_fit_time',
-                        'mean_score_time',
-                        'std_fit_time',
-                        'mean_test_' + score,
-                        'std_test_' + score):
-                    row[key] = gscv.cv_results_[key][idx]
-            results.append(row)
+        ####################
+        # LABEL SCORES 
+        ####################
+        pcfs = precision_recall_fscore_support(y_test, y_pred, beta=1)
+        for label in range(0, y_test.shape[1]):
+            row["precision_" + str(label)] = pcfs[0][label]
+            row["recall_" + str(label)] = pcfs[1][label]
+            row["fone_" + str(label)] = pcfs[2][label]
 
+        label_scores_half = fbeta_score(y_test, y_pred, beta=0.5, average=None)
+        for label in range(0, y_test.shape[1]):
+            row["fhalf_" + str(label)] = label_scores_half[label]
+
+        label_scores_two = fbeta_score(y_test, y_pred, beta=2, average=None)
+        for label in range(0, y_test.shape[1]):
+            row["ftwo_" + str(label)] = label_scores_two[label]
+
+        results.append(row)
         cur_df = pd.DataFrame(results)
         if len(df) == 0:
             df = cur_df
         else:
             df = pd.concat([df, cur_df], sort=False)
-
         df.to_csv(config["target"])
-        config["logger"].info("Stored information of evaluation run to\n\t{}".format(config["target"]))
+        config["logger"].info(
+                "Stored information of evaluation run to\n\t{}".format(config["target"])
+        )

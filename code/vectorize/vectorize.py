@@ -12,6 +12,7 @@ import scipy.sparse
 from sklearn.model_selection import train_test_split
 from random import randint
 import nltk
+from keras.preprocessing.sequence import pad_sequences
 
 def prepare():
     parser = argparse.ArgumentParser(
@@ -73,11 +74,11 @@ if __name__ == "__main__":
     info["noTest"] = len(df_test) 
 
     df_train_train, df_train_val = (train_test_split(
-        df,
+        df_train,
         random_state=info["seed"],
         test_size=config["vectorize"]["test_size"],
         shuffle = True,
-        stratify=df.bl
+        stratify=df_train.bl
     ))
     df_train_train.to_csv(os.path.join(config["vectorize"]["outputDir"], "train_train.csv"))
     df_train_val.to_csv(os.path.join(config["vectorize"]["outputDir"], "train_val.csv"))
@@ -92,33 +93,83 @@ if __name__ == "__main__":
     ####################
     # BAG OF WORDS
     ####################
-    (vectorizer, selector, x) = vectorizeHelpers.getVectorizerAndSelector(config, df_train)
+    vectorizer, selector, x = vectorizeHelpers.getVectorizerAndSelector(config, df_train)
     with open(os.path.join(config["vectorize"]["outputDir"], "vocab_scores.json"), "w") as f:
-        json.dump(vectorizeHelpers.getSelectedVocabularyAndScores(vectorizer.vocabulary_, selector),f)
+        json.dump(
+            vectorizeHelpers.getSelectedVocabularyAndScores(vectorizer.vocabulary_, selector),
+            f
+        )
     info["allFeatures_bow"] = x.shape[1]
     x_train_bow = selector.transform(x).astype(np.float64)
     info["selectedFeatures_bow"] = x_train_bow.shape[1]
-    x_test_bow = selector.transform(vectorizer.transform(df_test[config["payload"]])).astype(np.float64)
-    x_train_train_bow = selector.transform(vectorizer.transform(df_train_train[config["payload"]])).astype(np.float64)
-    x_train_val_bow = selector.transform(vectorizer.transform(df_train_val[config["payload"]])).astype(np.float64)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_bow"), x_train_bow)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_test_bow"), x_test_bow)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_train_bow"), x_train_train_bow)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_val_bow"), x_train_val_bow)
+
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_bow.npz"),
+        x_train_bow 
+    )
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_test_bow.npz"),
+        selector.transform(vectorizer.transform(df_test["payload"])).astype(np.float64)
+    )
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_train_bow.npz"),
+        selector.transform(vectorizer.transform(df_train_train["payload"])).astype(np.float64)
+    )
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_val_bow.npz"),
+        selector.transform(vectorizer.transform(df_train_val["payload"])).astype(np.float64)
+    )
     vectorizeHelpers.dumpBinary(config, "vectorizer.bin", vectorizer)
     vectorizeHelpers.dumpBinary(config, "selector.bin", selector)
 
     ####################
     # EMBEDDINGS
     ####################
-    x_train_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_train)
-    x_test_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_test)
-    x_train_train_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_train_train)
-    x_train_val_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_train_val) 
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_emb"), x_train_emb)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_test_emb"), x_test_emb)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_train_emb"), x_train_train_emb)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_val_emb"), x_train_val_emb)
+    tokenizer, embedding_matrix = vectorizeHelpers.getTokenizerAndEmbeddingMatrix(
+            config,
+            df_train["payload"]
+    )
+    vectorizeHelpers.dumpBinary(config, "tokenizer.bin", tokenizer)
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "embedding_matrix"),
+        embedding_matrix 
+    )
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_emb.npz"),
+        scipy.sparse.csc_matrix(
+            pad_sequences(
+                tokenizer.texts_to_sequences(df_train["payload"]),
+                maxlen=config["vectorize"]["maxlen"]
+            )
+        )
+    )
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_test_emb.npz"),
+        scipy.sparse.csc_matrix(
+            pad_sequences(
+                tokenizer.texts_to_sequences(df_test["payload"]),
+                maxlen=config["vectorize"]["maxlen"]
+            )
+        )
+    )
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_train_emb.npz"),
+        scipy.sparse.csc_matrix(
+            pad_sequences(
+                tokenizer.texts_to_sequences(df_train_train["payload"]),
+                maxlen=config["vectorize"]["maxlen"]
+            )
+        )
+    )
+    scipy.sparse.save_npz(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_val_emb.npz"),
+        scipy.sparse.csc_matrix(
+            pad_sequences(
+                tokenizer.texts_to_sequences(df_train_val["payload"]),
+                maxlen=config["vectorize"]["maxlen"]
+            )
+        )
+    )
 
     ####################
     # LABELS 
