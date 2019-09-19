@@ -11,6 +11,8 @@ import scipy.sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
+from gensim.models import KeyedVectors
+from keras import Tokenizer
 
 from nltk.stem.lancaster import LancasterStemmer
 from nltk.stem.porter import PorterStemmer
@@ -28,8 +30,22 @@ def vectorizeEmbeddings(config, df):
     # See
         vectorizeBagOfWords
     """
-    # TODO @Michael
-    return scipy.sparse.csc_matrix([0])
+    #sequences = df["payloadFinal"]
+    #tokenizer = Tokenizer(lower=True)
+    #tokenizer.fit_on_texts(sequences)
+    #word_index = tokenizer.word_index
+    #print('Found %s unique tokens.' % len(word_index))
+    #word2vec_path = "/home/debian/ml/data/embedding/GoogleNews-vectors-negative300.bin"
+    #model = KeyedVectors.load_word2vec_format(word2vec_path, binary=True)
+    #embedding_matrix = np.zeros((len(word_index + 1), 300))
+    #word_vectors = model.wv
+    #for word, i in word_index.items():
+    #    try:
+    #        embedding_vector=word_vectors[word]
+    #        embedding_matrix[i] = embedding_vector
+    #    except:
+    #        pass
+    #return embedding_matrix
 
 def vectorizeBagOfWords(config, df):
     """ Vectorize the payload in df as bag of words 
