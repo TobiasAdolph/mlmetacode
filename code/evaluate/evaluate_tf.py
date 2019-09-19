@@ -145,8 +145,12 @@ if __name__ == "__main__":
     df.labelsI = df.labels.apply(lambda x: util.int2bv(x, 21)[1:]).tolist()
     config["logger"].info("Vectorizing {}".format(config["src"]))
     (vectorizer, selector, x) = vectorizeHelpers.getVectorizerAndSelector(config, df)
-    xSelected = selector.transform(x).astype(np.float64)
     config["seed"] = randint(0,2**32-1) 
+#    with open(os.path.join(config["vectorize"]["outputDir"], str(config["seed"]) + "_vocab_scores.json"), "w") as f:
+#        json.dump(vectorizeHelpers.getSelectedVocabularyAndScores(vectorizer.vocabulary_, selector),f)
+
+    xSelected = selector.transform(x).astype(np.float64)
+
     config["logger"].info("Splitting with seed {}".format(config["seed"]))
   
     x_train_val, x_test, y_train_val, y_test, bl_train_val, bl_test = (
@@ -187,7 +191,8 @@ if __name__ == "__main__":
     for ly in config["ly"]:
         model, m_spec = (addHiddenLayer(model, m_spec, units=ly))
     model, m_spec = (addOutputLayer(model, m_spec, y_train))
-
+    
+    m_spec["dataHash"] = config["vectorize"]["cleanHash"]
     m_spec["loss"] = "binary_crossentropy"
     optimizer, m_spec =  (getOptimizer(m_spec))
     model.compile(

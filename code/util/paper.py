@@ -52,8 +52,7 @@ def get_labels_data(config):
         label_no = idx + 1
         data.append({
             "name":         label_name,
-            "1-label":      df[df.labels == 2**label_no].id.count(), 
-            "add":          df[df.labels & 2**label_no == 2**label_no][df.special].id.count(), 
+            "1-label":      df[df.labels == 2**label_no].id.count(),
             "2-labels":     df[df.labels & 2**label_no == 2**label_no][df.nol == 2].id.count(), 
             "3-labels":     df[df.labels & 2**label_no == 2**label_no][df.nol == 3].id.count(), 
             "geq-4-labels": df[df.labels & 2**label_no == 2**label_no][df.nol >= 4].id.count(), 
@@ -65,13 +64,12 @@ def get_labels_data(config):
         {
             "name": "total", 
             "1-label": df[df.nol == 1].id.count(),
-            "add": df[df.special].id.count(),
             "2-labels": df[df.nol == 2].id.count(),
             "3-labels": df[df.nol == 3].id.count(),
             "geq-4-labels": df[df.nol >= 4].id.count(),
             "blcount": "-",
             "total": df.id.count(),
-            "percentage": 1.0 
+            "percentage": 1.0
         }
     )
     return data

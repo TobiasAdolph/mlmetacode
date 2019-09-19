@@ -165,6 +165,8 @@ def processFile(instruction):
                         label = getLabel(config, subject, row)
                         if label:
                             row["labels"] |= 1 << label
+                        elif "payloadSubjects" in config["clean"]["payloadFields"]:
+                            document.setdefault("payloadSubjects", []).append(subject)
                 if not row["labels"]:
                     row["notAnnot"] = True
                     result.append(finalizeRow(config, row))

@@ -19,11 +19,13 @@
         "retrieveHash": "0797f318a1b1d0be80fa2c224d8678b80e76c7f951b4c29a83b25eeca369fce5",
         "mappingHash": "2cc9765ec445d0eee3728abe4e20e505ed02f7329010c5cbb82893a4b75019ed",
         "lang": "en",
+	"langCert": 0.51,
         "payloadFields": [
             "titles",
-            "descriptions"
+            "descriptions",
+	    "payloadSubjects"
         ],
-	"payloadMinLength": 200,
+	"payloadMinLength": 15,
         "regex": {
             "ddcValue": "(^\\d+\\.\\d+,)+",
             "ddcSchemeURI": "https{0,1}://dewey.info/*",
@@ -36,31 +38,14 @@
             "ddc",
             "bk",
             "narcis",
-            "bepress",
-            "linsearch"
-        ],
-        "special": {
-            "f1.json": 19,
-            "f2.json": 17,
-            "f3.json": 6,
-            "f4.json": 19,
-            "f5.json": 19,
-            "f6.json": 19,
-            "f7.json": 17,
-            "f8.json": 17,
-            "f9.json": 17,
-            "fa.json": 17,
-            "fb.json": 20,
-            "fc.json": 20,
-            "fd.json": 16,
-            "fe.json": 16,
-            "ff.json": 16
-        }
+            "bepress"
+        ]
     },
     "vectorize": {
-        "cleanHash": "9ee9ce89f8ae4b639fc899ad5765635cb3af5bffad88736c7d6bdc70c21d65e9",
-        "stemming": "lancaster",
+	"cleanHash": "4c32777ce3a7035cccad8a06cdcc30302533daad322f84bef1f10538461b8434",
+        "stemming": "none",
         "test_size": 0.2,
+	"multipleOfMinPopulationSize": 1.25,
         "minDocFreq": 2,
         "ngramRange": [1,2],
         "tokenMode": "word",
@@ -71,63 +56,109 @@
         "stopWordsHash": "fdb7caa2414fdeb0b1e208b637e1fea44704dfc105573eb4357468ec8ed4dd60"
     },
     "evaluate": {
-    	"cv": 10,
-	"models": [
-		{
-		    "name": "MLPClassifier",
-		    "package": "sklearn.neural_network",
-		    "multilabel": "true",
-		    "params": {
-			    "n_iter_no_change": 3,
-			    "batch_size": 1000,
-			    "hidden_layer_sizes": [100,100]
-		    },
-		    "param_grid": [
-			{
-			    "activation": ["relu", "tanh"], 
-			    "solver": ["adam", "sgd"]
-			}
-		    ]
-		}, 
-		{
-		    "name": "RidgeClassifier",
-		    "package": "sklearn.linear_model",
-		    "multilabel": "false",
-		    "params": { },
-		    "param_grid": [
-			{
-			    "alpha": [0.5, 1.0, 2.0, 5.0,100.0], 
-			    "solver": ["sag"]
-			}
-		    ]
-		},
-		{
-		    "name": "XGBClassifier",
-		    "package": "xgboost",
-		    "multilabel": "false",
-		    "params": { 
-		    	"objective": "binary:logistic",
-			"verbosity": 3,
-			"booster": "gbtree"
-		    },
-		    "param_grid": [
-			{
-			    "max_depth": [300, 600, 1200]
-			}
-		    ]
-		},
+    	"cv": 5,
+	"models": [ 
 		{
 		    "name": "RandomForestClassifier",
 		    "package": "sklearn.ensemble",
 		    "multilabel": true,
 		    "params": {
-			    "n_estimators": 100,
-			    "verbose": 10
+			    "criterion": "gini",
+			    "min_samples_split": 10,
+			    "min_samples_leaf": 1,
+			    "min_weight_fraction_leaf": 0.0,
+			    "max_features": "auto",
+			    "max_leaf_nodes": null,
+			    "min_impurity_decrease": 0.0,
+			    "min_impurity_split": 0.0,
+			    "bootstrap": true,
+			    "oob_score": true,
+			    "n_jobs": null,
+			    "random_state": null,
+			    "verbose": 0,
+			    "warm_start": false,
+			    "class_weight": null
+
 	            },
 		    "param_grid": [
 			{
-			    "max_depth": [300, 600, 1200], 
-			    "min_samples_split": [2,10,20] 
+			    "n_estimators": [25, 50, 100],
+			    "max_depth": [350, 375, 400, 425, 450, 950, 1000, 975],
+			    "max_features": ["auto", "log2", 2000, 1500, 2500]
+			}
+		    ]
+		},
+		{
+		    "name": "KNeighborsClassifier",
+		    "package": "sklearn.neighbors",
+		    "multilabel": true,
+		    "params": {
+			    "algorithm": "auto",
+			    "leaf_size": 30,
+			    "metric": "minkowski",
+			    "metric_params": null,
+			    "n_jobs": null
+
+	            },
+		    "param_grid": [
+			{
+			    "n_neighbors": [3,5,7,9,11,13,21,50],
+			    "weights": ["uniform", "distance"],
+			    "p": [1,2]
+			}
+		    ]
+		},
+		{
+		    "name": "RadiusNeighborsClassifier",
+		    "package": "sklearn.neighbors",
+		    "multilabel": true,
+		    "params": {
+			    "algorithm": "auto",
+			    "leaf_size": 30,
+			    "metric": "minkowski",
+			    "outlier_label": null,
+			    "metric_params": null,
+			    "n_jobs": null
+
+	            },
+		    "param_grid": [
+			{
+			    "radius": [0.1, 0.5, 1, 2, 10],
+			    "weights": ["uniform", "distance"],
+			    "p": [1,2]
+			}
+		    ]
+		},
+		{
+		    "name": "MLPClassifier",
+		    "package": "sklearn.neural_network",
+		    "multilabel": "true",
+		    "params": {
+			    "hidden_layer_sizes": [100],
+			    "activation": "relu",
+			    "solver": "adam",
+			    "learning_rate_init": [0.001],
+			    "batch_size": "auto",
+			    "learning_rate": "constant",
+			    "power_t": 0.5,
+			    "max_iter": 200,
+			    "shuffle": true,
+			    "random_state": null,
+			    "tol": 1e-4,
+			    "verbose": true,
+			    "warm_start": false,
+			    "momentum": 0.9,
+			    "nesterovs_momentum": true,
+			    "early_stopping": false,
+			    "validation_fraction": 0.1,
+			    "beta_1": 0.9,
+			    "beta_2": 0.999,
+			    "epsilon": 1e-8,
+			    "n_iter_no_change": 3
+		    },
+		    "param_grid": [
+			{
+			    "alpha": [0.0001, 0.0003, 0.001]
 			}
 		    ]
 		}

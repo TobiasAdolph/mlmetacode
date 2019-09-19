@@ -219,5 +219,3 @@ def label_score(y, y_pred, **kwargs):
     if score == "f":
         return prfs[2][label]
     return 0
-
-

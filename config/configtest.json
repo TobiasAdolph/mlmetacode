@@ -71,7 +71,7 @@
         "stopWordsHash": "fdb7caa2414fdeb0b1e208b637e1fea44704dfc105573eb4357468ec8ed4dd60"
     },
     "evaluate": {
-    	"cv": 2,
+    	"cv": 3,
 	"models": [
 		{
 		    "name": "MLPClassifier",
@@ -80,39 +80,40 @@
 		    "params": {
 			    "n_iter_no_change": 3,
 			    "batch_size": 1000,
-			    "hidden_layer_sizes": [100,100]
+			    "solver": "adam",
+			    "max_iter": 1000,
+			    "activation": "relu",
+			    "random_state": 180585
 		    },
 		    "param_grid": [
 			{
-			    "activation": ["relu", "tanh"], 
-			    "solver": ["adam", "sgd"]
+			    "hidden_layer_sizes": [[64,64], [48,48,48]],
+			    "learning_rate_init": [0.0001, 0.0001, 0.001]
 			}
 		    ]
 		}, 
 		{
-		    "name": "RidgeClassifier",
-		    "package": "sklearn.linear_model",
-		    "multilabel": "false",
-		    "params": { },
-		    "param_grid": [
-			{
-			    "alpha": [0.5, 1.0, 2.0, 5.0,100.0], 
-			    "solver": ["sag"]
-			}
-		    ]
-		},
-		{
 		    "name": "XGBClassifier",
 		    "package": "xgboost",
 		    "multilabel": "false",
-		    "params": { 
-		    	"objective": "binary:logistic",
+		    "params": {
 			"verbosity": 3,
-			"booster": "gbtree"
+			"booster": "gbtree",
+			"evaluation_metric": "mlogloss",
+			"objective": "multi:softmax",
+			"scale_pos_weight": 1,
+			"seed": 123456,
+			"n_jobs": -1
 		    },
 		    "param_grid": [
 			{
-			    "max_depth": [300, 600, 1200]
+			    "learning_rate": [0.01, 0.1, 0.25],
+			    "max_depth": [6, 7, 8],
+			    "min_child_weight": [8, 10],
+			    "gamma": [0, 0.25, 0.5],
+			    "subsample": [0.8, 0.9],
+			    "colsample_bytree": [0.8, 0.9],
+			    "reg_alpha": [1e-5, 0.1, 1]
 			}
 		    ]
 		},
