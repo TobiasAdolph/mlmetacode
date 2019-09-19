@@ -6,7 +6,7 @@ import re
 import pickle
 import math
 
-from scipy.sparse import csc_matrix
+import scipy.sparse
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest
@@ -14,12 +14,15 @@ from sklearn.feature_selection import f_classif
 from gensim.models import KeyedVectors
 from keras import Tokenizer
 
+from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem.porter import PorterStemmer
+
 def vectorizeEmbeddings(config, df):
     """ Vectorize the payload in df as embeddings
 
     # Arguments:
         config:  a dictionary with the configuration 
-        df: a pandas dataFrame with the data (key: payloadFinal)
+        df: a pandas dataFrame with the data (key: payload)
 
     # Returns
         The embeddings as a sparse matrix
@@ -49,7 +52,7 @@ def vectorizeBagOfWords(config, df):
 
     # Arguments:
         config:  a dictionary with the configuration 
-        df: a pandas dataFrame with the data (key: payloadFinal)
+        df: a pandas dataFrame with the data (key: payload)
 
     # Returns
         The bag of words as a sparse matrix
@@ -93,8 +96,17 @@ def getVectorizerAndSelector(config, df):
             'min_df': config["vectorize"]["minDocFreq"],
             'stop_words': config["stop_words"]
     }
+    if config["vectorize"]["stemming"] != "none":
+        nltk.download('punkt')
+        if config["vectorize"]["stemming"] == "lancaster":
+            stemmer = LancasterStemmer()
+        if config["vectorize"]["stemming"] == "porter":
+            stemmer = PorterStemmer()
+        config["stop_words"] = (
+            [util.stem(stop_word, stemmer) for stop_word in ( 
+                config["stop_words"])])
     vectorizer =  TfidfVectorizer(**kwargs)
-    x = vectorizer.fit_transform(df["payloadFinal"])
+    x = vectorizer.fit_transform(df[config["payload"]])
     if config["vectorize"]["feature_selection"]["mode"] == "multipleOfLabels":
         topK = len(config["labels"] * config["vectorize"]["feature_selection"]["value"])
     elif config["vectorize"]["feature_selection"]["mode"] == "fractionOfFeatures":

@@ -11,8 +11,6 @@ import numpy as np
 import scipy.sparse
 from sklearn.model_selection import train_test_split
 from random import randint
-from nltk.stem.lancaster import LancasterStemmer
-from nltk.stem.porter import PorterStemmer
 import nltk
 
 def prepare():
@@ -44,63 +42,95 @@ def prepare():
                                )
         )
         os.sys.exit(1)
+
+    if config["vectorize"]["stemming"] == "none":
+        config["payload"] = "payload"
+    else:
+        config["payload"] = config["vectorize"]["stemming"]
     return config
 
 if __name__ == "__main__":
     config = prepare()
-    info = {}
-    
+    info = { "seed" : config["vectorize"].get("seed", randint(0,2**32-1)) }
     df = pd.read_csv(config["src"], index_col=0)
+
+    ########################################  
+    # SPLIT
+    ########################################
+    config["logger"].info("Splitting {} with seed {}".format(config["src"], info["seed"]))
+    # we need to recalculate, because pandas saves the lists as strings.
     df['labelsI'] = df.labels.apply(lambda x: util.int2bv(x, 21)[1:]).tolist()
-    if config["vectorize"]["stemming"] != "none":
-        nltk.download('punkt')
-        if config["vectorize"]["stemming"] == "lancaster":
-            stemmer = LancasterStemmer()
-            df['payloadFinal'] =  df['lancaster']
-        if config["vectorize"]["stemming"] == "porter":
-            stemmer = PorterStemmer() 
-            df['payloadFinal'] =  df['porter']
-        new_stop_words = (
-            [util.stem(stop_word, stemmer) for stop_word in ( 
-                config["stop_words"])])
-        config["stop_words"] = new_stop_words
-    else:
-        df['payloadFinal'] =  df['payload']
+    df_train, df_test = (train_test_split(
+        df,
+        random_state=info["seed"],
+        test_size=config["vectorize"]["test_size"],
+        shuffle = True,
+        stratify=df.bl
+    ))
+    df_train.to_csv(os.path.join(config["vectorize"]["outputDir"], "train.csv"))
+    df_test.to_csv(os.path.join(config["vectorize"]["outputDir"], "test.csv"))
+    info["noTrain"] = len(df_train)
+    info["noTest"] = len(df_test) 
+
+    df_train_train, df_train_val = (train_test_split(
+        df,
+        random_state=info["seed"],
+        test_size=config["vectorize"]["test_size"],
+        shuffle = True,
+        stratify=df.bl
+    ))
+    df_train_train.to_csv(os.path.join(config["vectorize"]["outputDir"], "train_train.csv"))
+    df_train_val.to_csv(os.path.join(config["vectorize"]["outputDir"], "train_val.csv"))
+    info["noTrain_train"] = len(df_train_train)
+    info["noTrain_val"] = len(df_train_val)
+
+    ########################################  
+    # VECTORIZE
+    ######################################## 
     config["logger"].info("Vectorizing {}".format(config["src"]))
-    (vectorizer, selector, x) = vectorizeHelpers.getVectorizerAndSelector(config, df)
-    info["allFeatures"] = x.shape[1]
-    xSelected =  selector.transform(x).astype(np.float64)
-    info["selectedFeatures"] = xSelected.shape[1]
+
+    ####################
+    # BAG OF WORDS
+    ####################
+    (vectorizer, selector, x) = vectorizeHelpers.getVectorizerAndSelector(config, df_train)
     with open(os.path.join(config["vectorize"]["outputDir"], "vocab_scores.json"), "w") as f:
         json.dump(vectorizeHelpers.getSelectedVocabularyAndScores(vectorizer.vocabulary_, selector),f)
+    info["allFeatures_bow"] = x.shape[1]
+    x_train_bow = selector.transform(x).astype(np.float64)
+    info["selectedFeatures_bow"] = x_train_bow.shape[1]
+    x_test_bow = selector.transform(vectorizer.transform(df_test[config["payload"]])).astype(np.float64)
+    x_train_train_bow = selector.transform(vectorizer.transform(df_train_train[config["payload"]])).astype(np.float64)
+    x_train_val_bow = selector.transform(vectorizer.transform(df_train_val[config["payload"]])).astype(np.float64)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_bow"), x_train_bow)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_test_bow"), x_test_bow)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_train_bow"), x_train_train_bow)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_val_bow"), x_train_val_bow)
+    vectorizeHelpers.dumpBinary(config, "vectorizer.bin", vectorizer)
+    vectorizeHelpers.dumpBinary(config, "selector.bin", selector)
 
-    seed = config["vectorize"].get("seed", randint(0,2**32-1))
-    info["seed"] = seed
-    config["logger"].info("Split with seed {}".format(seed))
-    x_train, x_test, y_train, y_test = (
-        train_test_split(
-            xSelected,
-            df.labelsI.values.tolist(),
-            random_state=seed,
-            test_size=config["vectorize"]["test_size"],
-            shuffle = True,
-            stratify=df.bl,
-        ))
-    y_train = scipy.sparse.csc_matrix(y_train)
-    y_test = scipy.sparse.csc_matrix(y_test)
-    info["noTrain"] = x_train.shape[0]
-    info["noTest"] = x_test.shape[0] 
+    ####################
+    # EMBEDDINGS
+    ####################
+    x_train_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_train)
+    x_test_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_test)
+    x_train_train_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_train_train)
+    x_train_val_emb = vectorizeHelpers.vectorizeEmbeddings(config, df_train_val) 
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_emb"), x_train_emb)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_test_emb"), x_test_emb)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_train_emb"), x_train_train_emb)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train_val_emb"), x_train_val_emb)
+
+    ####################
+    # LABELS 
+    ####################
+    y_train = scipy.sparse.csc_matrix(df_train.labelsI.values.tolist())
+    y_test = scipy.sparse.csc_matrix(df_test.labelsI.values.tolist())
+    y_train_train = scipy.sparse.csc_matrix(df_train_train.labelsI.values.tolist())
+    y_train_val = scipy.sparse.csc_matrix(df_train_val.labelsI.values.tolist())
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_train"), y_train)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_test"), y_test)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_train_train"), y_train_train)
+    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_train_val"), y_train_val) 
+
     with open(os.path.join(config["vectorize"]["outputDir"], "info.json"), "w") as f:
         json.dump(info,f)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_train"), x_train)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_train"), y_train)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "x_test"), x_test)
-    scipy.sparse.save_npz(os.path.join(config["vectorize"]["outputDir"], "y_test"), y_test)
-    vectorizeHelpers.dumpBinary(
-        config,
-        "vectorizer.bin",
-        vectorizer)
-    vectorizeHelpers.dumpBinary(
-        config,
-        "selector.bin",
-        selector)
