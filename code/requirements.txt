@@ -7,7 +7,6 @@ pytest
 pytest-cov
 pyyaml
 requests
-seaborn
 sklearn
 nltk
-xgboost
+gensim
