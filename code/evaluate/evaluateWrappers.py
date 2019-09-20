@@ -5,6 +5,7 @@ from keras.layers.embeddings import Embedding
 from keras import backend as K
 from sklearn.metrics import precision_score, recall_score, fbeta_score, precision_recall_fscore_support
 from keras.layers.embeddings import Embedding
+import numpy as np
 
 def micro_recall(y_true, y_pred):
         """Recall metric.
@@ -73,6 +74,7 @@ class MLPClassifier(TFClassifier):
 
     # TODO seed, multiprocessing 
     def fit(self, x_train, y_train, x_val, y_val):
+        np.random.seed(self.random_state)
         self.addInitLayer(x_train, self.init_rate)
         for idx,ly in enumerate(self.hidden_layer):
             self.addHiddenLayer(units=ly, activation=self.activation[idx], rate=self.rate[idx])
@@ -94,32 +96,40 @@ class MLPClassifier(TFClassifier):
         )
 
 class LSTMClassifier(TFClassifier):
-    def __init__(self, tokenizer, embedding_matrix): 
+    def __init__(self, tokenizer, embedding_matrix, maxlen):
         self.tokenizer = tokenizer
         self.embedding_matrix = embedding_matrix.toarray()
+        self.maxlen = maxlen
 
     def fit(self, x_train, y_train, x_val, y_val):
-        # TODO seed, multiprocessing
-        inputs = Input(shape=(x_train.shape[1],))
+        np.random.seed(self.random_state)
+        inputs = Input(shape=(self.maxlen,))
         embedding = Embedding(
             len(self.tokenizer.word_index) + 1,
             output_dim=self.output_dim,
             weights=[self.embedding_matrix],
-            input_length=x_train.shape[1],
+            input_length=self.maxlen,
             trainable=self.trainable)(input)
-        lstm = Bidirectional(
-            LSTM(
-                self.lstm_size,
-                dropout=self.dropout,
-                recurrent_dropout=self.recurrent_dropout
-            ),
-            merge_mode=self.merge_mode)(embedding)
+        if self.bidirectional:
+            lstm = Bidirectional(
+                LSTM(
+                    self.lstm_size,
+                    dropout=self.dropout,
+                    recurrent_dropout=self.recurrent_dropout
+                ),
+                merge_mode=self.merge_mode)(embedding)
+        else:
+            lstm = LSTM(
+                    self.lstm_size,
+                    dropout=self.dropout,
+                    recurrent_dropout=self.recurrent_dropout
+                )(embedding)
         outputs = Dense(units=y_train.shape[1], activation="sigmoid")(lstm)
-        self.model = Model(inputs=inputs,outputs=outputs)
+        self.model = models.Model(inputs=inputs,outputs=outputs)
         self.model.compile(
                 loss=self.loss,
                 optimizer = self.getOptimizer(),
-                metrics=[fone, micro_recall, micro_precision]
+                metrics=[fone_loss, micro_recall, micro_precision]
         )
         return self.model.fit(
             x_train,

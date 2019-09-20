@@ -102,7 +102,7 @@ if __name__ == "__main__":
         elif m["type"] == "tf_mlp":
             model = MLPClassifier()
         elif m["type"] == "tf_nlp":
-            model = LSTMClassifier(tokenizer, embedding_matrix)
+            model = LSTMClassifier(tokenizer, embedding_matrix, config["vectorize"]["maxlen"])
         for key, value in m["params"].items(): 
             setattr(model, key, value)
         config["logger"].info("Starting evaluate model {}".format(m["name"]))

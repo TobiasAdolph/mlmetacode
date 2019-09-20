@@ -79,7 +79,8 @@
 				"lstm_size": 512,
 				"dropout": 0.2,
 				"recurrent_dropout": 0.2,
-				"merge_mode": "concat"
+				"merge_mode": "concat",
+				"bidirectional": true
 
 			}
 
