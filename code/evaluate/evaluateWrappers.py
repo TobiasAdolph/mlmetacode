@@ -96,7 +96,7 @@ class MLPClassifier(TFClassifier):
 class LSTMClassifier(TFClassifier):
     def __init__(self, tokenizer, embedding_matrix): 
         self.tokenizer = tokenizer
-        self.embedding_matrix = embedding_matrix
+        self.embedding_matrix = embedding_matrix.toarray()
 
     def fit(self, x_train, y_train, x_val, y_val):
         # TODO seed, multiprocessing
@@ -104,8 +104,8 @@ class LSTMClassifier(TFClassifier):
         embedding = Embedding(
             len(self.tokenizer.word_index) + 1,
             output_dim=self.output_dim,
-            weights=[embedding_matrix.tolist()],
-            intput_length=?,
+            weights=[self.embedding_matrix],
+            input_length=x_train.shape[1],
             trainable=self.trainable)(input)
         lstm = Bidirectional(
             LSTM(

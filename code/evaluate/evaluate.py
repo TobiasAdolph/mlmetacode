@@ -9,10 +9,12 @@ from importlib import import_module
 import argparse
 import datetime
 import re
-import evaluateHelpers
 from random import randint
 from pprint import pformat
-from evaluateWrappers import TFMLPClassifier
+from evaluateWrappers import MLPClassifier, LSTMClassifier
+import vectorize.vectorizeHelpers as vectorizeHelpers
+from keras.preprocessing.sequence import pad_sequences
+import json
 
 def prepare():
     parser = argparse.ArgumentParser(
@@ -29,8 +31,11 @@ def prepare():
         config["evaluate"]["logFile"]
     ))
     config["logger"] = setupLogging(config, "evaluate")
-    config["target"] = os.path.join(config["base"]["outputDir"], "evaluation.csv")
-
+    config["target"] = os.path.join(config["evaluate"]["baseDir"], "evaluation.csv")
+    config["srcDir"] = os.path.join(
+        config["vectorize"]["baseDir"],
+        config["evaluate"]["vectorizeHash"]
+    )
     return config
 
 if __name__ == "__main__":
@@ -43,46 +48,46 @@ if __name__ == "__main__":
     ########################################
     # LOAD DATA
     ########################################
+    config["logger"].info("Starting to load vectorized data from {}".format(
+        config["srcDir"]
+    ))
     # Bag of Words
-    x_train_bow = load_npz(
-        os.path.join(config["vectorize"]["outputDir"],"x_train_bow.npz")
-    )
-    x_test_bow = load_npz(
-        os.path.join(config["vectorize"]["outputDir"], "x_test_bow.npz")
-    )
-    x_train_train_bow = load_npz(
-        os.path.join(config["vectorize"]["outputDir"], "x_train_train_bow.npz")
-    )
-    x_train_val_bow = load_npz(
-        os.path.join(config["vectorize"]["outputDir"], "x_train_val_bow.npz")
-    )
+    x_train_bow = load_npz(os.path.join(config["srcDir"],"x_train_bow.npz"))
+    x_test_bow = load_npz(os.path.join(config["srcDir"], "x_test_bow.npz"))
+    x_train_train_bow = load_npz(os.path.join(config["srcDir"], "x_train_train_bow.npz"))
+    x_train_val_bow = load_npz(os.path.join(config["srcDir"], "x_train_val_bow.npz"))
+    vectorizer = vectorizeHelpers.loadBinary(config, "vectorizer.bin")
+    selector = vectorizeHelpers.loadBinary(config, "selector.bin")
 
     # Embeddings
-    x_test_emb = load_npz(
-        os.path.join(config["vectorize"]["outputDir"], "test_emb.npz"),
-    )
-    x_train_train_emb = load_npz(
-        os.path.join(config["vectorize"]["outputDir"], "train_train_emb.npz"),
-    )
-    x_train_val_emb = load_npz(
-        os.path.join(config["vectorize"]["outputDir"], "train_val_emb.npz"),
-    )
+    x_test_emb = load_npz(os.path.join(config["srcDir"], "x_test_emb.npz")).toarray()
+    x_train_train_emb = load_npz(os.path.join(config["srcDir"], "x_train_train_emb.npz")).toarray()
+    x_train_val_emb = load_npz(os.path.join(config["srcDir"], "x_train_val_emb.npz")).toarray()
     tokenizer = vectorizeHelpers.loadBinary(config, "tokenizer.bin")
-    embedding_matrix = load_npz(
-        os.path.join(config["vectorize"]["outputDir"], "embedding_matrix")
-    )
+    embedding_matrix = load_npz(os.path.join(config["srcDir"], "embedding_matrix.npz"))
 
-    # Labels + class weights
-    y_train = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_train.npz"))
-    y_test = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_test.npz"))
-    y_train_train = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_train_train.npz"))
-    y_train_val = load_npz(os.path.join(config["vectorize"]["outputDir"], "y_train_val.npz"))
+    # Labels
+    y_train = load_npz(os.path.join(config["srcDir"], "y_train.npz"))
+    y_test = load_npz(os.path.join(config["srcDir"], "y_test.npz"))
+    y_train_train = load_npz(os.path.join(config["srcDir"], "y_train_train.npz"))
+    y_train_val = load_npz(os.path.join(config["srcDir"], "y_train_val.npz"))
 
+    # Class Weights
     label_frequency = np.sum(y_train.toarray(), axis = 0)
     config["class_weight"] = np.apply_along_axis(
             lambda x: 1/(x/max(label_frequency)), 0, label_frequency
     )
-    config["logger"].info("Using these class weights {}".format(
+
+    # Wikipedia test data
+    with open(os.path.join(config["evaluate"]["configDir"], "test.json"), "r") as f:
+        wiki_data = json.load(f)
+    x_wiki_bow = selector.transform(vectorizer.transform(wiki_data)).astype(np.float64)
+    x_wiki_emb = pad_sequences(
+        tokenizer.texts_to_sequences(wiki_data),
+        maxlen=config["vectorize"]["maxlen"]
+    )
+
+    config["logger"].info("Finished loading data. Using these class weights {}".format(
         pformat(config["class_weight"], indent=2))
     )
 
@@ -128,6 +133,7 @@ if __name__ == "__main__":
             )
 
         x_test = x_test_bow
+        x_wiki = x_wiki_bow
         if m["type"] == "classic":
             if not m["multilabel"]:
                 from sklearn.multiclass import OneVsRestClassifier
@@ -135,14 +141,15 @@ if __name__ == "__main__":
             model.fit(x_train_bow, y_train.toarray())
         elif m["type"] == "tf_mlp":
             model.fit(x_train_train_bow, y_train_train, x_train_val_bow, y_train_val)
-        elif m["type"] == "tf_lstm": 
+        elif m["type"] == "tf_nlp": 
             model.fit(
-                x_train_train_emb.toarray(),
+                x_train_train_emb,
                 y_train_train,
-                x_train_val_emb.toarray(),
+                x_train_val_emb,
                 y_train_val
             )
             x_test = x_test_emb.toarray()
+            x_wiki = x_wiki_emb
 
         ########################################
         # CREATE PERFORMANCE REPORT
@@ -159,6 +166,7 @@ if __name__ == "__main__":
         }
 
         y_pred = model.predict(x_test)
+        y_wiki = model.predict(x_wiki)
         
         ####################
         # AVERAGE SCORES
@@ -173,6 +181,8 @@ if __name__ == "__main__":
         row["fone_all_micro"] = fbeta_score(y_test, y_pred, beta=1, average="micro")  
         row["ftwo_all_macro"] = fbeta_score(y_test, y_pred, beta=2, average="macro")  
         row["ftwo_all_micro"] = fbeta_score(y_test, y_pred, beta=2, average="micro")  
+        row["wiki_diag"] = sum(np.diag(y_wiki))/y_wiki.shape[1]
+        row["wiki_total"] = sum(sum(y_wiki))/y_wiki.shape[1]
 
         ####################
         # LABEL SCORES 
@@ -182,6 +192,7 @@ if __name__ == "__main__":
             row["precision_" + str(label)] = pcfs[0][label]
             row["recall_" + str(label)] = pcfs[1][label]
             row["fone_" + str(label)] = pcfs[2][label]
+            row["wiki_" + str(label)] = y_wiki[label][label]
 
         label_scores_half = fbeta_score(y_test, y_pred, beta=0.5, average=None)
         for label in range(0, y_test.shape[1]):

@@ -57,29 +57,8 @@
 	"maxlen": 60
     },
     "evaluate": {
+	"vectorizeHash": "66a245a805341aaf76944798c6afb385ae9014a273a95cbdeb7d7f6c74b1c769",
 	"models": [
-		{
-			"name": "MLPClassifier",
-			"multilabel": true,
-			"type": "tf_mlp",
-			"params": {
-				"epochs": 1000,
-				"batch_size": 128,
-				"random_state": 180485,
-				"hidden_layer": [4750, 400],
-				"activation": ["relu", "relu"],
-				"rate": [0.2, 0.2],
-				"class_weight":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-				"init_rate": 0.1,
-				"learning_rate": 0.001,
-				"optimizer": "adam",
-				"loss": "binary_crossentropy",
-				"early_stopping_metric": "val_fone_loss",
-				"early_stopping_patience": 3,
-				"early_stopping_delta": 0.001
-			}
-
-		},
 		{
 			"name": "LSTMClassifier",
 			"multilabel": true,
@@ -102,6 +81,28 @@
 				"recurrent_dropout": 0.2,
 				"merge_mode": "concat"
 
+			}
+
+		},
+		{
+			"name": "MLPClassifier",
+			"multilabel": true,
+			"type": "tf_mlp",
+			"params": {
+				"epochs": 1000,
+				"batch_size": 128,
+				"random_state": 180485,
+				"hidden_layer": [4750, 400],
+				"activation": ["relu", "relu"],
+				"rate": [0.2, 0.2],
+				"class_weight":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+				"init_rate": 0.1,
+				"learning_rate": 0.001,
+				"optimizer": "adam",
+				"loss": "binary_crossentropy",
+				"early_stopping_metric": "val_fone_loss",
+				"early_stopping_patience": 3,
+				"early_stopping_delta": 0.001
 			}
 
 		},
