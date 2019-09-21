@@ -98,18 +98,20 @@ class MLPClassifier(TFClassifier):
 class LSTMClassifier(TFClassifier):
     def __init__(self, tokenizer, embedding_matrix, maxlen):
         self.tokenizer = tokenizer
-        self.embedding_matrix = embedding_matrix.toarray()
+        self.embedding_matrix = embedding_matrix
         self.maxlen = maxlen
 
     def fit(self, x_train, y_train, x_val, y_val):
         np.random.seed(self.random_state)
         inputs = Input(shape=(self.maxlen,))
+        print(len(self.tokenizer.word_index))
+        print(self.embedding_matrix.shape)
         embedding = Embedding(
             len(self.tokenizer.word_index) + 1,
             output_dim=self.output_dim,
             weights=[self.embedding_matrix],
             input_length=self.maxlen,
-            trainable=self.trainable)(input)
+            trainable=self.trainable)(inputs)
         if self.bidirectional:
             lstm = Bidirectional(
                 LSTM(

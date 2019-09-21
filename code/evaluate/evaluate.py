@@ -60,11 +60,12 @@ if __name__ == "__main__":
     selector = vectorizeHelpers.loadBinary(config, "selector.bin")
 
     # Embeddings
-    x_test_emb = load_npz(os.path.join(config["srcDir"], "x_test_emb.npz")).toarray()
-    x_train_train_emb = load_npz(os.path.join(config["srcDir"], "x_train_train_emb.npz")).toarray()
-    x_train_val_emb = load_npz(os.path.join(config["srcDir"], "x_train_val_emb.npz")).toarray()
+    x_test_emb = np.load(os.path.join(config["srcDir"], "x_test_emb.npy"))
+    x_train_train_emb = np.load(os.path.join(config["srcDir"], "x_train_train_emb.npy"))
+    x_train_val_emb = np.load(os.path.join(config["srcDir"], "x_train_val_emb.npy"))
     tokenizer = vectorizeHelpers.loadBinary(config, "tokenizer.bin")
-    embedding_matrix = load_npz(os.path.join(config["srcDir"], "embedding_matrix.npz"))
+    embedding_matrix = np.load(os.path.join(config["srcDir"], "embedding_matrix.npy"))
+    print(embedding_matrix)
 
     # Labels
     y_train = load_npz(os.path.join(config["srcDir"], "y_train.npz"))
@@ -112,25 +113,22 @@ if __name__ == "__main__":
                 class_weight = [{0: 1, 1: x} for x in config["class_weight"]]
             setattr(model, "class_weight", class_weight)
         pHash = getDictHash(m["params"])
-        if not getattr(model, "random_state", False):
-            if len(df[df.pHash == pHash][df.model == m["name"]]) > 0:           
-                config["logger"].info(
-                    "Model {} with pHash {} has already been evaluated!".format(
-                        m["name"],
-                        pHash
-                    )
-                )
-                continue
-        else:
-            m["params"]["random_state"] = randint(0,2**32-1)
-            pHash = getDictHash(m["params"])
+
+        if len(df) > 0 and len(df[df.pHash == pHash][df.model == m["name"]]) > 0:           
             config["logger"].info(
-                "Evaluate Model {} with pHash {} and random state {}".format(
+                "Model {} with pHash {} has already been evaluated!".format(
                     m["name"],
-                    pHash,
-                    m["params"]["random_state"]
+                    pHash
                 )
             )
+            continue
+
+        if m["params"]["seed_random_state"]:
+            m["params"]["random_state"] = randint(0,2**32-1)
+            setattr(model, "random_state", m["params"]["random_state"])
+            pHash = getDictHash(m["params"])
+
+
 
         x_test = x_test_bow
         x_wiki = x_wiki_bow
@@ -151,6 +149,7 @@ if __name__ == "__main__":
             x_test = x_test_emb.toarray()
             x_wiki = x_wiki_emb
 
+        config["logger"].info("Evaluate Model {} with pHash {}".format( ["name"], pHash))
         ########################################
         # CREATE PERFORMANCE REPORT
         ########################################

@@ -121,7 +121,7 @@ if __name__ == "__main__":
     )
     vectorizeHelpers.dumpBinary(config, "vectorizer.bin", vectorizer)
     vectorizeHelpers.dumpBinary(config, "selector.bin", selector)
-
+#
     ####################
     # EMBEDDINGS
     ####################
@@ -130,44 +130,36 @@ if __name__ == "__main__":
             df_train["payload"]
     )
     vectorizeHelpers.dumpBinary(config, "tokenizer.bin", tokenizer)
-    scipy.sparse.save_npz(
-        os.path.join(config["vectorize"]["outputDir"], "embedding_matrix"),
+    np.save(
+        os.path.join(config["vectorize"]["outputDir"], "embedding_matrix.npy"),
         embedding_matrix 
     )
-    scipy.sparse.save_npz(
-        os.path.join(config["vectorize"]["outputDir"], "x_train_emb.npz"),
-        scipy.sparse.csc_matrix(
-            pad_sequences(
-                tokenizer.texts_to_sequences(df_train["payload"]),
-                maxlen=config["vectorize"]["maxlen"]
-            )
+    np.save(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_emb.npy"),
+        pad_sequences(
+            tokenizer.texts_to_sequences(df_train["payload"]),
+            maxlen=config["vectorize"]["maxlen"]
         )
     )
-    scipy.sparse.save_npz(
-        os.path.join(config["vectorize"]["outputDir"], "x_test_emb.npz"),
-        scipy.sparse.csc_matrix(
-            pad_sequences(
-                tokenizer.texts_to_sequences(df_test["payload"]),
-                maxlen=config["vectorize"]["maxlen"]
-            )
+    np.save(
+        os.path.join(config["vectorize"]["outputDir"], "x_test_emb.npy"),
+        pad_sequences(
+            tokenizer.texts_to_sequences(df_test["payload"]),
+            maxlen=config["vectorize"]["maxlen"]
         )
     )
-    scipy.sparse.save_npz(
-        os.path.join(config["vectorize"]["outputDir"], "x_train_train_emb.npz"),
-        scipy.sparse.csc_matrix(
-            pad_sequences(
-                tokenizer.texts_to_sequences(df_train_train["payload"]),
-                maxlen=config["vectorize"]["maxlen"]
-            )
+    np.save(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_train_emb.npy"),
+        pad_sequences(
+            tokenizer.texts_to_sequences(df_train_train["payload"]),
+            maxlen=config["vectorize"]["maxlen"]
         )
     )
-    scipy.sparse.save_npz(
-        os.path.join(config["vectorize"]["outputDir"], "x_train_val_emb.npz"),
-        scipy.sparse.csc_matrix(
-            pad_sequences(
-                tokenizer.texts_to_sequences(df_train_val["payload"]),
-                maxlen=config["vectorize"]["maxlen"]
-            )
+    np.save(
+        os.path.join(config["vectorize"]["outputDir"], "x_train_val_emb.npy"),
+        pad_sequences(
+            tokenizer.texts_to_sequences(df_train_val["payload"]),
+            maxlen=config["vectorize"]["maxlen"]
         )
     )
 

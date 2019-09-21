@@ -1,1 +1,0 @@
-{"mlp": {"dtype": "dmed", "batchSize": 128, "dropoutRate": 0.2, "epochs": 1000, "layers": 2, "learningRate": 0.001, "units": 64}}

@@ -50,14 +50,15 @@
         "tokenMode": "word",
         "feature_selection": {
             "mode": "multipleOfLabels",
-            "value": 1000
+            "value": 5000
         },
         "stopWordsHash": "fdb7caa2414fdeb0b1e208b637e1fea44704dfc105573eb4357468ec8ed4dd60",
 	"word2vec": "GoogleNews-vectors-negative300.bin",
-	"maxlen": 60
+	"maxlen": 2000,
+       "case_sensitivity": false	
     },
     "evaluate": {
-	"vectorizeHash": "66a245a805341aaf76944798c6afb385ae9014a273a95cbdeb7d7f6c74b1c769",
+	"vectorizeHash": "aacb53803ef848cf283cb725df538a0352c53019d214079dd29202b7fffbaa47",
 	"models": [
 		{
 			"name": "LSTMClassifier",
@@ -66,7 +67,7 @@
 			"params": {
 				"epochs": 1000,
 				"batch_size": 128,
-				"random_state": 180485,
+				"seed_random_state": true,
 				"class_weight":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				"learning_rate": 0.001,
 				"optimizer": "adam",

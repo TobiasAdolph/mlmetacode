@@ -1,1 +1,0 @@
-{"vectorizeHash": "5bacc5378938eef3ee660490b55718412bbe3ab1c5a9377f5852ed45850eb2d9", "type": "mlp", "mlpConfig": {"batchSize": 128, "dropoutRate": 0.2, "epochs": 1000, "layers": 2, "learningRate": 0.001, "units": 64}}

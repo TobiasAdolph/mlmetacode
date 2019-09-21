@@ -32,9 +32,7 @@ def getTokenizerAndEmbeddingMatrix(config, payload):
     # See
         vectorizeBagOfWords
     """
-
-    # is googleNews case-sensitive?
-    tokenizer = Tokenizer(lower=True)
+    tokenizer = Tokenizer(lower=config["vectorize"]["case_sensitivity"])
     tokenizer.fit_on_texts(payload)
 
     model = KeyedVectors.load_word2vec_format(
@@ -48,7 +46,7 @@ def getTokenizerAndEmbeddingMatrix(config, payload):
             embedding_matrix[i] = model.wv[word]
         except KeyError:
             pass
-    return tokenizer, scipy.sparse.csc_matrix(embedding_matrix)
+    return tokenizer, embedding_matrix
 
 def dumpBinary(config, name, payload):
     """ Wrapper around pickle.dump() dumps an python object
