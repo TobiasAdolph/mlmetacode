@@ -1,0 +1,141 @@
+{
+    "base": {
+        "dir": "../data"
+    },
+    "retrieve": {
+        "hvConfigRegex": ".*([0-9a-f]{2}).config.json$",
+        "hvs": [
+            "http://localhost:8001/oaipmh/harvest",
+            "http://localhost:8002/oaipmh/harvest"
+        ],
+        "hvUnloadSrc": [
+            "46f48f6a832e",
+            "6505543f78fe"
+        ],
+        "hvUnloadCmd": "docker cp {}:/var/lib/jetty/cache/records/OaiPmhETL.json {}",
+        "hvRangeTo": 100000
+    },
+    "clean": {
+        "retrieveHash": "0797f318a1b1d0be80fa2c224d8678b80e76c7f951b4c29a83b25eeca369fce5",
+        "mappingHash": "2cc9765ec445d0eee3728abe4e20e505ed02f7329010c5cbb82893a4b75019ed",
+        "lang": "en",
+	"langCert": 0.51,
+        "payloadFields": [
+            "titles",
+            "descriptions",
+	    "payloadSubjects"
+        ],
+	"payloadMinLength": 15,
+        "regex": {
+            "ddcValue": "(^\\d+\\.\\d+,)+",
+            "ddcSchemeURI": "https{0,1}://dewey.info/*",
+            "special": "f[0-9a-f]{1}\\.json",
+            "dataInput": ".*([a-f0-9]{2})\\.json",
+            "dataOutput": ".*[a-f0-9]{2}\\.chunk\\.json"
+        },
+        "schemes": [
+            "anzsrc",
+            "ddc",
+            "bk",
+            "narcis",
+            "bepress"
+        ]
+    },
+    "vectorize": {
+	"cleanHash": "4c32777ce3a7035cccad8a06cdcc30302533daad322f84bef1f10538461b8434",
+        "stemming": "none",
+        "test_size": 0.1,
+        "minDocFreq": 2,
+        "ngramRange": [1,2],
+        "tokenMode": "word",
+        "feature_selection": {
+            "mode": "multipleOfLabels",
+            "value": 5000
+        },
+        "stopWordsHash": "fdb7caa2414fdeb0b1e208b637e1fea44704dfc105573eb4357468ec8ed4dd60",
+	"word2vec": "GoogleNews-vectors-negative300.bin",
+	"maxlen": 2000,
+       "case_sensitivity": false	
+    },
+    "evaluate": {
+	"vectorizeHash": "46e4d08f373ee10bec65345c078974f0dfb2afc1236e1bf59a26c098f82631b4",
+	"models": [
+		{
+			"name": "LSTMClassifier",
+			"multilabel": true,
+			"type": "tf_nlp",
+			"params": {
+				"epochs": 1000,
+				"batch_size": 355,
+				"seed_random_state": true,
+				"class_weight": true,
+				"learning_rate": 0.001,
+				"optimizer": "adam",
+				"loss": "binary_crossentropy",
+				"early_stopping_metric": "val_loss",
+				"early_stopping_patience": 3,
+				"early_stopping_delta": 0.001,
+				"output_dim": 300,
+				"trainable": false,
+				"lstm_size": 512,
+				"dropout": 0.2,
+				"recurrent_dropout": 0.2,
+				"merge_mode": "concat",
+				"bidirectional": true
+
+			}
+
+		},
+		{
+			"name": "MLPClassifier",
+			"multilabel": true,
+			"type": "tf_mlp",
+			"params": {
+				"epochs": 1000,
+				"batch_size": 256,
+				"seed_random_state": true,
+				"hidden_layer": [4750, 400],
+				"activation": ["relu", "relu"],
+				"rate": [0.2, 0.2],
+				"class_weight": true,
+				"init_rate": 0.1,
+				"learning_rate": 0.001,
+				"optimizer": "adam",
+				"loss": "binary_crossentropy",
+				"early_stopping_metric": "val_loss",
+				"early_stopping_patience": 3,
+				"early_stopping_delta": 0.001
+			}
+
+		},
+		{
+		    "name": "RandomForestClassifier",
+		    "package": "sklearn.ensemble",
+		    "type": "classic",
+		    "multilabel": true,
+		    "params": {
+			    "criterion": "gini",
+			    "min_samples_split": 10,
+			    "min_samples_leaf": 1,
+			    "min_weight_fraction_leaf": 0.0,
+			    "max_features": "auto",
+			    "max_leaf_nodes": null,
+			    "min_impurity_decrease": 0.0,
+			    "min_impurity_split": 0.0,
+			    "bootstrap": true,
+			    "oob_score": true,
+			    "n_estimators": 100,
+			    "n_jobs": -1,
+			    "random_state": 180485,
+			    "verbose": 0,
+			    "warm_start": false,
+		            "class_weight": true,
+			    "max_depth": 400,
+			    "max_features": "auto"
+	            }
+		}
+
+	]
+    }
+}
+
