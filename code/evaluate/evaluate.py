@@ -15,6 +15,20 @@ from evaluateWrappers import MLPClassifier, LSTMClassifier
 import vectorize.vectorizeHelpers as vectorizeHelpers
 from keras.preprocessing.sequence import pad_sequences
 import json
+from joblib import dump
+import tensorflow as tf
+import binascii
+
+class EvaluateEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(EvaluateEncoder, elsf).default(obj)
 
 def prepare():
     parser = argparse.ArgumentParser(
@@ -23,6 +37,9 @@ def prepare():
     parser.add_argument('--config',
             required = True,
             help = "File with the configuration, must contain key 'evaluate'")
+    parser.add_argument('--device',
+            default="default",
+            help = "Device name used to train the models")
 
     args = parser.parse_args()
     config = loadConfig(args.config)
@@ -31,11 +48,17 @@ def prepare():
         config["evaluate"]["logFile"]
     ))
     config["logger"] = setupLogging(config, "evaluate")
-    config["target"] = os.path.join(config["evaluate"]["baseDir"], "evaluation.csv")
+    config["device"] = args.device
+    if config["device"] == "default":
+        prefix = "0"
+    else:
+        prefix = "1"
+    config["target"] = os.path.join(config["evaluate"]["baseDir"], prefix + "_evaluation.csv")
     config["srcDir"] = os.path.join(
         config["vectorize"]["baseDir"],
         config["evaluate"]["vectorizeHash"]
     )
+
     return config
 
 if __name__ == "__main__":
@@ -43,7 +66,7 @@ if __name__ == "__main__":
     results = []
     df = pd.DataFrame()
     if os.path.exists(config["target"]):
-        df = pd.read_csv(config["target"], index_col=0)
+        df = pd.read_csv(config["target"])
         
     ########################################
     # LOAD DATA
@@ -65,7 +88,6 @@ if __name__ == "__main__":
     x_train_val_emb = np.load(os.path.join(config["srcDir"], "x_train_val_emb.npy"))
     tokenizer = vectorizeHelpers.loadBinary(config, "tokenizer.bin")
     embedding_matrix = np.load(os.path.join(config["srcDir"], "embedding_matrix.npy"))
-    print(embedding_matrix)
 
     # Labels
     y_train = load_npz(os.path.join(config["srcDir"], "y_train.npz"))
@@ -107,14 +129,23 @@ if __name__ == "__main__":
         for key, value in m["params"].items(): 
             setattr(model, key, value)
         config["logger"].info("Starting evaluate model {}".format(m["name"]))
+
+        if m["params"].get("seed_random_state", False):
+            m["params"]["random_state"] = randint(0,2**32-1)
+            setattr(model, "random_state", m["params"]["random_state"])
+            config["logger"].info("Seeded random state: {}".format(m["params"]["random_state"]))
+        
+        pHash = getDictHash(m["params"])
+
+        # Do not add weights to pHash
         if m["params"].get("class_weight", False):
             class_weight = config["class_weight"]
             if m["name"] in ("RandomForestClassifier", "DecisionTreeClassifier", "ExtraTreeClassifier"):
                 class_weight = [{0: 1, 1: x} for x in config["class_weight"]]
             setattr(model, "class_weight", class_weight)
-        pHash = getDictHash(m["params"])
 
-        if len(df) > 0 and len(df[df.pHash == pHash][df.model == m["name"]]) > 0:           
+        config["logger"].info("Model {} with pHash {} prepared".format(m["name"], pHash))
+        if len(df) > 0 and len(df[df.pHash == pHash][df.model == m["name"]]) > 0:
             config["logger"].info(
                 "Model {} with pHash {} has already been evaluated!".format(
                     m["name"],
@@ -123,33 +154,51 @@ if __name__ == "__main__":
             )
             continue
 
-        if m["params"]["seed_random_state"]:
-            m["params"]["random_state"] = randint(0,2**32-1)
-            setattr(model, "random_state", m["params"]["random_state"])
-            pHash = getDictHash(m["params"])
-
-
-
         x_test = x_test_bow
         x_wiki = x_wiki_bow
+        history = {}
+
         if m["type"] == "classic":
             if not m["multilabel"]:
                 from sklearn.multiclass import OneVsRestClassifier
                 model = OneVsRestClassifier(model)
             model.fit(x_train_bow, y_train.toarray())
         elif m["type"] == "tf_mlp":
-            model.fit(x_train_train_bow, y_train_train, x_train_val_bow, y_train_val)
-        elif m["type"] == "tf_nlp": 
-            model.fit(
-                x_train_train_emb,
-                y_train_train,
-                x_train_val_emb,
-                y_train_val
-            )
-            x_test = x_test_emb.toarray()
+            if config["device"] != "default":
+                with tf.device(config["device"]):
+                    history = model.fit(x_train_train_bow, y_train_train, x_train_val_bow, y_train_val).history
+            else:
+                history = model.fit(x_train_train_bow, y_train_train, x_train_val_bow, y_train_val).history
+        elif m["type"] == "tf_nlp":
+            if config["device"] != "default":
+                with tf.device(config["device"]):
+                    history = model.fit(
+                        x_train_train_emb,
+                        y_train_train,
+                        x_train_val_emb,
+                        y_train_val
+                    ).history
+            else:
+                history = model.fit(
+                    x_train_train_emb,
+                    y_train_train,
+                    x_train_val_emb,
+                    y_train_val
+                ).history
+            x_test = x_test_emb
             x_wiki = x_wiki_emb
 
-        config["logger"].info("Evaluate Model {} with pHash {}".format( ["name"], pHash))
+        if m["type"] == "tf_nlp" or m["type"] == "tf_mlp": 
+            config["logger"].info("Saving Model {} with pHash {}".format(m["name"], pHash))
+            with open(os.path.join(config["evaluate"]["baseDir"], pHash + ".json"), "w") as f:
+                f.write(model.to_json())
+            model.save_weights(os.path.join(config["evaluate"]["baseDir"], pHash + ".h5"))
+            with open(os.path.join(config["evaluate"]["baseDir"], pHash + "_history.json"), "w") as f:
+                json.dump(history, f, cls=EvaluateEncoder)
+        else:
+            dump(model,os.path.join(config["evaluate"]["baseDir"], pHash + ".joblib"))
+        config["logger"].info("Evaluate Model {} with pHash {}".format(m["name"], pHash))
+
         ########################################
         # CREATE PERFORMANCE REPORT
         ########################################
@@ -201,13 +250,8 @@ if __name__ == "__main__":
         for label in range(0, y_test.shape[1]):
             row["ftwo_" + str(label)] = label_scores_two[label]
 
-        results.append(row)
-        cur_df = pd.DataFrame(results)
-        if len(df) == 0:
-            df = cur_df
-        else:
-            df = pd.concat([df, cur_df], sort=False)
-        df.to_csv(config["target"])
+        df = df.append(pd.Series(row), ignore_index=True)
+        df.to_csv(config["target"], index=False)
         config["logger"].info(
                 "Stored information of evaluation run to\n\t{}".format(config["target"])
         )

@@ -45,7 +45,7 @@ def prob2onehot(y):
 
 class TFClassifier(object):
     def predict(self, x):
-        return prob2onehot(self.model.predict(x))
+        return prob2onehot(self.model.predict(x, batch_size=512, verbose=1))
 
     def getOptimizer(self):
         if self.optimizer == "adam":
@@ -59,6 +59,12 @@ class TFClassifier(object):
                 min_delta=self.early_stopping_delta
             )
         ]
+
+    def to_json(self):
+        return self.model.to_json()
+
+    def save_weights(self, path):
+        return self.model.save_weights(path)
 
 class MLPClassifier(TFClassifier):
     def addHiddenLayer(self, units=100, activation="relu", rate=0.2):
