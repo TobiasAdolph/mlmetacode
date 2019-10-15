@@ -39,7 +39,7 @@ def prepare():
             help = "File with the configuration, must contain key 'evaluate'")
     parser.add_argument('--device',
             default="default",
-            help = "Device name used to train the models")
+            help = "Device name used to train the models ('/device:GPU:0', '/device:GPU:1')")
 
     args = parser.parse_args()
     config = loadConfig(args.config)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         # Do not add weights to pHash
         if m["params"].get("class_weight", False):
             class_weight = config["class_weight"]
-            if m["name"] in ("RandomForestClassifier", "DecisionTreeClassifier", "ExtraTreeClassifier"):
+            if m["name"] in ("RandomForestClassifier", "DecisionTreeClassifier", "ExtraTreesClassifier"):
                 class_weight = [{0: 1, 1: x} for x in config["class_weight"]]
             setattr(model, "class_weight", class_weight)
 

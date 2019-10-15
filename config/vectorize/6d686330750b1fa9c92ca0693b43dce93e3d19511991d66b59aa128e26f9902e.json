@@ -1,1 +1,0 @@
-{"sampleHash": "000bc39a860a0da74e3deb3e1adb0784e716fa40d30c46ddb043a3f011d11787", "dtype": "float64", "replace": {"[_:,;]": " ", "[\u201c\u201d\"\\(\\)\\[\\]]| -": ""}, "stemming": "none", "minDocFreq": 2, "ngramRange": [1, 2], "tokenMode": "word", "topK": 20000}

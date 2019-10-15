@@ -61,80 +61,27 @@
 	"vectorizeHash": "46e4d08f373ee10bec65345c078974f0dfb2afc1236e1bf59a26c098f82631b4",
 	"models": [
 		{
-			"name": "LSTMClassifier",
-			"multilabel": true,
-			"type": "tf_nlp",
-			"params": {
-				"epochs": 1000,
-				"batch_size": 355,
-				"seed_random_state": true,
-				"class_weight": true,
-				"learning_rate": 0.001,
-				"optimizer": "adam",
-				"loss": "binary_crossentropy",
-				"early_stopping_metric": "val_loss",
-				"early_stopping_patience": 3,
-				"early_stopping_delta": 0.001,
-				"output_dim": 300,
-				"trainable": false,
-				"lstm_size": 512,
-				"dropout": 0.2,
-				"recurrent_dropout": 0.2,
-				"merge_mode": "concat",
-				"bidirectional": true
-
-			}
-
-		},
-		{
 			"name": "MLPClassifier",
 			"multilabel": true,
 			"type": "tf_mlp",
 			"params": {
 				"epochs": 1000,
-				"batch_size": 256,
+				"batch_size": 16,
 				"seed_random_state": true,
-				"hidden_layer": [4750, 400],
-				"activation": ["relu", "relu"],
-				"rate": [0.2, 0.2],
+				"hidden_layer": [4000,80],
+				"activation": ["relu","relu"],
+				"rate": [0.3,0.15],
 				"class_weight": true,
-				"init_rate": 0.1,
+				"init_rate": 0.3,
 				"learning_rate": 0.001,
 				"optimizer": "adam",
 				"loss": "binary_crossentropy",
 				"early_stopping_metric": "val_loss",
-				"early_stopping_patience": 3,
+				"early_stopping_patience": 5,
 				"early_stopping_delta": 0.001
 			}
 
-		},
-		{
-		    "name": "RandomForestClassifier",
-		    "package": "sklearn.ensemble",
-		    "type": "classic",
-		    "multilabel": true,
-		    "params": {
-			    "criterion": "gini",
-			    "min_samples_split": 10,
-			    "min_samples_leaf": 1,
-			    "min_weight_fraction_leaf": 0.0,
-			    "max_features": "auto",
-			    "max_leaf_nodes": null,
-			    "min_impurity_decrease": 0.0,
-			    "min_impurity_split": 0.0,
-			    "bootstrap": true,
-			    "oob_score": true,
-			    "n_estimators": 100,
-			    "n_jobs": -1,
-			    "random_state": 180485,
-			    "verbose": 0,
-			    "warm_start": false,
-		            "class_weight": true,
-			    "max_depth": 400,
-			    "max_features": "auto"
-	            }
 		}
-
 	]
     }
 }

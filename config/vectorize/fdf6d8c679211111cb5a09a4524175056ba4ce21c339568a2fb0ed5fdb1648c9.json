@@ -1,1 +1,0 @@
-{"sampleHash": "000bc39a860a0da74e3deb3e1adb0784e716fa40d30c46ddb043a3f011d11787", "sampleSeed": 158707373, "mode": "max", "dtype": "float64", "minDocFreq": 2, "ngramRange": [1, 2], "tokenMode": "word", "topK": 20000}
